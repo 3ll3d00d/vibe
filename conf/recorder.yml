@@ -1,0 +1,19 @@
+debug: True
+accelerometers:
+- name: mpu6050
+  type: mpu6050
+  fs: 500
+  handler: local log
+  io:
+    type: mock
+    provider: white noise
+#  io:
+#    type: smbus
+#    busId: 1
+handlers:
+- name: local service
+  type: post
+  target: http://localhost:5001/data
+- name: local log
+  type: log
+  target: C:\Users\Matt\AppData\Local\Temp\test.log
