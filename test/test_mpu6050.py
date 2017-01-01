@@ -142,7 +142,7 @@ class MPU6050TestCase(unittest.TestCase):
         self.assertIsNotNone(data)
         self.assertEqual(len(data), 125)
         self.assertTrue(all(len(i) == len(data[0]) for i in data))
-        self.assertTrue(all(i == [0b0000, 0b0001, 0b0010, 0b0011, 0b0100, 0b0101] for i in output))
+        self.assertTrue(all(i == [0b0000, 0b0001, 0b0010, 0b0011, 0b0100, 0b0101] for i in data))
         self.assertEqual(fifoCounter, 125)
         self.assertEqual(fifoReader, 125)
 

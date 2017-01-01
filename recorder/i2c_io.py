@@ -3,7 +3,7 @@ from queue import Queue
 
 import numpy as np
 
-from recorder.mpu6050 import mpu6050
+from mpu6050 import mpu6050
 
 
 class i2c_io(object):

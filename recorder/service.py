@@ -6,8 +6,8 @@ from flask import Flask
 from flask import request
 from flask_restful import Resource, Api, marshal_with, fields
 
-from recorder.accelerometer import Status
-from recorder.config import Config
+from accelerometer import Status
+from config import Config
 
 cfg = Config()
 handlers = cfg.loadHandlers()
@@ -55,6 +55,7 @@ class ScheduledMeasurement:
         """
         self.name = name
         self.device = device
+        self.recording = False
         self.statuses = [{'name': ScheduledMeasurementStatus.INITIALISING.name, 'time': datetime.now()}]
 
     def schedule(self, duration, at=None, delay=None):
@@ -76,7 +77,11 @@ class ScheduledMeasurement:
         :return: nothing.
         """
         self.statuses.append({'name': ScheduledMeasurementStatus.RUNNING.name, 'time': datetime.now()})
-        self.device.start(self.name, durationInSeconds=duration)
+        try:
+            self.recording = True
+            self.device.start(self.name, durationInSeconds=duration)
+        finally:
+            self.recording = False
         self.statuses.append({'name': ScheduledMeasurementStatus.COMPLETE.name, 'time': datetime.now()})
 
     def calculateDelay(self, at, delay):
@@ -204,6 +209,7 @@ class Measurement(Resource):
 
 
 class AbortMeasurement(Resource):
+    @marshal_with(scheduledMeasurementFields)
     def get(self, deviceId, measurementName):
         """
         signals a stop for the given measurement.
@@ -239,6 +245,34 @@ api.add_resource(Measurement, '/devices/<deviceId>/measurements/<measurementName
 # GET: triggers a stop of the named measurement
 api.add_resource(AbortMeasurement, '/devices/<deviceId>/measurements/<measurementName>/abort')
 
+
+def configureLogger(debugMode):
+    """
+    Configures the python logging system to log to a debug file and to stdout for warn and above.
+    :return:
+    """
+    import logging.handlers
+
+    baseLogLevel = logging.DEBUG if debugMode else logging.INFO
+    # create recorder app root logger
+    logger = logging.getLogger('recorder')
+    logger.setLevel(baseLogLevel)
+    # file handler
+    fh = logging.handlers.RotatingFileHandler('recorder.log', maxBytes=10 * 1024 * 1024, backupCount=10)
+    fh.setLevel(baseLogLevel)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.WARN)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+
+
 if __name__ == '__main__':
+    configureLogger(cfg.runInDebug())
     # get config from a flask standard place not our config yml
-    app.run(debug=cfg.runInDebug())
+    app.run(debug=cfg.runInDebug(), host='0.0.0.0')
