@@ -1,11 +1,10 @@
+import collections
 import logging
 import struct
 from _ctypes import ArgumentError
 from time import sleep
 
-import collections
-
-from accelerometer import Accelerometer, ACCEL_X, ACCEL_Y, ACCEL_Z, GYRO_X, GYRO_Y, GYRO_Z, TEMP, SAMPLE_TIME
+from .accelerometer import Accelerometer, ACCEL_X, ACCEL_Y, ACCEL_Z, GYRO_X, GYRO_Y, GYRO_Z, TEMP, SAMPLE_TIME
 
 SENSOR_SCALE_FACTOR = 32768.0
 DEFAULT_GYRO_SENSITIVITY = 500.0
@@ -28,7 +27,7 @@ class mpu6050(Accelerometer):
     MPU6050_ADDRESS = 0x68  # default I2C Address
 
     # bit masks for enabling the which sensors are written to the FIFO
-    enableAccelerationMask = 0b00001000
+    enableAccelerometerMask = 0b00001000
     enableGyroMask = 0b01110000
     enableTemperatureMask = 0b10000000
 
@@ -252,7 +251,11 @@ class mpu6050(Accelerometer):
         """
         super().__init__(fs, samplesPerBatch, dataHandler)
         self.name = 'mpu6050'
-        self.fifoSensorMask = self.enableAccelerationMask
+        self.fifoSensorMask = self.enableAccelerometerMask
+        # used for rendering to json
+        # TODO convert to @property
+        self._accelEnabled = True
+        self._gyroEnabled = False
         self._setSampleSizeBytes()
         self.accelerometerSensitivity = DEFAULT_ACCELEROMETER_SENSITIVITY
         self.gyroSensitivity = DEFAULT_GYRO_SENSITIVITY
@@ -275,7 +278,7 @@ class mpu6050(Accelerometer):
         :return: the current packet size based on the enabled registers.
         """
         size = 0
-        if self.isAccelerationEnabled():
+        if self.isAccelerometerEnabled():
             size += 6
         if self.isGyroEnabled():
             size += 6
@@ -306,30 +309,32 @@ class mpu6050(Accelerometer):
         self.enableFifo()
         logger.debug("Initialised device")
 
-    def isAccelerationEnabled(self):
+    def isAccelerometerEnabled(self):
         """
         tests whether acceleration is currently enabled
         :return: true if it is
         """
-        return (self.fifoSensorMask & self.enableAccelerationMask) == self.enableAccelerationMask
+        return (self.fifoSensorMask & self.enableAccelerometerMask) == self.enableAccelerometerMask
 
-    def enableAcceleration(self):
+    def enableAccelerometer(self):
         """
         Specifies the device should write acceleration values to the FIFO, is not applied until enableFIFO is called.
         :return:
         """
         logger.debug("Enabling acceleration sensor")
-        self.fifoSensorMask |= self.enableAccelerationMask
+        self.fifoSensorMask |= self.enableAccelerometerMask
+        self._accelEnabled = True
         self._setSampleSizeBytes()
 
-    def disableAcceleration(self):
+    def disableAccelerometer(self):
         """
         Specifies the device should NOT write acceleration values to the FIFO, is not applied until enableFIFO is
         called.
         :return: 
         """
         logger.debug("Disabling acceleration sensor")
-        self.fifoSensorMask &= ~self.enableAccelerationMask
+        self.fifoSensorMask &= ~self.enableAccelerometerMask
+        self._accelEnabled = False
         self._setSampleSizeBytes()
 
     def isGyroEnabled(self):
@@ -346,6 +351,7 @@ class mpu6050(Accelerometer):
         """
         logger.debug("Enabling gyro sensor")
         self.fifoSensorMask |= self.enableGyroMask
+        self._gyroEnabled = True
         self._setSampleSizeBytes()
 
     def disableGyro(self):
@@ -355,6 +361,7 @@ class mpu6050(Accelerometer):
         """
         logger.debug("Disabling gyro sensor")
         self.fifoSensorMask &= ~self.enableGyroMask
+        self._gyroEnabled = False
         self._setSampleSizeBytes()
 
     def isTemperatureEnabled(self):
@@ -489,7 +496,8 @@ class mpu6050(Accelerometer):
         """
         reads a batchSize batch of data from the FIFO while attempting to optimise the number of times we have to read
         from the device itself.
-        :return: the batch of data as a list of samples.
+        :return: a list of data where each item is a single sample of data converted into real values and stored as a
+        dict.
         """
         samples = []
         fifoBytesAvailable = 0
@@ -502,7 +510,7 @@ class mpu6050(Accelerometer):
             # if (interrupt & 0x10) or (fifoBytesAvailable == 1024):
             #     logger.error("FIFO OVERFLOW, RESETTING [available: %d , interrupt: %d]", fifoBytesAvailable, interrupt)
             #     self.resetFifo()
-            #     TODO raise error
+                # TODO raise error
             # elif interrupt & 0x02 or interrupt & 0x01:
             if interrupt & 0x02 or interrupt & 0x01:
                 # wait for at least 1 sample to arrive, should be a VERY short wait
@@ -534,7 +542,6 @@ class mpu6050(Accelerometer):
                 fifoBytes = self.getDataFromFIFO(fifoReadBytes)
                 samples.extend([self.unpackSample(fifoBytes[i:i + self.sampleSizeBytes])
                                 for i in range(0, len(fifoBytes), self.sampleSizeBytes)])
-                sampleIdx = len(samples) - 1
                 # track the count here so we can avoid going back to the FIFO each time
                 fifoBytesAvailable -= fifoReadBytes
                 logger.debug("End sample loop [available: %d , required: %d]", fifoBytesAvailable, self.sampleSizeBytes)
@@ -555,7 +562,7 @@ class mpu6050(Accelerometer):
         mpu6050 = collections.OrderedDict()
         mpu6050[SAMPLE_TIME] = self._sampleIdx / self.fs
         sensorIdx = 0
-        if self.isAccelerationEnabled():
+        if self.isAccelerometerEnabled():
             mpu6050[ACCEL_X] = unpacked[sensorIdx] * self._accelerationFactor
             sensorIdx += 1
             mpu6050[ACCEL_Y] = unpacked[sensorIdx] * self._accelerationFactor
@@ -574,7 +581,7 @@ class mpu6050(Accelerometer):
             sensorIdx += 1
             mpu6050[GYRO_Z] = unpacked[sensorIdx] * self._gyroFactor
             sensorIdx += 1
-
+        # TODO should we send as a dict so the keys are available?
         output = list(mpu6050.values())
         self._sampleIdx += 1
         # logger.debug("<< unpacked sample length %d into vals size %d", length, len(output))

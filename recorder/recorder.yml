@@ -1,4 +1,6 @@
-debug: True
+debug: False
+debugLogging: True
+useAsyncHandler: True
 accelerometers:
 - name: mpu6050
   type: mpu6050
@@ -11,9 +13,9 @@ accelerometers:
 #    type: smbus
 #    busId: 1
 handlers:
-- name: local service
+- name: remote
   type: post
-  target: http://localhost:5001/data
-- name: local log
+  target: http://localhost:10001
+- name: local
   type: log
   target: C:\Users\Matt\AppData\Local\Temp

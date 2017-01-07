@@ -1,6 +1,6 @@
 from smbus2 import SMBus
 
-from i2c_io import i2c_io
+from .i2c_io import i2c_io
 
 
 class smbus_io(i2c_io):
