@@ -16,4 +16,4 @@ handlers:
   target: http://localhost:5001/data
 - name: local log
   type: log
-  target: C:\Users\Matt\AppData\Local\Temp\test.log
+  target: C:\Users\Matt\AppData\Local\Temp

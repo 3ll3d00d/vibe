@@ -1,8 +1,11 @@
+import logging
 import struct
 from _ctypes import ArgumentError
 from time import sleep
 
-from recorder.accelerometer import Accelerometer, ACCEL_X, ACCEL_Y, ACCEL_Z, GYRO_X, GYRO_Y, GYRO_Z, TEMP
+import collections
+
+from accelerometer import Accelerometer, ACCEL_X, ACCEL_Y, ACCEL_Z, GYRO_X, GYRO_Y, GYRO_Z, TEMP, SAMPLE_TIME
 
 SENSOR_SCALE_FACTOR = 32768.0
 DEFAULT_GYRO_SENSITIVITY = 500.0
@@ -10,14 +13,16 @@ DEFAULT_ACCELEROMETER_SENSITIVITY = 2.0
 DEFAULT_TEMPERATURE_GAIN = 1.0 / 340.0
 DEFAULT_TEMPERATURE_OFFSET = 36.53
 
+logger = logging.getLogger('recorder.mpu6050')
+
 
 class mpu6050(Accelerometer):
     """
     Controls the Invensense MPU-6050, code based on danjperron's https://github.com/danjperron/mpu6050TestInC
     """
     # Temperature in degrees C = (TEMP_OUT Register Value as a signed quantity)/340 + 36.53
-    temperatureGain = DEFAULT_TEMPERATURE_GAIN
-    temperatureOffset = DEFAULT_TEMPERATURE_OFFSET
+    _temperatureGain = DEFAULT_TEMPERATURE_GAIN
+    _temperatureOffset = DEFAULT_TEMPERATURE_OFFSET
 
     # converted from Jeff Rowberg code https://github.com/jrowberg/i2cdevlib/blob/master/Arduino/MPU6050/MPU6050.h
     MPU6050_ADDRESS = 0x68  # default I2C Address
@@ -284,9 +289,11 @@ class mpu6050(Accelerometer):
         :param batchSize: the no of samples that each provideData call should yield
         :return:
         """
+        logger.debug("Initialising device")
         self.getInterruptStatus()
         self.setAccelerometerSensitivity(self._accelerationFactor * 32768.0)
         self.setGyroSensitivity(self._gyroFactor * 32768.0)
+        self.setSampleRate(self.fs)
         for loop in self.ZeroRegister:
             self.i2c_io.write(self.MPU6050_ADDRESS, loop, 0)
         # Sets clock source to gyro reference w/ PLL
@@ -297,6 +304,7 @@ class mpu6050(Accelerometer):
         self.i2c_io.write(self.MPU6050_ADDRESS, self.MPU6050_RA_INT_ENABLE, 0x01)
         # enable the FIFO
         self.enableFifo()
+        logger.debug("Initialised device")
 
     def isAccelerationEnabled(self):
         """
@@ -310,6 +318,7 @@ class mpu6050(Accelerometer):
         Specifies the device should write acceleration values to the FIFO, is not applied until enableFIFO is called.
         :return:
         """
+        logger.debug("Enabling acceleration sensor")
         self.fifoSensorMask |= self.enableAccelerationMask
         self._setSampleSizeBytes()
 
@@ -319,6 +328,7 @@ class mpu6050(Accelerometer):
         called.
         :return: 
         """
+        logger.debug("Disabling acceleration sensor")
         self.fifoSensorMask &= ~self.enableAccelerationMask
         self._setSampleSizeBytes()
 
@@ -334,6 +344,7 @@ class mpu6050(Accelerometer):
         Specifies the device should write gyro values to the FIFO, is not applied until enableFIFO is called.
         :return: 
         """
+        logger.debug("Enabling gyro sensor")
         self.fifoSensorMask |= self.enableGyroMask
         self._setSampleSizeBytes()
 
@@ -342,6 +353,7 @@ class mpu6050(Accelerometer):
         Specifies the device should NOT write gyro values to the FIFO, is not applied until enableFIFO is called.
         :return: 
         """
+        logger.debug("Disabling gyro sensor")
         self.fifoSensorMask &= ~self.enableGyroMask
         self._setSampleSizeBytes()
 
@@ -357,6 +369,7 @@ class mpu6050(Accelerometer):
         Specifies the device should write temperature values to the FIFO, is not applied until enableFIFO is called.
         :return: 
         """
+        logger.debug("Enabling temperature sensor")
         self.fifoSensorMask |= self.enableTemperatureMask
         self._setSampleSizeBytes()
 
@@ -365,6 +378,7 @@ class mpu6050(Accelerometer):
         Specifies the device should NOT write temperature values to the FIFO, is not applied until enableFIFO is called.
         :return: 
         """
+        logger.debug("Disabling temperature sensor")
         self.fifoSensorMask &= ~self.enableTemperatureMask
         self._setSampleSizeBytes()
 
@@ -380,6 +394,7 @@ class mpu6050(Accelerometer):
                               {250: 0, 500: 8, 1000: 16, 2000: 24}[value])
             self._gyroFactor = value / 32768.0
             self.gyroSensitivity = value
+            logger.debug("Set gyro sensitivity = %d", value)
         except KeyError:
             raise ArgumentError(value + " is not a valid sensitivity (250,500,1000,2000)")
 
@@ -401,6 +416,7 @@ class mpu6050(Accelerometer):
                               {2: 0, 4: 8, 8: 16, 16: 24}[value])
             self._accelerationFactor = value / 32768.0
             self.accelerometerSensitivity = value
+            logger.debug("Set accelerometer sensitivity = %d", value)
         except KeyError:
             raise ArgumentError(value + " is not a valid sensitivity (2,4,8,18)")
 
@@ -415,12 +431,14 @@ class mpu6050(Accelerometer):
         sampleRateDenominator = int((8000 / min(targetSampleRate, 1000)) - 1)
         self.i2c_io.write(self.MPU6050_ADDRESS, self.MPU6050_RA_SMPLRT_DIV, sampleRateDenominator)
         self.fs = 8000.0 / (sampleRateDenominator + 1.0)
+        logger.debug("Set sample rate = %d", self.fs)
 
     def resetFifo(self):
         """
         Resets the FIFO by first disabling the FIFO then sending a FIFO_RESET and then re-enabling the FIFO.
         :return:
         """
+        logger.debug("Resetting FIFO")
         self.i2c_io.write(self.MPU6050_ADDRESS, self.MPU6050_RA_USER_CTRL, 0b00000000)
         pass
         self.i2c_io.write(self.MPU6050_ADDRESS, self.MPU6050_RA_USER_CTRL, 0b00000100)
@@ -432,9 +450,11 @@ class mpu6050(Accelerometer):
         Enables the FIFO, resets it and then sets which values should be written to the FIFO.
         :return:
         """
+        logger.debug("Enabling FIFO")
         self.i2c_io.write(self.MPU6050_ADDRESS, self.MPU6050_RA_FIFO_EN, 0)
         self.resetFifo()
         self.i2c_io.write(self.MPU6050_ADDRESS, self.MPU6050_RA_FIFO_EN, self.fifoSensorMask)
+        logger.debug("Enabled FIFO")
 
     def getInterruptStatus(self):
         """
@@ -452,7 +472,9 @@ class mpu6050(Accelerometer):
         based on the values the device is configured to sample.
         """
         bytes = self.i2c_io.readBlock(self.MPU6050_ADDRESS, self.MPU6050_RA_FIFO_COUNTH, 2)
-        return (bytes[0] << 8) + bytes[1]
+        count = (bytes[0] << 8) + bytes[1]
+        logger.debug("FIFO Count: %d", count)
+        return count
 
     def getDataFromFIFO(self, bytesToRead):
         """
@@ -471,38 +493,92 @@ class mpu6050(Accelerometer):
         """
         samples = []
         fifoBytesAvailable = 0
+        logger.debug(">> provideData target %d samples", self.samplesPerBatch)
         while len(samples) < self.samplesPerBatch:
             if fifoBytesAvailable < self.sampleSizeBytes:
                 interrupt = self.getInterruptStatus()
                 fifoBytesAvailable = self.getFifoCount()
-            if (interrupt & 0x10) or (fifoBytesAvailable == 1024):
-                self.resetFifo()
-                # TODO raise error
-            elif interrupt & 0x02 or interrupt & 0x01:
+            logger.debug("Start sample loop [available: %d , required: %d]", fifoBytesAvailable, self.sampleSizeBytes)
+            # if (interrupt & 0x10) or (fifoBytesAvailable == 1024):
+            #     logger.error("FIFO OVERFLOW, RESETTING [available: %d , interrupt: %d]", fifoBytesAvailable, interrupt)
+            #     self.resetFifo()
+            #     TODO raise error
+            # elif interrupt & 0x02 or interrupt & 0x01:
+            if interrupt & 0x02 or interrupt & 0x01:
                 # wait for at least 1 sample to arrive, should be a VERY short wait
                 while fifoBytesAvailable < self.sampleSizeBytes:
+                    logger.debug("Waiting for sample [available: %d , required: %d]", fifoBytesAvailable,
+                                 self.sampleSizeBytes)
                     fifoBytesAvailable = self.getFifoCount()
+                logger.debug("Processing data [available: %d , required: %d]", fifoBytesAvailable, self.sampleSizeBytes)
                 fifoReadBytes = self.sampleSizeBytes
                 # TODO this chunk of code is a bit messy, tidy it up
-                # if we have more than 1 sample available then ensure we read as many as we can at once
+                # if we have more than 1 sample available then ensure we read as many as we can at once (albeit within
+                # the limits of the max i2c read size of 32 bytes)
                 if fifoBytesAvailable > self.sampleSizeBytes:
                     fifoReadBytes = min(fifoBytesAvailable // self.sampleSizeBytes,
                                         self.maxBytesPerFifoRead) * self.sampleSizeBytes
+                    logger.debug("Excess bytes to read [available: %d , reading: %d]", fifoBytesAvailable,
+                                 fifoReadBytes)
                 # but don't read more than we need to fulfil the batch
                 samplesToRead = fifoReadBytes // self.sampleSizeBytes
                 excessSamples = self.samplesPerBatch - len(samples) - samplesToRead
                 if excessSamples < 0:
                     samplesToRead += excessSamples
                     fifoReadBytes = int(samplesToRead * self.sampleSizeBytes)
-                samples.extend(list(self._chunks(self.getDataFromFIFO(fifoReadBytes))))
+                    logger.debug("Excess samples to read [available: %d , reading: %d]", fifoBytesAvailable,
+                                 fifoReadBytes)
+                else:
+                    logger.debug("Reading [available: %d , reading: %d]", fifoBytesAvailable, fifoReadBytes)
+                # read the bytes from the fifo, break it into sample sized chunks and convert to the actual values
+                fifoBytes = self.getDataFromFIFO(fifoReadBytes)
+                samples.extend([self.unpackSample(fifoBytes[i:i + self.sampleSizeBytes])
+                                for i in range(0, len(fifoBytes), self.sampleSizeBytes)])
+                sampleIdx = len(samples) - 1
                 # track the count here so we can avoid going back to the FIFO each time
                 fifoBytesAvailable -= fifoReadBytes
+                logger.debug("End sample loop [available: %d , required: %d]", fifoBytesAvailable, self.sampleSizeBytes)
+        logger.debug("<< provideData %d samples", len(samples))
         return samples
 
-    def _chunks(self, data):
-        """Yield successive sampleSizeBytes chunks from the input data."""
-        for i in range(0, len(data), self.sampleSizeBytes):
-            yield data[i:i + self.sampleSizeBytes]
+    def unpackSample(self, rawData):
+        """
+        unpacks a single sample of data (where sample length is based on the currently enabled sensors).
+        :param rawData: the data to convert
+        :return: a converted data set.
+        """
+        length = len(rawData)
+        # TODO error if not multiple of 2
+        # logger.debug(">> unpacking sample %d length %d", self._sampleIdx, length)
+        unpacked = struct.unpack(">" + ('h' * (length//2)), memoryview(bytearray(rawData)).tobytes())
+        # store the data in a dictionary
+        mpu6050 = collections.OrderedDict()
+        mpu6050[SAMPLE_TIME] = self._sampleIdx / self.fs
+        sensorIdx = 0
+        if self.isAccelerationEnabled():
+            mpu6050[ACCEL_X] = unpacked[sensorIdx] * self._accelerationFactor
+            sensorIdx += 1
+            mpu6050[ACCEL_Y] = unpacked[sensorIdx] * self._accelerationFactor
+            sensorIdx += 1
+            mpu6050[ACCEL_Z] = unpacked[sensorIdx] * self._accelerationFactor
+            sensorIdx += 1
+
+        if self.isTemperatureEnabled():
+            mpu6050[TEMP] = unpacked[sensorIdx] * self._temperatureGain + self._temperatureOffset
+            sensorIdx += 1
+
+        if self.isGyroEnabled():
+            mpu6050[GYRO_X] = unpacked[sensorIdx] * self._gyroFactor
+            sensorIdx += 1
+            mpu6050[GYRO_Y] = unpacked[sensorIdx] * self._gyroFactor
+            sensorIdx += 1
+            mpu6050[GYRO_Z] = unpacked[sensorIdx] * self._gyroFactor
+            sensorIdx += 1
+
+        output = list(mpu6050.values())
+        self._sampleIdx += 1
+        # logger.debug("<< unpacked sample length %d into vals size %d", length, len(output))
+        return output
 
     def performSelfTest(self):
         """
@@ -512,6 +588,7 @@ class mpu6050(Accelerometer):
         dictionary: all underlying percentage deviations, +/-14% is a pass
         """
         try:
+            logger.debug(">> selfTest")
             # enable self test on all axes and set range to +/-250
             self.i2c_io.write(self.MPU6050_ADDRESS, self.MPU6050_RA_GYRO_CONFIG, 0b11100000)
             # enable self test on all axes and set range to +/-8g
@@ -554,67 +631,14 @@ class mpu6050(Accelerometer):
                 results['a' + axis] = 100.0 + 100.0 * (acceleration[axis] - factoryTrimAcceleration[axis]) / \
                                               factoryTrimAcceleration[axis]
                 results['g' + axis] = 100.0 + 100.0 * (gyro[axis] - factoryTrimGyro[axis]) / factoryTrimGyro[axis]
-            return all(abs(v) < 14 for v in results.values()), results
+
+            passed = all(abs(v) < 14 for v in results.values())
+            if passed:
+                logger.debug("self test passed")
+            else:
+                logger.error("SELF TEST FAILURE " + str(results))
+            return passed, results
         finally:
             self.setAccelerometerSensitivity(self.accelerometerSensitivity)
             self.setGyroSensitivity(self.gyroSensitivity)
-
-
-class Converter:
-    """
-    Converts raw data produced by the mpu6050 into real values.
-    """
-
-    def __init__(self,
-                 accelerationEnabled=True,
-                 gyroEnabled=False,
-                 tempEnabled=False,
-                 accelerationSensitivity=DEFAULT_ACCELEROMETER_SENSITIVITY,
-                 gyroSensitivity=DEFAULT_GYRO_SENSITIVITY,
-                 tempGain=DEFAULT_TEMPERATURE_GAIN,
-                 tempOffset=DEFAULT_TEMPERATURE_OFFSET):
-        self.accelerationEnabled = accelerationEnabled
-        self.gyroEnabled = gyroEnabled
-        self.tempEnabled = tempEnabled
-        self._gyroFactor = gyroSensitivity / SENSOR_SCALE_FACTOR
-        self._accelerationFactor = accelerationSensitivity / SENSOR_SCALE_FACTOR
-        self._tempGain = tempGain
-        self._tempOffset = tempOffset
-
-    def setGryoSensitivity(self, sensitivity):
-        self._gyroFactor = sensitivity / SENSOR_SCALE_FACTOR
-
-    def setAccelerometerSensitivity(self, sensitivity):
-        self._accelerationFactor = sensitivity / SENSOR_SCALE_FACTOR
-
-    def unpackSample(self, rawData):
-        """
-        unpacks a single sample of data (where sample length is based on the currently enabled sensors).
-        :param rawData: the data to convert
-        :return: a converted data set.
-        """
-        unpacked = struct.unpack(">" + ('h' * len(rawData)), memoryview(bytearray(rawData)).tobytes())
-        # store the data in a dictionary
-        mpu6050 = {}
-        idx = 0
-        if self.accelerationEnabled:
-            mpu6050[ACCEL_X] = unpacked[idx] * self._accelerationFactor
-            idx += 1
-            mpu6050[ACCEL_Y] = unpacked[idx] * self._accelerationFactor
-            idx += 1
-            mpu6050[ACCEL_Y] = unpacked[idx] * self._accelerationFactor
-            idx += 1
-
-        if self.tempEnabled:
-            mpu6050[TEMP] = unpacked[idx] * self._tempGain + self._tempOffset
-            idx += 1
-
-        if self.gyroEnabled:
-            mpu6050[GYRO_X] = unpacked[idx] * self._gyroFactor
-            idx += 1
-            mpu6050[GYRO_Y] = unpacked[idx] * self._gyroFactor
-            idx += 1
-            mpu6050[GYRO_Z] = unpacked[idx] * self._gyroFactor
-            idx += 1
-
-        return mpu6050
+            logger.debug("<< selfTest")

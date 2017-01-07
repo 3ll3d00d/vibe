@@ -1,12 +1,15 @@
 from collections import OrderedDict
 from os import environ, path
 
+import logging
 import yaml
 
-from recorder.handler import CSVLogger, AsyncPoster
-from recorder.i2c_io import WhiteNoiseProvider, mock_io
-from recorder.mpu6050 import mpu6050
-from recorder.smbus_io import smbus_io
+from handler import CSVLogger, AsyncPoster
+from i2c_io import WhiteNoiseProvider, mock_io
+from mpu6050 import mpu6050
+from smbus_io import smbus_io
+
+logger = logging.getLogger('recorder.config')
 
 
 class Config:
@@ -29,8 +32,9 @@ class Config:
             confHome = path.join(path.dirname(__file__), path.pardir, 'conf')
         if not path.exists(confHome):
             raise ValueError(confHome + " does not exist, exiting")
-        print("Using " + confHome + "as config dir")
-        with open(path.join(confHome, "recorder.yml"), 'r') as yml:
+        configPath = path.join(confHome, "recorder.yml")
+        logger.warning("Loading config from " + configPath)
+        with open(configPath, 'r') as yml:
             return yaml.load(yml)
 
     def createDevice(self, deviceCfg, handlers):
@@ -51,9 +55,12 @@ class Config:
                     dataProvider = WhiteNoiseProvider()
                 else:
                     raise ValueError(provider + " is not a supported mock io data provider")
+                logger.warning("Loading mock data provider")
                 io = mock_io(dataProvider=dataProvider.provide)
             elif ioCfg['type'] == 'smbus':
-                io = smbus_io(ioCfg['busId'])
+                busId = ioCfg['busId']
+                logger.warning("Loading smbus %d", busId)
+                io = smbus_io(busId)
             else:
                 raise ValueError(ioCfg['type'] + " is not a supported io provider")
 
@@ -70,7 +77,8 @@ class Config:
         :param: handlers the loaded handlers.
         :return: the constructed devices in a dict keyed by name.
         """
-        return {device.name: device for device in [self.createDevice(deviceCfg, handlers) for deviceCfg in self.config['accelerometers']]}
+        return {device.name: device for device in
+                [self.createDevice(deviceCfg, handlers) for deviceCfg in self.config['accelerometers']]}
 
     def loadMeasurements(self, devices):
         """
@@ -86,10 +94,13 @@ class Config:
         :param handler: the handler cfg.
         :return: the constructed handler.
         """
+        target = handler['target']
         if handler['type'] == 'log':
-            return CSVLogger(handler['name'], handler['target'])
+            logger.warning("Initialising csvlogger to log data to " + target)
+            return CSVLogger(handler['name'], target)
         elif handler['type'] == 'post':
-            return AsyncPoster(handler['name'], handler['target'])
+            logger.warning("Initialising http logger to log data to " + target)
+            return AsyncPoster(handler['name'], target)
 
     def loadHandlers(self):
         """

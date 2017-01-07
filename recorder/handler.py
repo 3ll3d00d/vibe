@@ -10,14 +10,29 @@ class DataHandler:
 
     @abc.abstractmethod
     def start(self, measurementName):
+        """
+        Initialises a handling session.
+        :param measurementName: the name of the measurement that is about to start.
+        :param converter: an optional converter to apply before the raw data is handled.
+        :return:
+        """
         pass
 
     @abc.abstractmethod
     def handle(self, rawData):
+        """
+        A callback for handling some raw data.
+        :param rawData:
+        :return:
+        """
         pass
 
     @abc.abstractmethod
     def stop(self):
+        """
+        Allows for cleanup on end of measurement.
+        :return:
+        """
         pass
 
 
@@ -47,24 +62,25 @@ class CSVLogger(DataHandler):
         self.started = False
         self._csv = None
         self._csvfile = None
+        self._converter = None
 
     def start(self, measurementName):
-        if os.path.exists(self.target):
+        targetPath = os.path.join(self.target, measurementName + ".out")
+        if os.path.exists(targetPath):
             mode = 'w'
         else:
             mode = 'x'
-        self._csvfile = open(self.target, mode=mode)
+        self._csvfile = open(targetPath, mode=mode)
         self._csv = csv.writer(self._csvfile)
         self.started = True
 
     def handle(self, data):
-        # TODO convert data
-        self._csv.writerow(data)
+        for datum in data:
+            self._csv.writerow(datum)
 
     def stop(self):
         if self._csvfile is not None:
             self._csvfile.close()
-        pass
 
 
 class AsyncPoster(DataHandler):

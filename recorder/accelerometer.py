@@ -4,9 +4,12 @@ import time
 import traceback
 from enum import Enum
 
-from recorder.handler import Discarder
+import logging
+
+from handler import Discarder
 
 # Output data dictionary keys
+SAMPLE_TIME = 'time'
 ACCEL_X = 'ac_x'
 ACCEL_Y = 'ac_y'
 ACCEL_Z = 'ac_z'
@@ -14,6 +17,8 @@ GYRO_X = 'gy_x'
 GYRO_Y = 'gy_y'
 GYRO_Z = 'gy_z'
 TEMP = 'temp'
+
+logger = logging.getLogger('recorder.accelerometer')
 
 
 class Status(Enum):
@@ -55,15 +60,17 @@ class Accelerometer(object):
         self.breakRead = False
         self.startTime = 0
         self.failureCode = None
+        self._sampleIdx = 0
 
     def doInit(self):
         try:
             self.initialiseDevice()
             self.status = Status.INITIALISED
+            logger.info("Initialisation complete")
         except:
             self.status = Status.FAILED
             self.failureCode = str(sys.exc_info())
-            traceback.print_exc()
+            logger.exception("Initialisation failure")
 
     def start(self, measurementName, durationInSeconds=None):
         """
@@ -71,30 +78,47 @@ class Accelerometer(object):
          handler. It will continue until either breakRead is true or the duration (if provided) has passed.
         :return:
         """
-        self.doInit()
+        logger.info(">> measurement " + measurementName +
+                    ((" for " + str(durationInSeconds)) if durationInSeconds is not None else " until break"))
         self.dataHandler.start(measurementName)
         self.breakRead = False
         self.status = Status.RECORDING
         self.startTime = time.time()
+        self.doInit()
+        elapsedTime = 0
         try:
+            self._sampleIdx = 0
             while True:
+                logger.debug(measurementName + " provideData ")
                 self.dataHandler.handle(self.provideData())
-                elapsedTime = durationInSeconds is not None and (time.time() - self.startTime) > durationInSeconds
-                if self.breakRead or elapsedTime:
+                elapsedTime = time.time() - self.startTime
+                if self.breakRead or durationInSeconds is not None and elapsedTime > durationInSeconds:
+                    logger.debug(measurementName + " breaking provideData")
                     self.startTime = 0
                     break
             self.status = Status.INITIALISED
         except:
             self.status = Status.FAILED
             self.failureCode = str(sys.exc_info())
+            logger.exception(measurementName + " failed")
         finally:
             self.dataHandler.stop()
+            if self._sampleIdx < (self.fs * (durationInSeconds if durationInSeconds is not None else elapsedTime)):
+                self.status = Status.FAILED
+                self.failureCode = "Insufficient samples " + str(self._sampleIdx) + " for " + \
+                                   str(elapsedTime) + " second long run"
+            self._sampleIdx = 0
+            if self.status == Status.FAILED:
+                logger.error("<< measurement " + measurementName + " - FAILED - " + self.failureCode)
+            else:
+                logger.info("<< measurement " + measurementName + " - " + self.status.name)
 
     def signalStop(self):
         """
         Signals the accelerometer to stop reading after the next read completes.
         :return:
         """
+        logger.info("Signalling stop")
         self.breakRead = True
 
     @abc.abstractmethod
