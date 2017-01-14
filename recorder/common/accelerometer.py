@@ -1,12 +1,10 @@
 import abc
+import logging
 import sys
 import time
-import traceback
 from enum import Enum
 
-import logging
-
-from handler import Discarder
+from core.handler import Discarder
 
 # Output data dictionary keys
 SAMPLE_TIME = 'time'
@@ -96,13 +94,12 @@ class Accelerometer(object):
                     logger.debug(measurementName + " breaking provideData")
                     self.startTime = 0
                     break
-            self.status = Status.INITIALISED
         except:
             self.status = Status.FAILED
             self.failureCode = str(sys.exc_info())
             logger.exception(measurementName + " failed")
         finally:
-            self.dataHandler.stop()
+            self.dataHandler.stop(measurementName)
             if self._sampleIdx < (self.fs * (durationInSeconds if durationInSeconds is not None else elapsedTime)):
                 self.status = Status.FAILED
                 self.failureCode = "Insufficient samples " + str(self._sampleIdx) + " for " + \
@@ -111,6 +108,7 @@ class Accelerometer(object):
             if self.status == Status.FAILED:
                 logger.error("<< measurement " + measurementName + " - FAILED - " + self.failureCode)
             else:
+                self.status = Status.INITIALISED
                 logger.info("<< measurement " + measurementName + " - " + self.status.name)
 
     def signalStop(self):
@@ -125,7 +123,8 @@ class Accelerometer(object):
     def provideData(self):
         """
         reads the underlying device to provide a batch of raw data.
-        :return: a list of byte arrays.
+        :return: a list of data where each item is a single sample of data converted into real values and stored as a
+        dict.
         """
         pass
 

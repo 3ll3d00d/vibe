@@ -91,5 +91,8 @@ ENV/
 # recorder specific
 external
 .idea
-eot.wav
-fcntl.py
+test/data/*
+recorder/fcntl.py
+*.out
+*.csv
+*.xlsx

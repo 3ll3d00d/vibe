@@ -1,14 +1,19 @@
 import unittest
 from random import randint
 
-from recorder.i2c_io import mock_io
 from recorder.mpu6050 import mpu6050
+
+from common.i2c_io import mock_io
 
 
 class MPU6050TestCase(unittest.TestCase):
     def test_defaultState(self):
-        mpu = mpu6050(mock_io())
-        self.assertTrue(mpu.isAccelerationEnabled())
+        def provider(register, length=None):
+            if register is mpu6050.MPU6050_RA_INT_STATUS:
+                return 0x01
+
+        mpu = mpu6050(mock_io(dataProvider=provider))
+        self.assertTrue(mpu.isAccelerometerEnabled())
         self.assertFalse(mpu.isTemperatureEnabled())
         self.assertFalse(mpu.isGyroEnabled())
         self.assertEquals(mpu.fs, 500)
@@ -16,13 +21,13 @@ class MPU6050TestCase(unittest.TestCase):
 
     def test_canToggleAccelerometer(self):
         mpu = mpu6050(mock_io())
-        self.assertTrue(mpu.isAccelerationEnabled())
-        mpu.disableAcceleration()
-        self.assertFalse(mpu.isAccelerationEnabled())
-        mpu.enableAcceleration()
-        self.assertTrue(mpu.isAccelerationEnabled())
-        mpu.disableAcceleration()
-        self.assertFalse(mpu.isAccelerationEnabled())
+        self.assertTrue(mpu.isAccelerometerEnabled())
+        mpu.disableAccelerometer()
+        self.assertFalse(mpu.isAccelerometerEnabled())
+        mpu.enableAccelerometer()
+        self.assertTrue(mpu.isAccelerometerEnabled())
+        mpu.disableAccelerometer()
+        self.assertFalse(mpu.isAccelerometerEnabled())
 
     def test_canToggleGyro(self):
         mpu = mpu6050(mock_io())
@@ -59,7 +64,7 @@ class MPU6050TestCase(unittest.TestCase):
         # +gyro+temperature+acceleration
         self.assertEqual(mpu.getPacketSize(), 14)
         self.assertEqual(mpu.fifoSensorMask, 0b11111000)
-        mpu.disableAcceleration()
+        mpu.disableAccelerometer()
         # +gyro+temperature-acceleration
         self.assertEqual(mpu.getPacketSize(), 8)
         self.assertEqual(mpu.fifoSensorMask, 0b11110000)
@@ -76,7 +81,7 @@ class MPU6050TestCase(unittest.TestCase):
         self.assertEqual(mpu.getPacketSize(), 6)
         self.assertEqual(mpu.fifoSensorMask, 0b01110000)
         mpu.disableGyro()
-        mpu.enableAcceleration()
+        mpu.enableAccelerometer()
         mpu.enableTemperature()
         # -gyro+temperature+acceleration
         self.assertEqual(mpu.getPacketSize(), 8)
@@ -171,6 +176,7 @@ class MPU6050TestCase(unittest.TestCase):
         self.assertIsNotNone(output)
         self.assertEqual(len(output), 125)
         self.assertTrue(all(len(i) == len(output[0]) for i in output))
+        # TODO convert to real values including time
         self.assertTrue(all(i == [0b0000, 0b0001, 0b0010, 0b0011, 0b0100, 0b0101] for i in output))
         self.assertEqual(fifoCounter, 1)
         self.assertEqual(fifoReader, 25)
