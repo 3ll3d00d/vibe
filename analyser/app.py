@@ -2,28 +2,30 @@ from flask import Flask
 from flask_restful import Api
 
 from analyser.common.config import Config
+from analyser.common.devicecontroller import DeviceController
+from analyser.common.measurementcontroller import MeasurementController
+from analyser.common.targetstatecontroller import TargetStateProvider, TargetStateController
 from analyser.resources.analyse import Analyse
+from analyser.resources.measurement import InitialiseMeasurement, RecordData, CompleteMeasurement, Measurement, \
+    FailMeasurement
 from analyser.resources.measurementdevices import MeasurementDevices, MeasurementDevice
-from analyser.resources.measurements import Measurements, InitialiseMeasurement, RecordData, CompleteMeasurement, \
-    Measurement, ReloadMeasurement
+from analyser.resources.measurements import Measurements, ReloadMeasurement
 from core.reactor import Reactor
 
 app = Flask(__name__)
 api = Api(app)
 cfg = Config()
-cachedDevices = {}
-deviceHandlers = {}
+reactor = Reactor(name='analyser')
+targetStateProvider = TargetStateProvider(cfg.targetState)
+targetStateController = TargetStateController(targetStateProvider, reactor)
+deviceController = DeviceController(targetStateController, cfg.dataDir)
+measurementController = MeasurementController(targetStateProvider, cfg.dataDir, deviceController)
 resourceArgs = {
-    'measurementDevices': cachedDevices,
-    'deviceHandlers': deviceHandlers,
-    '_targetState': cfg.targetState,
-    'measurementDir': cfg.measurementDir,
-    'reactor': Reactor(),
-    'measurements': {}
+    'deviceController': deviceController,
+    'targetStateProvider': targetStateProvider,
+    'targetStateController': targetStateController,
+    'measurementController': measurementController,
 }
-# TODO create a timer that expires measurementDevices if x seconds have elapsed since they last put
-# TODO delete failed measurements
-# TODO recorder needs to tell analyser if something fails
 
 # GET: the state of currently available measurementDevices
 # PATCH: mutate specific aspects of device configuration, delegates to the underlying measurementDevices
@@ -49,6 +51,9 @@ api.add_resource(InitialiseMeasurement, '/measurements/<measurementName>/<device
 api.add_resource(RecordData, '/measurements/<measurementName>/<deviceName>/data', resource_class_kwargs=resourceArgs)
 # PUT: mark the measurement as complete
 api.add_resource(CompleteMeasurement, '/measurements/<measurementName>/<deviceName>/complete',
+                 resource_class_kwargs=resourceArgs)
+# PUT: mark the measurement as failed
+api.add_resource(FailMeasurement, '/measurements/<measurementName>/<deviceName>/failed',
                  resource_class_kwargs=resourceArgs)
 
 # PUT: analyse the measurement

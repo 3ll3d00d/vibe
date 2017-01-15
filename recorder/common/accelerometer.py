@@ -2,11 +2,10 @@ import abc
 import logging
 import sys
 import time
-from enum import Enum
 
 from core.handler import Discarder
+from core.interface import RecordingDeviceStatus
 
-# Output data dictionary keys
 SAMPLE_TIME = 'time'
 ACCEL_X = 'ac_x'
 ACCEL_Y = 'ac_y'
@@ -17,15 +16,6 @@ GYRO_Z = 'gy_z'
 TEMP = 'temp'
 
 logger = logging.getLogger('recorder.accelerometer')
-
-
-class Status(Enum):
-    """
-    the status of the accelerometer.
-    """
-    INITIALISED = 1
-    RECORDING = 2
-    FAILED = 3
 
 
 class Accelerometer(object):
@@ -59,14 +49,15 @@ class Accelerometer(object):
         self.startTime = 0
         self.failureCode = None
         self._sampleIdx = 0
+        self.status = RecordingDeviceStatus.NEW
 
     def doInit(self):
         try:
             self.initialiseDevice()
-            self.status = Status.INITIALISED
+            self.status = RecordingDeviceStatus.INITIALISED
             logger.info("Initialisation complete")
         except:
-            self.status = Status.FAILED
+            self.status = RecordingDeviceStatus.FAILED
             self.failureCode = str(sys.exc_info())
             logger.exception("Initialisation failure")
 
@@ -80,9 +71,10 @@ class Accelerometer(object):
                     ((" for " + str(durationInSeconds)) if durationInSeconds is not None else " until break"))
         self.dataHandler.start(measurementName)
         self.breakRead = False
-        self.status = Status.RECORDING
         self.startTime = time.time()
         self.doInit()
+        # this must follow doInit because doInit sets status to INITIALISED
+        self.status = RecordingDeviceStatus.RECORDING
         elapsedTime = 0
         try:
             self._sampleIdx = 0
@@ -95,20 +87,21 @@ class Accelerometer(object):
                     self.startTime = 0
                     break
         except:
-            self.status = Status.FAILED
+            self.status = RecordingDeviceStatus.FAILED
             self.failureCode = str(sys.exc_info())
             logger.exception(measurementName + " failed")
         finally:
             self.dataHandler.stop(measurementName)
-            if self._sampleIdx < (self.fs * (durationInSeconds if durationInSeconds is not None else elapsedTime)):
-                self.status = Status.FAILED
+            expectedSamples = self.fs * (durationInSeconds if durationInSeconds is not None else elapsedTime)
+            if self._sampleIdx < expectedSamples:
+                self.status = RecordingDeviceStatus.FAILED
                 self.failureCode = "Insufficient samples " + str(self._sampleIdx) + " for " + \
-                                   str(elapsedTime) + " second long run"
+                                   str(elapsedTime) + " second long run, expected " + str(expectedSamples)
             self._sampleIdx = 0
-            if self.status == Status.FAILED:
+            if self.status == RecordingDeviceStatus.FAILED:
                 logger.error("<< measurement " + measurementName + " - FAILED - " + self.failureCode)
             else:
-                self.status = Status.INITIALISED
+                self.status = RecordingDeviceStatus.INITIALISED
                 logger.info("<< measurement " + measurementName + " - " + self.status.name)
 
     def signalStop(self):

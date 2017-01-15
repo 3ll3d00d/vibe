@@ -1,12 +1,12 @@
+import logging
 import threading
 from datetime import datetime
 from enum import Enum
 
-import logging
 from flask import request
 from flask_restful import Resource, marshal_with, fields
 
-from core.interface import DATETIME_FORMAT
+from core.interface import DATETIME_FORMAT, RecordingDeviceStatus
 
 scheduledMeasurementFields = {
     'name': fields.String,
@@ -15,6 +15,7 @@ scheduledMeasurementFields = {
 }
 
 logger = logging.getLogger('recorder.measurements')
+
 
 class Measurements(Resource):
     def __init__(self, **kwargs):
@@ -59,7 +60,7 @@ class Measurement(Resource):
         if record is not None:
             measurement = record.get(measurementName)
             if measurement is None:
-                logger.info('Initiating measurement ' + measurementName )
+                logger.info('Initiating measurement ' + measurementName)
                 measurement = ScheduledMeasurement(measurementName, self.recordingDevices.get(deviceId))
                 body = request.get_json()
                 duration_ = body['duration']
@@ -116,6 +117,7 @@ class ScheduledMeasurementStatus(Enum):
     SCHEDULED = 1
     RUNNING = 2
     COMPLETE = 3
+    FAILED = 4
 
 
 class ScheduledMeasurement:
@@ -159,7 +161,12 @@ class ScheduledMeasurement:
             self.device.start(self.name, durationInSeconds=duration)
         finally:
             self.recording = False
-        self.statuses.append({'name': ScheduledMeasurementStatus.COMPLETE.name, 'time': datetime.now()})
+        if self.device.status == RecordingDeviceStatus.FAILED:
+            self.statuses.append({'name': ScheduledMeasurementStatus.FAILED.name,
+                                  'time': datetime.now(),
+                                  'reason': self.device.failureCode})
+        else:
+            self.statuses.append({'name': ScheduledMeasurementStatus.COMPLETE.name, 'time': datetime.now()})
 
     def calculateDelay(self, at, delay):
         """

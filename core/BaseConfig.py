@@ -1,8 +1,8 @@
+import logging
 from logging import handlers
 from os import environ
 from os import path
 
-import logging
 import yaml
 
 
@@ -51,15 +51,22 @@ class BaseConfig(object):
         loads configuration from some predictable locations.
         :return: the config.
         """
-        confHome = environ.get('VIBE_CONFIG_HOME')
-        if confHome is None:
-            confHome = path.join(path.dirname(__file__), path.pardir, self._name)
-        if not path.exists(confHome):
-            raise ValueError(confHome + " does not exist, exiting")
-        configPath = path.join(confHome, self._name + ".yml")
+        configPath = path.join(self._getConfigPath(), self._name + ".yml")
         self.logger.warning("Loading config from " + configPath)
         with open(configPath, 'r') as yml:
             return yaml.load(yml)
+
+    def _getConfigPath(self):
+        """
+        Gets the currently configured config path.
+        :return: the path, raises ValueError if it doesn't exist.
+        """
+        confHome = environ.get('VIBE_CONFIG_HOME')
+        if confHome is None:
+            confHome = path.join(path.expanduser("~"), '.vibe')
+        if not path.exists(confHome):
+            raise ValueError(confHome + " does not exist, exiting")
+        return confHome
 
     def configureLogger(self):
         """
@@ -71,7 +78,8 @@ class BaseConfig(object):
         logger = logging.getLogger(self._name)
         logger.setLevel(baseLogLevel)
         # file handler
-        fh = handlers.RotatingFileHandler(self._name + '.log', maxBytes=10 * 1024 * 1024, backupCount=10)
+        fh = handlers.RotatingFileHandler(path.join(self._getConfigPath(), self._name + '.log'),
+                                          maxBytes=10 * 1024 * 1024, backupCount=10)
         fh.setLevel(baseLogLevel)
         # create console handler with a higher log level
         ch = logging.StreamHandler()

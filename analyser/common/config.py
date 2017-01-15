@@ -1,12 +1,13 @@
-from analyser.resources.measurementdevices import TargetStateContainer
+import os
+
 from core.BaseConfig import BaseConfig
 
 
 class Config(BaseConfig):
     def __init__(self):
         super().__init__('analyser')
-        self.targetState = TargetStateContainer(loadTargetState(self.config.get('_targetState')))
-        self.measurementDir = self.config.get('measurementDir')
+        self.targetState = loadTargetState(self.config.get('targetStateProvider'))
+        self.dataDir = self.config.get('dataDir', os.path.join(self._getConfigPath(), 'data'))
 
 
 def loadTargetState(targetStateConfig, existingTargetState=None):
@@ -16,9 +17,9 @@ def loadTargetState(targetStateConfig, existingTargetState=None):
     :param existingTargetState: the existing state
     :return:
     """
-    from analyser.resources.measurementdevices import TargetState
+    from analyser.common.targetstatecontroller import TargetState
     targetState = TargetState() if existingTargetState is None else existingTargetState
-    # TODO validate
+    # FIXFIX validate
     if targetStateConfig is not None:
         val = targetStateConfig.get('fs')
         if val is not None:
