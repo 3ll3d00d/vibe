@@ -252,8 +252,6 @@ class mpu6050(Accelerometer):
         super().__init__(fs, samplesPerBatch, dataHandler)
         self.name = 'mpu6050'
         self.fifoSensorMask = self.enableAccelerometerMask
-        # used for rendering to json
-        # TODO convert to @property
         self._accelEnabled = True
         self._gyroEnabled = False
         self._setSampleSizeBytes()
@@ -501,18 +499,23 @@ class mpu6050(Accelerometer):
         """
         samples = []
         fifoBytesAvailable = 0
+        fifoWasReset = False
         logger.debug(">> provideData target %d samples", self.samplesPerBatch)
         while len(samples) < self.samplesPerBatch:
-            if fifoBytesAvailable < self.sampleSizeBytes:
+            if fifoBytesAvailable < self.sampleSizeBytes or fifoWasReset:
                 interrupt = self.getInterruptStatus()
                 fifoBytesAvailable = self.getFifoCount()
+                fifoWasReset = False
             logger.debug("Start sample loop [available: %d , required: %d]", fifoBytesAvailable, self.sampleSizeBytes)
-            # if (interrupt & 0x10) or (fifoBytesAvailable == 1024):
-            #     logger.error("FIFO OVERFLOW, RESETTING [available: %d , interrupt: %d]", fifoBytesAvailable, interrupt)
-            #     self.resetFifo()
-                # TODO raise error
-            # elif interrupt & 0x02 or interrupt & 0x01:
-            if interrupt & 0x02 or interrupt & 0x01:
+            if interrupt & 0x10:
+                logger.error("FIFO OVERFLOW, RESETTING [available: %d , interrupt: %d]", fifoBytesAvailable, interrupt)
+                self.resetFifo()
+                fifoWasReset = True
+            elif fifoBytesAvailable == 1024:
+                logger.error("FIFO FULL, RESETTING [available: %d , interrupt: %d]", fifoBytesAvailable, interrupt)
+                self.resetFifo()
+                fifoWasReset = True
+            elif interrupt & 0x02 or interrupt & 0x01:
                 # wait for at least 1 sample to arrive, should be a VERY short wait
                 while fifoBytesAvailable < self.sampleSizeBytes:
                     logger.debug("Waiting for sample [available: %d , required: %d]", fifoBytesAvailable,
@@ -557,7 +560,7 @@ class mpu6050(Accelerometer):
         length = len(rawData)
         # TODO error if not multiple of 2
         # logger.debug(">> unpacking sample %d length %d", self._sampleIdx, length)
-        unpacked = struct.unpack(">" + ('h' * (length//2)), memoryview(bytearray(rawData)).tobytes())
+        unpacked = struct.unpack(">" + ('h' * (length // 2)), memoryview(bytearray(rawData)).tobytes())
         # store the data in a dictionary
         mpu6050 = collections.OrderedDict()
         mpu6050[SAMPLE_TIME] = self._sampleIdx / self.fs

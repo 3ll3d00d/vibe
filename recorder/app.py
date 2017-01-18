@@ -1,6 +1,6 @@
+import copy
 import logging.handlers
 
-import copy
 import requests
 from flask import Flask
 from flask_restful import Api, marshal
@@ -56,9 +56,9 @@ def pingAnalyser(serverURL, cfg):
             resp = requests.put(targetURL, json=data)
             if resp.status_code != 200:
                 logger.warning("Unable to ping server at " + targetURL + " with " + str(data.keys()) +
-                                ", response is " + str(resp.status_code))
+                               ", response is " + str(resp.status_code))
             else:
-                logger.debug("Pinged server at " + targetURL + " with " + str(data.items()))
+                logger.info("Pinged server at " + targetURL + " with " + str(data.items()))
         except:
             logger.exception("Unable to ping server")
     tilNextTime = max(nextRun - datetime.now().timestamp(), 0)

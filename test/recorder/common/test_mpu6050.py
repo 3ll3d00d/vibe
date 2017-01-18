@@ -1,9 +1,8 @@
 import unittest
 from random import randint
 
-from recorder.mpu6050 import mpu6050
-
 from common.i2c_io import mock_io
+from recorder.mpu6050 import mpu6050
 
 
 class MPU6050TestCase(unittest.TestCase):
@@ -197,7 +196,7 @@ class MPU6050TestCase(unittest.TestCase):
                 fifoReader += 1
                 self.assertIsNotNone(length)
                 self.assertIn(length, [6, 12])
-                return [0b0000, 0b0001, 0b0010, 0b0011, 0b0100, 0b0101] * (length//6)
+                return [0b0000, 0b0001, 0b0010, 0b0011, 0b0100, 0b0101] * (length // 6)
 
         io = mock_io(dataProvider=provider)
         mpu = mpu6050(io)
@@ -250,14 +249,14 @@ class MPU6050TestCase(unittest.TestCase):
             elif register is mpu6050.MPU6050_RA_FIFO_COUNTH:
                 nonlocal fifoCounter
                 fifoCounter += 1
-                to_bytes = (randint(1, 50)*6).to_bytes(2, 'big')
+                to_bytes = (randint(1, 50) * 6).to_bytes(2, 'big')
                 return to_bytes
             elif register is mpu6050.MPU6050_RA_FIFO_R_W:
                 nonlocal fifoReader
                 fifoReader += 1
                 self.assertIsNotNone(length)
                 self.assertIn(length, [6, 12, 18, 24, 30])
-                return [0b0000, 0b0001, 0b0010, 0b0011, 0b0100, 0b0101] * (length//6)
+                return [0b0000, 0b0001, 0b0010, 0b0011, 0b0100, 0b0101] * (length // 6)
 
         io = mock_io(dataProvider=provider)
         mpu = mpu6050(io)

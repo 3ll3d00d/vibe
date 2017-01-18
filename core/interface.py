@@ -1,4 +1,30 @@
+from enum import Enum
+
 from flask_restful import fields
+from flask_restful.fields import Raw, MarshallingException
+
+
+class RecordingDeviceStatus(Enum):
+    """
+    the status of the recording device.
+    """
+    NEW = 0
+    INITIALISED = 1
+    RECORDING = 2
+    FAILED = 3
+
+
+class EnumField(Raw):
+    """
+    Marshal an enum as a string
+    """
+
+    def format(self, value):
+        try:
+            return value.name
+        except ValueError as ve:
+            raise MarshallingException(ve)
+
 
 """
 Formats a TargetState to JSON
@@ -27,7 +53,7 @@ recordingDeviceFields = {
     'gyroEnabled': fields.Boolean(attribute='_gyroEnabled'),
     'gyroSens': fields.Integer(attribute='gyroSensitivity'),
     # device status fields
-    'status': fields.String(attribute=lambda x: x.status.name),
+    'status': EnumField,
     'failureCode': fields.String
 }
 

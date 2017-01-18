@@ -22,9 +22,9 @@ class Config(BaseConfig):
 
     def getPingInterval(self):
         """
-        :return: the server ping interval if set, defaults to 10s.
+        :return: the server ping interval if set, defaults to 5s.
         """
-        return self.config.get('pingInterval', 10)
+        return self.config.get('pingInterval', 5)
 
     def createDevice(self, deviceCfg):
         """

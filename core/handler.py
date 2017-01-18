@@ -1,10 +1,10 @@
 import abc
 import csv
+import logging
 import os
 import threading
 from queue import Queue, Empty
 
-import logging
 import requests
 from flask import json
 
@@ -34,10 +34,11 @@ class DataHandler:
         pass
 
     @abc.abstractmethod
-    def stop(self, measurementName):
+    def stop(self, measurementName, failureReason=None):
         """
         Allows for cleanup on end of measurement.
         :param measurementName the measurement that is stopping.
+        :param failureReason the reason it failed if any, if None then it completed ok.
         :return:
         """
         pass
@@ -54,7 +55,7 @@ class Discarder(DataHandler):
     def handle(self, data):
         pass
 
-    def stop(self, measurementName):
+    def stop(self, measurementName, failureReason=None):
         pass
 
 
@@ -103,7 +104,7 @@ class CSVLogger(DataHandler):
             else:
                 self.logger.warning("Ignoring unsupported data type " + str(type(datum)) + " : " + str(datum))
 
-    def stop(self, measurementName):
+    def stop(self, measurementName, failureReason=None):
         if self._csvfile is not None:
             self._csvfile.close()
 
@@ -120,6 +121,7 @@ class AsyncHandler(DataHandler):
         self.queue = Queue()
         self.worker = None
         self.working = False
+        self.stopping = False
 
     def start(self, measurementName):
         self.delegate.start(measurementName)
@@ -131,15 +133,17 @@ class AsyncHandler(DataHandler):
     def handle(self, data):
         self.queue.put(data)
 
-    def stop(self, measurementName):
+    def stop(self, measurementName, failureReason=None):
         # TODO do we need to link this stop to the status of the accelerometer
         self.logger.info('Stopping async handler for ' + measurementName)
+        self.stopping = True
         self.queue.join()
-        self.delegate.stop(measurementName)
+        self.delegate.stop(measurementName, failureReason=failureReason)
         self.logger.info('Stopped async handler for ' + measurementName)
         self.working = False
 
     def asyncHandle(self):
+        remaining = -1
         while self.working:
             try:
                 self.logger.debug('async handle')
@@ -149,6 +153,11 @@ class AsyncHandler(DataHandler):
                     self.queue.task_done()
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug('async queue has ' + str(self.queue.qsize()) + ' items')
+                    elif self.stopping:
+                        if remaining == -1:
+                            remaining = self.queue.qsize()
+                        self.logger.info('Closing down asynchandler, ' + str(remaining) + ' items remaining')
+                        remaining -= 1
             except Empty:
                 self.logger.debug('async handle EMPTY')
 
@@ -188,12 +197,15 @@ class HttpPoster(DataHandler):
         """
         self.dataResponseCode.append(self._doPut(self.sendURL + '/data', data=data))
 
-    def stop(self, measurementName):
+    def stop(self, measurementName, failureReason=None):
         """
         informs the target the named measurement has completed
         :param measurementName: the measurement that has completed.
         :return:
         """
-        self.endResponseCode = self._doPut(self.sendURL + "/complete")
+        if failureReason is None:
+            self.endResponseCode = self._doPut(self.sendURL + "/complete")
+        else:
+            self.endResponseCode = self._doPut(self.sendURL + "/failed", data={'failureReason': failureReason})
         self.sendURL = None
         # TODO verify that the response codes are all ok

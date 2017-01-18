@@ -3,8 +3,8 @@ import logging
 from flask import request
 from flask_restful import Resource, marshal_with
 
-from core.interface import recordingDeviceFields
-from ..common.accelerometer import Status
+from core.interface import recordingDeviceFields, RecordingDeviceStatus
+from ..common.accelerometer import RecordingDeviceStatus
 
 logger = logging.getLogger('recorder.recordingDevices')
 
@@ -47,7 +47,7 @@ class RecordingDevice(Resource):
         """
         errors = []
         device = self.recordingDevices.get(deviceId)
-        if device.status == Status.INITIALISED:
+        if device.status == RecordingDeviceStatus.INITIALISED:
             body = request.get_json()
 
             newFs = body.get('fs')
