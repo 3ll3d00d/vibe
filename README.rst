@@ -1,10 +1,16 @@
 # Vibe
 
 .. image:: https://travis-ci.org/3ll3d00d/vibe.svg?branch=master
-    :target: https://travis-ci.org/3ll3d00d/vibe
+   :target: https://travis-ci.org/3ll3d00d/vibe
+   :alt: Continuous Integration
 
 .. image:: https://codecov.io/gh/3ll3d00d/vibe/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/3ll3d00d/vibe
+   :target: https://codecov.io/gh/3ll3d00d/vibe
+   :alt: Code Coverage
+
+.. image:: https://landscape.io/github/3ll3d00d/vibe/master/landscape.svg?style=flat
+   :target: https://landscape.io/github/3ll3d00d/vibe/master
+   :alt: Code Health
 
 An vibration analysis measurement suite with a web ui.
 

@@ -30,6 +30,6 @@ install:
   - source activate test
   - pip install -q -U codecov smbus2 unittest-data-provider flask flask-restful pyyaml requests
   - python setup.py install
-script: PYTHONPATH=. pytest
+script: PYTHONPATH=. pytest --cov=./
 after_success:
   - bash <(curl -s https://codecov.io/bash)
