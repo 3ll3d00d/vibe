@@ -1,0 +1,15 @@
+language: python
+python:
+  - "3.4"
+  - "3.5"
+  - "3.6"
+addons:
+  apt:
+    packages:
+    - libblas-dev
+    - liblapack-dev
+    - gfortran
+install: pip install -r requirements.txt
+script: PYTHONPATH=. pytest
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

@@ -1,10 +1,9 @@
 import os
 import shutil
 import tempfile
-import unittest
-import unittest.mock as mock
+from unittest import mock
 
-from common.handler import AsyncHandler, DataHandler, HttpPoster, CSVLogger
+from core.handler import DataHandler, AsyncHandler, HttpPoster, CSVLogger
 
 
 class MyHandler(DataHandler):
@@ -19,85 +18,87 @@ class MyHandler(DataHandler):
     def handle(self, data):
         self.events.append(data)
 
-    def stop(self, measurementName):
+    def stop(self, measurementName, failureReason=None):
         self.endName = measurementName
+        self.failureReason = failureReason
 
 
-class HandlerTestCase(unittest.TestCase):
-    def test_asyncHandlesAllEvents(self):
-        logger = MyHandler()
-        asyncHandler = AsyncHandler(logger)
-        self.doMeasurementLoop(asyncHandler)
-        self.assertEqual(logger.startName, "starttest")
-        self.assertEqual(len(logger.events), 100)
+def test_asyncHandlesAllEvents():
+    logger = MyHandler()
+    asyncHandler = AsyncHandler('test', logger)
+    doMeasurementLoop(asyncHandler)
+    assert logger.startName == "starttest"
+    assert len(logger.events) == 100
+    for i in range(0, 100):
+        assert logger.events[i] == makeEvent(i)
+    assert logger.endName == "endtest"
+
+def doMeasurementLoop(handler):
+    handler.start("starttest")
+    for i in range(0, 100):
+        handler.handle(makeEvent(i))
+    handler.stop("endtest")
+
+def test_httpSendsAllEvents():
+    target = "http://localhost:8080/"
+    http = HttpPoster("mpu6050", target)
+    http.deviceName = 'mpu6050'
+    with mock.patch.object(http, '_doPut') as monkey:
+        doMeasurementLoop(http)
+        calls = [mock.call("http://localhost:8080/measurements/starttest/mpu6050", )]
         for i in range(0, 100):
-            self.assertEqual(logger.events[i], self.makeEvent(i))
-        self.assertEqual(logger.endName, "endtest")
+            calls.append(
+                mock.call("http://localhost:8080/measurements/starttest/mpu6050/data", data=makeEvent(i)))
+        calls.append(mock.call("http://localhost:8080/measurements/starttest/mpu6050/complete", ))
+        monkey.assert_has_calls(calls)
 
-    def doMeasurementLoop(self, handler):
-        handler.start("starttest")
+def test_httpSendsAllEventsWhenAsync():
+    target = "http://localhost:8080/"
+    http = HttpPoster("mpu6050", target)
+    http.deviceName = 'mpu6050'
+    asyncHandler = AsyncHandler('test', http)
+    with mock.patch.object(http, '_doPut') as monkey:
+        doMeasurementLoop(asyncHandler)
+        calls = [mock.call("http://localhost:8080/measurements/starttest/mpu6050", )]
         for i in range(0, 100):
-            handler.handle(self.makeEvent(i))
-        handler.stop("endtest")
+            calls.append(
+                mock.call("http://localhost:8080/measurements/starttest/mpu6050/data", data=makeEvent(i)))
+        calls.append(mock.call("http://localhost:8080/measurements/starttest/mpu6050/complete", ))
+        monkey.assert_has_calls(calls)
 
-    def test_httpSendsAllEvents(self):
-        target = "http://localhost:8080/"
-        http = HttpPoster(target, "mpu6050")
-        with mock.patch.object(http, '_doPut') as monkey:
-            self.doMeasurementLoop(http)
-            calls = [mock.call("http://localhost:8080/measurements/starttest/mpu6050", )]
-            for i in range(0, 100):
-                calls.append(
-                    mock.call("http://localhost:8080/measurements/starttest/mpu6050/data", data=self.makeEvent(i)))
-            calls.append(mock.call("http://localhost:8080/measurements/starttest/mpu6050/complete", ))
-            monkey.assert_has_calls(calls)
+def makeEvent(i):
+    import collections
+    dict = collections.OrderedDict()
+    dict["d"] = "d" + str(i)
+    dict["b"] = "b" + str(i)
+    return [dict]
 
-    def test_httpSendsAllEventsWhenAsync(self):
-        target = "http://localhost:8080/"
-        http = HttpPoster(target, "mpu6050")
-        asyncHandler = AsyncHandler(http)
-        with mock.patch.object(http, '_doPut') as monkey:
-            self.doMeasurementLoop(asyncHandler)
-            calls = [mock.call("http://localhost:8080/measurements/starttest/mpu6050", )]
-            for i in range(0, 100):
-                calls.append(
-                    mock.call("http://localhost:8080/measurements/starttest/mpu6050/data", data=self.makeEvent(i)))
-            calls.append(mock.call("http://localhost:8080/measurements/starttest/mpu6050/complete", ))
-            monkey.assert_has_calls(calls)
+def test_csvWritesEachRowToFile():
+    outputDir = setupCsv()
+    logger = CSVLogger('owner', "csv", outputDir)
+    doMeasurementLoop(logger)
+    verifyCsv()
 
-    def makeEvent(self, i):
-        import collections
-        dict = collections.OrderedDict()
-        dict["d"] = "d" + str(i)
-        dict["b"] = "b" + str(i)
-        return [dict]
+def test_csvWritesEachRowToFileWhenAsync():
+    outputDir = setupCsv()
+    logger = CSVLogger('owner', "csv", outputDir)
+    asyncHandler = AsyncHandler('test', logger)
+    doMeasurementLoop(asyncHandler)
+    verifyCsv()
 
-    def test_csvWritesEachRowToFile(self):
-        outputDir = self.setupCsv()
-        logger = CSVLogger('owner', "csv", outputDir)
-        self.doMeasurementLoop(logger)
-        self.verifyCsv()
+def setupCsv():
+    outputDir = os.path.join(tempfile.gettempdir(), "test")
+    if os.path.exists(outputDir):
+        shutil.rmtree(outputDir)
+    os.makedirs(outputDir)
+    return outputDir
 
-    def test_csvWritesEachRowToFileWhenAsync(self):
-        outputDir = self.setupCsv()
-        logger = CSVLogger('owner', "csv", outputDir)
-        asyncHandler = AsyncHandler(logger)
-        self.doMeasurementLoop(asyncHandler)
-        self.verifyCsv()
-
-    def setupCsv(self):
-        outputDir = os.path.join(tempfile.gettempdir(), "test")
-        if os.path.exists(outputDir):
-            shutil.rmtree(outputDir)
-        os.makedirs(outputDir)
-        return outputDir
-
-    def verifyCsv(self):
-        outputFile = os.path.join(tempfile.gettempdir(), "test", "starttest.out")
-        self.assertTrue(os.path.exists(outputFile))
-        with open(outputFile) as f:
-            lines = f.read().splitlines()
-        self.assertEqual(len(lines), 101)
-        self.assertEqual(lines[0], "d,b")
-        for i in range(0, 100):
-            self.assertEqual(lines[i + 1], "d" + str(i) + ",b" + str(i))
+def verifyCsv():
+    outputFile = os.path.join(tempfile.gettempdir(), "test", "starttest", 'csv', 'data.out')
+    assert os.path.exists(outputFile)
+    with open(outputFile) as f:
+        lines = f.read().splitlines()
+    assert len(lines) == 101
+    assert lines[0] == "d,b"
+    for i in range(0, 100):
+        assert lines[i + 1] == "d" + str(i) + ",b" + str(i)
