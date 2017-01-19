@@ -51,7 +51,6 @@ class HandlerTestCase(object):
         self.doGraphs(measurementPath, 'mpu', 1000)
 
     def doGraphs(self, measurementPath, prefix, start=None):
-        import matplotlib.pyplot as plt
         fc = 1
         plt.figure(1)
 
