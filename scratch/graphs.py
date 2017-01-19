@@ -1,14 +1,14 @@
 import os
-import unittest
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import mlab
 
 from analyser.common import signal as ms
 
 
-class HandlerTestCase(unittest.TestCase):
-    def test_showSpectrum(self):
+class HandlerTestCase(object):
+    def showSpectrum(self):
         # measurementPath = 'C:\\Users\\\Matt\\OneDrive\\Documents\\eot\\Edge of Tomorrow - Opening.wav'
         measurementPath = os.path.join(os.path.dirname(__file__), 'data', 'eot.wav')
         measurement = ms.loadSignalFromWav(measurementPath, bitDepth=16)
@@ -24,7 +24,7 @@ class HandlerTestCase(unittest.TestCase):
         plt.plot(f, 20 * np.log10(Pxx_spec))
         plt.show()
 
-    def test_showSpectro(self):
+    def showSpectro(self):
         # measurementPath = 'C:\\Users\\\Matt\\OneDrive\\Documents\\eot\\Edge of Tomorrow - Opening.wav'
         measurementPath = os.path.join(os.path.dirname(__file__), 'data', 'eot.wav')
         measurement = ms.loadSignalFromWav(measurementPath, bitDepth=16)
@@ -46,7 +46,7 @@ class HandlerTestCase(unittest.TestCase):
         plt.ylim(0, 100)
         plt.show()
 
-    def test_woot(self):
+    def woot(self):
         measurementPath = os.path.join(os.path.dirname(__file__), 'white15.out')
         self.doGraphs(measurementPath, 'mpu', 1000)
 

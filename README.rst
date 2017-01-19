@@ -1,5 +1,11 @@
 # Vibe
 
+.. image:: https://travis-ci.org/3ll3d00d/vibe.svg?branch=master
+    :target: https://travis-ci.org/3ll3d00d/vibe
+
+.. image:: https://codecov.io/gh/3ll3d00d/vibe/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/3ll3d00d/vibe
+
 An vibration analysis measurement suite with a web ui.
 
 The system is split into 2 main components.
