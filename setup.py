@@ -23,9 +23,6 @@ setup(name='rpi-vibe',
       author_email='mattkhan+vibe@gmail.com',
       license='MIT',
       packages=['analyser', 'core', 'recorder'],
-      # install_requires=[
-      #
-      # ],
       setup_requires=[
           'pytest-runner'
       ],
