@@ -1,8 +1,7 @@
 language: python
 cache: pip
 python:
-# TODO work out why 3.4 fails on travis-ci
-#  - "3.4"
+  - "3.4"
   - "3.5"
   - "3.6"
 addons:

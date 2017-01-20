@@ -33,11 +33,13 @@ def test_asyncHandlesAllEvents():
         assert logger.events[i] == makeEvent(i)
     assert logger.endName == "endtest"
 
-def doMeasurementLoop(handler):
+
+def doMeasurementLoop(handler, useListVals=False):
     handler.start("starttest")
     for i in range(0, 100):
-        handler.handle(makeEvent(i))
+        handler.handle(makeEvent(i, useListVals))
     handler.stop("endtest")
+
 
 def test_httpSendsAllEvents():
     target = "http://localhost:8080/"
@@ -51,6 +53,7 @@ def test_httpSendsAllEvents():
                 mock.call("http://localhost:8080/measurements/starttest/mpu6050/data", data=makeEvent(i)))
         calls.append(mock.call("http://localhost:8080/measurements/starttest/mpu6050/complete", ))
         monkey.assert_has_calls(calls)
+
 
 def test_httpSendsAllEventsWhenAsync():
     target = "http://localhost:8080/"
@@ -66,18 +69,31 @@ def test_httpSendsAllEventsWhenAsync():
         calls.append(mock.call("http://localhost:8080/measurements/starttest/mpu6050/complete", ))
         monkey.assert_has_calls(calls)
 
-def makeEvent(i):
+
+def makeEvent(i, useListVals=False):
     import collections
     dict = collections.OrderedDict()
     dict["d"] = "d" + str(i)
     dict["b"] = "b" + str(i)
-    return [dict]
+    if useListVals:
+        return [list(dict.values())]
+    else:
+        return [dict]
+
 
 def test_csvWritesEachRowToFile():
     outputDir = setupCsv()
     logger = CSVLogger('owner', "csv", outputDir)
     doMeasurementLoop(logger)
     verifyCsv()
+
+
+def test_csvWritesEachRowToFileWhenAcceptingValues():
+    outputDir = setupCsv()
+    logger = CSVLogger('owner', "csv", outputDir)
+    doMeasurementLoop(logger, True)
+    verifyCsv(True)
+
 
 def test_csvWritesEachRowToFileWhenAsync():
     outputDir = setupCsv()
@@ -86,6 +102,7 @@ def test_csvWritesEachRowToFileWhenAsync():
     doMeasurementLoop(asyncHandler)
     verifyCsv()
 
+
 def setupCsv():
     outputDir = os.path.join(tempfile.gettempdir(), "test")
     if os.path.exists(outputDir):
@@ -93,12 +110,19 @@ def setupCsv():
     os.makedirs(outputDir)
     return outputDir
 
-def verifyCsv():
+
+def verifyCsv(useListVals=False):
     outputFile = os.path.join(tempfile.gettempdir(), "test", "starttest", 'csv', 'data.out')
     assert os.path.exists(outputFile)
     with open(outputFile) as f:
         lines = f.read().splitlines()
-    assert len(lines) == 101
-    assert lines[0] == "d,b"
-    for i in range(0, 100):
-        assert lines[i + 1] == "d" + str(i) + ",b" + str(i)
+
+    if useListVals:
+        assert len(lines) == 100
+        for i in range(0, 100):
+            assert lines[i] == "d" + str(i) + ",b" + str(i)
+    else:
+        assert len(lines) == 101
+        assert lines[0] == "d,b"
+        for i in range(0, 100):
+            assert lines[i + 1] == "d" + str(i) + ",b" + str(i)
