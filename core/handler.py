@@ -5,8 +5,9 @@ import os
 import threading
 from queue import Queue, Empty
 
-import requests
 from flask import json
+
+from core.httpclient import RequestsBasedHttpClient
 
 
 class DataHandler:
@@ -169,8 +170,9 @@ class HttpPoster(DataHandler):
     A handler which sends the data over http.
     """
 
-    def __init__(self, name, target):
+    def __init__(self, name, target, httpclient=RequestsBasedHttpClient()):
         self.name = name
+        self.httpclient = httpclient
         self.target = target[:-1] if target.endswith('/') else target
         self.deviceName = None
         self.rootURL = self.target + '/measurements/'
@@ -189,7 +191,7 @@ class HttpPoster(DataHandler):
 
     def _doPut(self, url, data=None):
         formattedPayload = None if data is None else json.dumps(data, sort_keys=True)
-        return requests.put(url, json=formattedPayload).status_code
+        return self.httpclient.put(url, json=formattedPayload).status_code
 
     def handle(self, data):
         """

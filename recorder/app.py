@@ -1,11 +1,11 @@
 import copy
 import logging.handlers
 
-import requests
 from flask import Flask
 from flask_restful import Api, marshal
 
 from core.handler import AsyncHandler
+from core.httpclient import RequestsBasedHttpClient
 from core.interface import recordingDeviceFields
 from core.reactor import Reactor
 from recorder.common.config import Config
@@ -15,7 +15,7 @@ from recorder.resources.recordingdevices import RecordingDevices, RecordingDevic
 cfg = Config()
 reactor = Reactor()
 caches = {'recordingDevices': cfg.recordingDevices, 'measurements': cfg.measurements, 'reactor': reactor}
-
+httpclient = RequestsBasedHttpClient()
 app = Flask(__name__)
 api = Api(app)
 
@@ -53,7 +53,7 @@ def pingAnalyser(serverURL, cfg):
             data['serviceURL'] = cfg.getServiceURL() + "/devices/" + name
             targetURL = serverURL + "/devices/" + name
             logger.info("Pinging " + targetURL)
-            resp = requests.put(targetURL, json=data)
+            resp = httpclient.put(targetURL, json=data)
             if resp.status_code != 200:
                 logger.warning("Unable to ping server at " + targetURL + " with " + str(data.keys()) +
                                ", response is " + str(resp.status_code))

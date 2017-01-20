@@ -1,6 +1,5 @@
 import logging
 
-import requests
 from flask_restful import marshal
 
 from core.interface import targetStateFields
@@ -12,12 +11,13 @@ REACH_TARGET_STATE = 'RTS'
 
 
 class TargetStateController(object):
-    def __init__(self, targetStateProvider, reactor):
+    def __init__(self, targetStateProvider, reactor, httpclient):
         """
         Registers with the reactor.
         :param reactor:
         """
         self._reactor = reactor
+        self._httpclient = httpclient
         self._reactor.register(REACH_TARGET_STATE, _applyTargetState)
         self._targetStateProvider = targetStateProvider
 
@@ -30,7 +30,7 @@ class TargetStateController(object):
         """
         # this is only threadsafe because the targetstate is effectively immutable, if it becomes mutable in future then
         # funkiness may result
-        self._reactor.offer(REACH_TARGET_STATE, [self._targetStateProvider.state, device])
+        self._reactor.offer(REACH_TARGET_STATE, [self._targetStateProvider.state, device, self._httpclient])
 
 
 class TargetStateProvider(object):
@@ -57,13 +57,14 @@ class TargetState(object):
         self.samplesPerBatch = samplesPerBatch
 
 
-def _applyTargetState(targetState, md):
+def _applyTargetState(targetState, md, httpclient):
     """
     compares the current device state against the targetStateProvider and issues updates as necessary to ensure the
     device is
     at that state.
     :param md:
     :param targetState: the target state.
+    :param httpclient: the http client
     :return:
     """
     logger.debug("Processing targetStateProvider for " + md['name'])
@@ -100,6 +101,6 @@ def _applyTargetState(targetState, md):
 
     if anyUpdate:
         if RecordingDeviceStatus.INITIALISED.name == md.get('status'):
-            requests.patch(md['serviceURL'], json=marshal(targetState, targetStateFields))
+            httpclient.patch(md['serviceURL'], json=marshal(targetState, targetStateFields))
         else:
             logger.debug("Ignoring update until device is idle")

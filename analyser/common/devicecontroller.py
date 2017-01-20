@@ -3,7 +3,6 @@ import logging
 import threading
 import time
 
-import requests
 from flask_restful import fields
 
 from core.handler import CSVLogger, AsyncHandler
@@ -42,10 +41,13 @@ class DeviceController(object):
     Controls interactions with the recording devices.
     """
 
-    def __init__(self, targetStateController, dataDir):
+    def __init__(self, targetStateController, dataDir, httpclient):
+        self.httpclient = httpclient
         self.devices = {}
         self.targetStateController = targetStateController
         self.dataDir = dataDir
+        if dataDir is None or httpclient is None or targetStateController is None:
+            raise ValueError("Mandatory args missing")
         self.running = True
         self.worker = threading.Thread(name='DeviceCaretaker', target=self._evictStaleDevices, daemon=True)
         self.worker.start()
@@ -115,7 +117,8 @@ class DeviceController(object):
         results = {}
         for device in self.getDevices(RecordingDeviceStatus.INITIALISED.name):
             logger.info('Sending measurement ' + measurementName + ' to ' + device.payload['serviceURL'])
-            resp = requests.put(device.payload['serviceURL'] + '/measurements/' + measurementName,
-                                json={'duration': duration, 'at': datetime.datetime.strftime(start, DATETIME_FORMAT)})
+            resp = self.httpclient.put(device.payload['serviceURL'] + '/measurements/' + measurementName,
+                                       json={'duration': duration,
+                                             'at': datetime.datetime.strftime(start, DATETIME_FORMAT)})
             results[device] = resp.status_code
         return results
