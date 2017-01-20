@@ -75,7 +75,7 @@ class DeviceController(object):
             logger.debug('Pinging by device ' + deviceId)
         storedDevice.payload = device
         storedDevice.lastUpdateTime = datetime.datetime.now()
-        self.devices[deviceId] = storedDevice
+        self.devices.update({deviceId: storedDevice})
         self.targetStateController.update(storedDevice.payload)
 
     def getDevices(self, status=None):
@@ -92,7 +92,7 @@ class DeviceController(object):
         :param name: the name.
         :return: the device
         """
-        return next(iter([d for d in self.devices.values() if d.deviceId == name]))
+        return next(iter([d for d in self.devices.values() if d.deviceId == name]), None)
 
     def _evictStaleDevices(self):
         """

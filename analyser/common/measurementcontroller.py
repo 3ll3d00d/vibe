@@ -12,6 +12,8 @@ from flask_restful import marshal
 
 from core.interface import EnumField, DATETIME_FORMAT
 
+MEASUREMENT_TIMES_CLASH = "Measurement times clash"
+
 targetStateFields = {
     'fs': fields.Integer,
     'accelerometerSens': fields.Integer,
@@ -211,7 +213,7 @@ class MeasurementController(object):
             message: description, generally only used as an error code
         """
         if self._clashes(startTime, duration):
-            return False, "Measurement times clash"
+            return False, MEASUREMENT_TIMES_CLASH
         elif any([m for m in self.getMeasurements() if m.name == name]):
             return False, "Duplicate measurement name [" + name + "]"
         else:

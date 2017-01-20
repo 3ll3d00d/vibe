@@ -95,7 +95,9 @@ class RecordingHttpClient(HttpClient):
 
     def _resp(self):
         from unittest.mock import Mock
-        return Mock()
+        mock = Mock()
+        mock.status_code = 200
+        return mock
 
     def patch(self, url, **kwargs):
         self.record.append(('patch', url, kwargs))
