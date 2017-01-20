@@ -99,12 +99,12 @@ def test_measurementsAreScheduledForInitialisedDevices(deviceController, httpcli
     assert devices[0].deviceId == 'old'
     startTime = datetime.datetime.now()
     measurement = deviceController.scheduleMeasurement('next', 10, startTime)
-    assert len(measurement) == 1
-    assert len(httpclient.record) == 1
+    assert len(measurement) == 1  # there is a response
+    assert len(httpclient.record) == 1  # measurement was sent to the device
     args = httpclient.record[0]
     assert len(args) == 3
+    # we sent a put to serviceURL/measurements/measurementName with a json payload
     assert args[0] == 'put'
-    # serviceURL/measurements/measurementName
     assert args[1] == 'hello/measurements/next'
     assert type(args[2]) is dict
     assert 'json' in args[2]
@@ -112,4 +112,3 @@ def test_measurementsAreScheduledForInitialisedDevices(deviceController, httpcli
     assert args[2]['json']['duration'] == 10
     assert 'at' in args[2]['json']
     assert args[2]['json']['at'] == startTime.strftime(DATETIME_FORMAT)
-
