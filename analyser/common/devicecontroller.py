@@ -23,17 +23,18 @@ class Device(object):
     housekeeping.
     """
 
-    def __init__(self):
+    def __init__(self, maxAgeSeconds):
         self.deviceId = None
         self.payload = None
         self.lastUpdateTime = None
         self.dataHandler = None
+        self.maxAgeSeconds = maxAgeSeconds
 
     def hasExpired(self):
         """
-        :return: true if the lastUpdateTime is more than 30s ago.
+        :return: true if the lastUpdateTime is more than maxAge seconds ago.
         """
-        return (datetime.datetime.now() - self.lastUpdateTime).total_seconds() > 30
+        return (datetime.datetime.now() - self.lastUpdateTime).total_seconds() > self.maxAgeSeconds
 
 
 class DeviceController(object):
@@ -41,13 +42,14 @@ class DeviceController(object):
     Controls interactions with the recording devices.
     """
 
-    def __init__(self, targetStateController, dataDir, httpclient):
+    def __init__(self, targetStateController, dataDir, httpclient, maxAgeSeconds=30):
         self.httpclient = httpclient
         self.devices = {}
         self.targetStateController = targetStateController
         self.dataDir = dataDir
         if dataDir is None or httpclient is None or targetStateController is None:
             raise ValueError("Mandatory args missing")
+        self.maxAgeSeconds = maxAgeSeconds
         self.running = True
         self.worker = threading.Thread(name='DeviceCaretaker', target=self._evictStaleDevices, daemon=True)
         self.worker.start()
@@ -62,7 +64,7 @@ class DeviceController(object):
         storedDevice = self.devices.get(deviceId)
         if storedDevice is None:
             logger.info('Initialising device ' + deviceId)
-            storedDevice = Device()
+            storedDevice = Device(self.maxAgeSeconds)
             storedDevice.deviceId = deviceId
             # this uses an async handler to decouple the recorder put (of the data) from the analyser handling that data
             # thus the recorder will become free as soon as it has handed off the data. This means delivery is only
@@ -103,7 +105,7 @@ class DeviceController(object):
                 logger.warning("Device timeout, removing " + key)
                 del self.devices[key]
             time.sleep(1)
-        # TODO send reset after a device fails
+            # TODO send reset after a device fails
 
     def scheduleMeasurement(self, measurementName, duration, start):
         """
@@ -118,7 +120,6 @@ class DeviceController(object):
         for device in self.getDevices(RecordingDeviceStatus.INITIALISED.name):
             logger.info('Sending measurement ' + measurementName + ' to ' + device.payload['serviceURL'])
             resp = self.httpclient.put(device.payload['serviceURL'] + '/measurements/' + measurementName,
-                                       json={'duration': duration,
-                                             'at': datetime.datetime.strftime(start, DATETIME_FORMAT)})
+                                       json={'duration': duration, 'at': start.strftime(DATETIME_FORMAT)})
             results[device] = resp.status_code
         return results

@@ -79,3 +79,36 @@ class RequestsBasedHttpClient(HttpClient):
 
     def delete(self, url, **kwargs):
         return requests.delete(url, **kwargs)
+
+
+class RecordingHttpClient(HttpClient):
+    """
+    An implementation of httpclient intended for use by test cases as it simply records each call in a list.
+    """
+
+    def __init__(self):
+        self.record = []
+
+    def post(self, url, **kwargs):
+        self.record.append(('post', url, kwargs))
+        return self._resp()
+
+    def _resp(self):
+        from unittest.mock import Mock
+        return Mock()
+
+    def patch(self, url, **kwargs):
+        self.record.append(('patch', url, kwargs))
+        return self._resp()
+
+    def put(self, url, **kwargs):
+        self.record.append(('put', url, kwargs))
+        return self._resp()
+
+    def delete(self, url, **kwargs):
+        self.record.append(('delete', url, kwargs))
+        return self._resp()
+
+    def get(self, url, **kwargs):
+        self.record.append(('get', url, kwargs))
+        return self._resp()
