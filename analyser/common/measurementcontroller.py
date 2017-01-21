@@ -12,6 +12,8 @@ from flask_restful import marshal
 
 from core.interface import EnumField, DATETIME_FORMAT
 
+MEASUREMENT_TIMES_CLASH = "Measurement times clash"
+
 targetStateFields = {
     'fs': fields.Integer,
     'accelerometerSens': fields.Integer,
@@ -91,6 +93,13 @@ class ActiveMeasurement(object):
         """
         self.recordingDevices[deviceName] = {'state': state.name, 'reason': reason}
 
+    def __str__(self):
+        """
+        :return: a human readable format
+        """
+        return "ActiveMeasurement[" + self.name + "-" + self.status.name + " " + \
+               self.startTime.strftime(DATETIME_FORMAT) + " for " + self.duration + "s]"
+
 
 class CompleteMeasurement(object):
     """
@@ -117,6 +126,13 @@ class CompleteMeasurement(object):
         #  the data set
         pass
 
+    def __str__(self):
+        """
+        :return: a human readable format
+        """
+        return "CompleteMeasurement[" + self.name + self.startTime.strftime(DATETIME_FORMAT) + \
+               " for " + self.duration + "s]"
+
 
 class MeasurementController(object):
     """
@@ -124,7 +140,8 @@ class MeasurementController(object):
     only.
     """
 
-    def __init__(self, targetStateProvider, dataDir, deviceController):
+    def __init__(self, targetStateProvider, dataDir, deviceController, maxTimeTilDeathbedSeconds=30,
+                 maxTimeOnDeathbedSeconds=120):
         self.targetStateProvider = targetStateProvider
         self.deviceController = deviceController
         self.dataDir = dataDir
@@ -133,9 +150,15 @@ class MeasurementController(object):
         self.failedMeasurements = []
         self.deathBed = {}
         self.reloadCompletedMeasurements()
+        self.maxTimeTilDeathbedSeconds = maxTimeTilDeathbedSeconds
+        self.maxTimeOnDeathbedSeconds = maxTimeOnDeathbedSeconds
         self.running = True
         self.worker = threading.Thread(name='MeasurementCaretaker', target=self._sweep, daemon=True)
         self.worker.start()
+
+    def shutdown(self):
+        logger.warning("Shutting down the MeasurementCaretaker")
+        self.running = False
 
     def _sweep(self):
         """
@@ -161,32 +184,38 @@ class MeasurementController(object):
                         self._moveToFailed(am)
 
                 # we are well past the end time and we have failed devices or an ongoing recording == kill or deathbed
-                if now > (am.endTime + datetime.timedelta(days=0, seconds=30)):
+                if now > (am.endTime + datetime.timedelta(days=0, seconds=self.maxTimeTilDeathbedSeconds)):
                     if any(entry['state'] == RecordStatus.FAILED.name for entry in am.recordingDevices.values()):
                         logger.warning("Detected failed and incomplete measurement " + am.name + ", assumed dead")
                         self._moveToFailed(am)
                     elif all(entry['state'] == RecordStatus.RECORDING.name for entry in am.recordingDevices.values()):
-                        self._handleDeathbed(am, now)
-            time.sleep(0.5)
+                        self._handleDeathbed(am)
+            # TODO should we delete failed measurements or just provide the option via the UI?
+            time.sleep(0.1)
+        logger.warning("MeasurementCaretaker is now shutdown")
 
-    def _handleDeathbed(self, am, now):
+    def _handleDeathbed(self, am):
         # check if in the deathbed, if not add it
-        if am in self.deathBed.values():
-            # if it is, check if it's been there for 2mins
-            if now > (am.endTime + datetime.timedelta(days=0, minutes=2)):
+        now = datetime.datetime.now()
+        if am in self.deathBed.keys():
+            # if it is, check if it's been there for too long
+            if now > (self.deathBed[am] + datetime.timedelta(days=0, seconds=self.maxTimeOnDeathbedSeconds)):
                 logger.warning(am.name + " has been on the deathbed since " +
-                               am.endTime.strftime(DATETIME_FORMAT) + ", evicting")
+                               self.deathBed[am].strftime(DATETIME_FORMAT) + ", max time allowed is " +
+                               str(self.maxTimeOnDeathbedSeconds) + ", evicting")
+                # ensure all recording devices that have not completed are marked as failed
+                for deviceName, status in am.recordingDevices.items():
+                    if status['state'] == RecordStatus.RECORDING.name or status['state'] == RecordStatus.SCHEDULED.name:
+                        logger.warning("Marking " + deviceName + " as failed due to deathbed eviction")
+                        if not self.failMeasurement(am.name, deviceName, failureReason='Evicting from deathbed'):
+                            logger.warning("Failed to mark " + deviceName + " as failed")
                 self._moveToFailed(am)
-                for key in [key for key, value in self.deathBed.items() if value == am]:
-                    del self.deathBed[key]
-            else:
-                logger.debug(am.name + " has been on the deathbed since " + am.endTime.strftime(DATETIME_FORMAT) +
-                            ", death is knocking on the door...")
+                del self.deathBed[am]
         else:
             logger.warning(am.name + " was expected to finish at " +
                            am.endTime.strftime(DATETIME_FORMAT) + ", adding to deathbed")
             am.status = MeasurementStatus.DYING
-            self.deathBed[now] = am
+            self.deathBed.update({am: now})
 
     def _moveToComplete(self, am):
         am.status = MeasurementStatus.COMPLETE
@@ -198,6 +227,7 @@ class MeasurementController(object):
         am.status = MeasurementStatus.FAILED
         self.activeMeasurements.remove(am)
         self.failedMeasurements.append(am)
+        self.store(am)
 
     def schedule(self, name, duration, startTime, description=None):
         """
@@ -211,7 +241,7 @@ class MeasurementController(object):
             message: description, generally only used as an error code
         """
         if self._clashes(startTime, duration):
-            return False, "Measurement times clash"
+            return False, MEASUREMENT_TIMES_CLASH
         elif any([m for m in self.getMeasurements() if m.name == name]):
             return False, "Duplicate measurement name [" + name + "]"
         else:
@@ -307,7 +337,7 @@ class MeasurementController(object):
         """
         am, handler = self.getDataHandler(measurementName, deviceName)
         if handler is not None:
-            am.updateDeviceState(deviceName, RecordStatus.FAILED, failureReason)
+            am.updateDeviceStatus(deviceName, RecordStatus.FAILED, failureReason)
             handler.stop(measurementName)
             return True
         else:
@@ -364,12 +394,14 @@ class MeasurementController(object):
         :return:
         """
         if measurementStatus is None:
-            l = self.activeMeasurements + self.completeMeasurements + self.failedMeasurements
-            return l
+            return self.activeMeasurements + self.completeMeasurements \
+                   + self.failedMeasurements + list(self.deathBed.keys())
         elif measurementStatus == MeasurementStatus.COMPLETE:
             return self.completeMeasurements
         elif measurementStatus == MeasurementStatus.FAILED:
             return self.failedMeasurements
+        elif measurementStatus == MeasurementStatus.DYING:
+            return list(self.deathBed.keys())
         else:
             return [x for x in self.activeMeasurements if x.status == measurementStatus]
 

@@ -16,8 +16,7 @@ class Reactor(object):
         self._name = name
         self._funcsByRequest = {}
         self.running = True
-        t = Thread(name=name, target=self._accept)
-        t.daemon = True
+        t = Thread(name=name, target=self._accept, daemon=True)
         t.start()
 
     def _accept(self):

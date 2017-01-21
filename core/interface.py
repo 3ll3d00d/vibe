@@ -30,7 +30,6 @@ class EnumField(Raw):
 Formats a TargetState to JSON
 """
 targetStateFields = {
-    'name': fields.String,
     'fs': fields.Integer,
     'samplesPerBatch': fields.Integer,
     'accelerometerEnabled': fields.Boolean,
