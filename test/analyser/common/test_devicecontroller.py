@@ -1,9 +1,9 @@
 import datetime
+import shutil
 from time import sleep
 from unittest.mock import MagicMock, Mock
 
 import pytest
-import shutil
 
 from analyser.common.devicecontroller import DeviceController
 from core.httpclient import RecordingHttpClient
@@ -31,9 +31,11 @@ def targetStateController():
     return mm
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def deviceController(tmpdirPath, targetStateController, httpclient):
-    return DeviceController(targetStateController, tmpdirPath, httpclient, maxAgeSeconds=DEVICE_MAX_AGE_SECONDS)
+    controller = DeviceController(targetStateController, tmpdirPath, httpclient, maxAgeSeconds=DEVICE_MAX_AGE_SECONDS)
+    yield controller
+    controller.shutdown()
 
 
 def test_whenNewDeviceArrives_ItIsStoredInTheCache_AndTargetStateIsReached(deviceController, targetStateController):

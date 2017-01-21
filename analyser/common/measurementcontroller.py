@@ -156,6 +156,10 @@ class MeasurementController(object):
         self.worker = threading.Thread(name='MeasurementCaretaker', target=self._sweep, daemon=True)
         self.worker.start()
 
+    def shutdown(self):
+        logger.warning("Shutting down the MeasurementCaretaker")
+        self.running = False
+
     def _sweep(self):
         """
         Checks the state of each measurement and verifies their state, if an active measurement is now complete then
@@ -188,6 +192,7 @@ class MeasurementController(object):
                         self._handleDeathbed(am, now)
             # TODO should we delete failed measurements or just provide the option via the UI?
             time.sleep(0.5)
+        logger.warning("MeasurementCaretaker is now shutdown")
 
     def _handleDeathbed(self, am, now):
         # check if in the deathbed, if not add it
@@ -196,6 +201,11 @@ class MeasurementController(object):
             if now > (am.endTime + datetime.timedelta(days=0, seconds=self.maxTimeOnDeathbedSeconds)):
                 logger.warning(am.name + " has been on the deathbed since " +
                                am.endTime.strftime(DATETIME_FORMAT) + ", evicting")
+                # ensure all recording devices that have not completed are marked as failed
+                for deviceName, status in am.recordingDevices.items():
+                    if status['state'] == RecordStatus.RECORDING.name or status['state'] == RecordStatus.SCHEDULED.name:
+                        logger.warning("Marking " + deviceName + " as failed due to deathbed eviction")
+                        self.failMeasurement(am.name, deviceName, failureReason='Evicting from deathbed')
                 self._moveToFailed(am)
                 for key in [key for key, value in self.deathBed.items() if value == am]:
                     del self.deathBed[key]
@@ -206,7 +216,7 @@ class MeasurementController(object):
             logger.warning(am.name + " was expected to finish at " +
                            am.endTime.strftime(DATETIME_FORMAT) + ", adding to deathbed")
             am.status = MeasurementStatus.DYING
-            self.deathBed[now] = am
+            self.deathBed.update({now: am})
 
     def _moveToComplete(self, am):
         am.status = MeasurementStatus.COMPLETE
@@ -328,7 +338,7 @@ class MeasurementController(object):
         """
         am, handler = self.getDataHandler(measurementName, deviceName)
         if handler is not None:
-            am.updateDeviceState(deviceName, RecordStatus.FAILED, failureReason)
+            am.updateDeviceStatus(deviceName, RecordStatus.FAILED, failureReason)
             handler.stop(measurementName)
             return True
         else:
@@ -385,12 +395,14 @@ class MeasurementController(object):
         :return:
         """
         if measurementStatus is None:
-            l = self.activeMeasurements + self.completeMeasurements + self.failedMeasurements
-            return l
+            return self.activeMeasurements + self.completeMeasurements \
+                   + self.failedMeasurements + list(self.deathBed.values())
         elif measurementStatus == MeasurementStatus.COMPLETE:
             return self.completeMeasurements
         elif measurementStatus == MeasurementStatus.FAILED:
             return self.failedMeasurements
+        elif measurementStatus == MeasurementStatus.DYING:
+            return list(self.deathBed.values())
         else:
             return [x for x in self.activeMeasurements if x.status == measurementStatus]
 

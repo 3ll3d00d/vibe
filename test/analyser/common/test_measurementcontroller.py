@@ -23,7 +23,15 @@ TIME_TIL_DEATHBED = 3
 def tmpdirPath(tmpdir):
     yield str(tmpdir)
     # required due to https://github.com/pytest-dev/pytest/issues/1120
-    shutil.rmtree(str(tmpdir))
+    cleanUpTmpDir(tmpdir)
+
+
+def cleanUpTmpDir(tmpdir):
+    try:
+        shutil.rmtree(str(tmpdir))
+    except:
+        import sys
+        print(sys.exc_info())
 
 
 @pytest.fixture
@@ -42,16 +50,20 @@ def targetStateController():
     return mm
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def deviceController(tmpdirPath, targetStateController, httpclient):
-    return DeviceController(targetStateController, tmpdirPath, httpclient, maxAgeSeconds=DEVICE_MAX_AGE_SECONDS)
+    controller = DeviceController(targetStateController, tmpdirPath, httpclient, maxAgeSeconds=DEVICE_MAX_AGE_SECONDS)
+    yield controller
+    controller.shutdown()
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def measurementController(tmpdirPath, targetStateProvider, deviceController):
-    return MeasurementController(targetStateProvider, tmpdirPath, deviceController,
-                                 maxTimeTilDeathbedSeconds=TIME_TIL_DEATHBED,
-                                 maxTimeOnDeathbedSeconds=TIME_TIL_DEATHBED)
+    controller = MeasurementController(targetStateProvider, tmpdirPath, deviceController,
+                                       maxTimeTilDeathbedSeconds=TIME_TIL_DEATHBED,
+                                       maxTimeOnDeathbedSeconds=TIME_TIL_DEATHBED)
+    yield controller
+    controller.shutdown()
 
 
 def verifyNothingOnDisk(tmpdirPath, name):
@@ -328,7 +340,7 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
     assert am[0].recordingDevices.get('d1')['state'] == RecordStatus.RECORDING.name
 
     # sleep to push onto the deathbed
-    sleep(TIME_TIL_DEATHBED + 0.5)
+    sleep(TIME_TIL_DEATHBED + 1)
 
     # check it is on the deathbed
     am = measurementController.getMeasurements(MeasurementStatus.DYING)

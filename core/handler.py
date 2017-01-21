@@ -128,7 +128,7 @@ class AsyncHandler(DataHandler):
 
     def start(self, measurementName):
         self.delegate.start(measurementName)
-        self.worker = threading.Thread(target=self.asyncHandle)
+        self.worker = threading.Thread(target=self.asyncHandle, daemon=True)
         self.working = True
         self.logger.info('Starting async handler for ' + measurementName)
         self.worker.start()

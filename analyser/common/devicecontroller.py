@@ -56,6 +56,10 @@ class DeviceController(object):
         self.worker = threading.Thread(name='DeviceCaretaker', target=self._evictStaleDevices, daemon=True)
         self.worker.start()
 
+    def shutdown(self):
+        logger.warning("Shutting down the DeviceCaretaker")
+        self.running = False
+
     def accept(self, deviceId, device):
         """
         Adds the named device to the store.
@@ -108,6 +112,7 @@ class DeviceController(object):
                 del self.devices[key]
             time.sleep(1)
             # TODO send reset after a device fails
+        logger.warning("DeviceCaretaker is now shutdown")
 
     def scheduleMeasurement(self, measurementName, duration, start):
         """
