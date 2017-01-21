@@ -36,6 +36,8 @@ class Device(object):
         """
         return (datetime.datetime.now() - self.lastUpdateTime).total_seconds() > self.maxAgeSeconds
 
+    def __str__(self):
+        return "Device[" + self.deviceId + "-" + self.lastUpdateTime.strftime(DATETIME_FORMAT) + "]"
 
 class DeviceController(object):
     """

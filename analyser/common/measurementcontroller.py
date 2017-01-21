@@ -93,6 +93,13 @@ class ActiveMeasurement(object):
         """
         self.recordingDevices[deviceName] = {'state': state.name, 'reason': reason}
 
+    def __str__(self):
+        """
+        :return: a human readable format
+        """
+        return "ActiveMeasurement[" + self.name + "-" + self.status.name + " " + \
+               self.startTime.strftime(DATETIME_FORMAT) + " for " + self.duration + "s]"
+
 
 class CompleteMeasurement(object):
     """
@@ -119,6 +126,13 @@ class CompleteMeasurement(object):
         #  the data set
         pass
 
+    def __str__(self):
+        """
+        :return: a human readable format
+        """
+        return "CompleteMeasurement[" + self.name + self.startTime.strftime(DATETIME_FORMAT) + \
+               " for " + self.duration + "s]"
+
 
 class MeasurementController(object):
     """
@@ -126,7 +140,8 @@ class MeasurementController(object):
     only.
     """
 
-    def __init__(self, targetStateProvider, dataDir, deviceController):
+    def __init__(self, targetStateProvider, dataDir, deviceController, maxTimeTilDeathbedSeconds=30,
+                 maxTimeOnDeathbedSeconds=120):
         self.targetStateProvider = targetStateProvider
         self.deviceController = deviceController
         self.dataDir = dataDir
@@ -135,6 +150,8 @@ class MeasurementController(object):
         self.failedMeasurements = []
         self.deathBed = {}
         self.reloadCompletedMeasurements()
+        self.maxTimeTilDeathbedSeconds = maxTimeTilDeathbedSeconds
+        self.maxTimeOnDeathbedSeconds = maxTimeOnDeathbedSeconds
         self.running = True
         self.worker = threading.Thread(name='MeasurementCaretaker', target=self._sweep, daemon=True)
         self.worker.start()
@@ -163,19 +180,20 @@ class MeasurementController(object):
                         self._moveToFailed(am)
 
                 # we are well past the end time and we have failed devices or an ongoing recording == kill or deathbed
-                if now > (am.endTime + datetime.timedelta(days=0, seconds=30)):
+                if now > (am.endTime + datetime.timedelta(days=0, seconds=self.maxTimeTilDeathbedSeconds)):
                     if any(entry['state'] == RecordStatus.FAILED.name for entry in am.recordingDevices.values()):
                         logger.warning("Detected failed and incomplete measurement " + am.name + ", assumed dead")
                         self._moveToFailed(am)
                     elif all(entry['state'] == RecordStatus.RECORDING.name for entry in am.recordingDevices.values()):
                         self._handleDeathbed(am, now)
+            # TODO should we delete failed measurements or just provide the option via the UI?
             time.sleep(0.5)
 
     def _handleDeathbed(self, am, now):
         # check if in the deathbed, if not add it
         if am in self.deathBed.values():
-            # if it is, check if it's been there for 2mins
-            if now > (am.endTime + datetime.timedelta(days=0, minutes=2)):
+            # if it is, check if it's been there for too long
+            if now > (am.endTime + datetime.timedelta(days=0, seconds=self.maxTimeOnDeathbedSeconds)):
                 logger.warning(am.name + " has been on the deathbed since " +
                                am.endTime.strftime(DATETIME_FORMAT) + ", evicting")
                 self._moveToFailed(am)
@@ -183,7 +201,7 @@ class MeasurementController(object):
                     del self.deathBed[key]
             else:
                 logger.debug(am.name + " has been on the deathbed since " + am.endTime.strftime(DATETIME_FORMAT) +
-                            ", death is knocking on the door...")
+                             ", death is knocking on the door...")
         else:
             logger.warning(am.name + " was expected to finish at " +
                            am.endTime.strftime(DATETIME_FORMAT) + ", adding to deathbed")
@@ -200,6 +218,7 @@ class MeasurementController(object):
         am.status = MeasurementStatus.FAILED
         self.activeMeasurements.remove(am)
         self.failedMeasurements.append(am)
+        self.store(am)
 
     def schedule(self, name, duration, startTime, description=None):
         """

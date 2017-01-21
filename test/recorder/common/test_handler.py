@@ -1,9 +1,17 @@
 import os
 import shutil
-import tempfile
 from unittest import mock
 
+import pytest
+
 from core.handler import DataHandler, AsyncHandler, HttpPoster, CSVLogger
+
+
+@pytest.yield_fixture
+def tmpdirPath(tmpdir):
+    yield str(tmpdir)
+    # required due to https://github.com/pytest-dev/pytest/issues/1120
+    shutil.rmtree(str(tmpdir))
 
 
 class MyHandler(DataHandler):
@@ -81,38 +89,38 @@ def makeEvent(i, useListVals=False):
         return [dict]
 
 
-def test_csvWritesEachRowToFile():
-    outputDir = setupCsv()
+def test_csvWritesEachRowToFile(tmpdirPath):
+    outputDir = setupCsv(tmpdirPath)
     logger = CSVLogger('owner', "csv", outputDir)
     doMeasurementLoop(logger)
-    verifyCsv()
+    verifyCsv(tmpdirPath)
 
 
-def test_csvWritesEachRowToFileWhenAcceptingValues():
-    outputDir = setupCsv()
+def test_csvWritesEachRowToFileWhenAcceptingValues(tmpdirPath):
+    outputDir = setupCsv(tmpdirPath)
     logger = CSVLogger('owner', "csv", outputDir)
     doMeasurementLoop(logger, True)
-    verifyCsv(True)
+    verifyCsv(tmpdirPath, True)
 
 
-def test_csvWritesEachRowToFileWhenAsync():
-    outputDir = setupCsv()
+def test_csvWritesEachRowToFileWhenAsync(tmpdirPath):
+    outputDir = setupCsv(tmpdirPath)
     logger = CSVLogger('owner', "csv", outputDir)
     asyncHandler = AsyncHandler('test', logger)
     doMeasurementLoop(asyncHandler)
-    verifyCsv()
+    verifyCsv(tmpdirPath)
 
 
-def setupCsv():
-    outputDir = os.path.join(tempfile.gettempdir(), "test")
+def setupCsv(tmpdirPath):
+    outputDir = os.path.join(tmpdirPath, "test")
     if os.path.exists(outputDir):
         shutil.rmtree(outputDir)
     os.makedirs(outputDir)
     return outputDir
 
 
-def verifyCsv(useListVals=False):
-    outputFile = os.path.join(tempfile.gettempdir(), "test", "starttest", 'csv', 'data.out')
+def verifyCsv(tmpdirPath, useListVals=False):
+    outputFile = os.path.join(tmpdirPath, "test", "starttest", 'csv', 'data.out')
     assert os.path.exists(outputFile)
     with open(outputFile) as f:
         lines = f.read().splitlines()

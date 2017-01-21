@@ -3,12 +3,20 @@ from time import sleep
 from unittest.mock import MagicMock, Mock
 
 import pytest
+import shutil
 
 from analyser.common.devicecontroller import DeviceController
 from core.httpclient import RecordingHttpClient
 from core.interface import RecordingDeviceStatus, DATETIME_FORMAT
 
 DEVICE_MAX_AGE_SECONDS = 1
+
+
+@pytest.yield_fixture
+def tmpdirPath(tmpdir):
+    yield str(tmpdir)
+    # required due to https://github.com/pytest-dev/pytest/issues/1120
+    shutil.rmtree(str(tmpdir))
 
 
 @pytest.fixture
@@ -24,8 +32,8 @@ def targetStateController():
 
 
 @pytest.fixture
-def deviceController(tmpdir, targetStateController, httpclient):
-    return DeviceController(targetStateController, tmpdir, httpclient, maxAgeSeconds=DEVICE_MAX_AGE_SECONDS)
+def deviceController(tmpdirPath, targetStateController, httpclient):
+    return DeviceController(targetStateController, tmpdirPath, httpclient, maxAgeSeconds=DEVICE_MAX_AGE_SECONDS)
 
 
 def test_whenNewDeviceArrives_ItIsStoredInTheCache_AndTargetStateIsReached(deviceController, targetStateController):
