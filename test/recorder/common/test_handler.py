@@ -2,16 +2,7 @@ import os
 import shutil
 from unittest import mock
 
-import pytest
-
 from core.handler import DataHandler, AsyncHandler, HttpPoster, CSVLogger
-
-
-@pytest.yield_fixture
-def tmpdirPath(tmpdir):
-    yield str(tmpdir)
-    # required due to https://github.com/pytest-dev/pytest/issues/1120
-    shutil.rmtree(str(tmpdir))
 
 
 class MyHandler(DataHandler):

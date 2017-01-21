@@ -15,15 +15,8 @@ from analyser.common.targetstatecontroller import TargetState, TargetStateProvid
 from core.httpclient import RecordingHttpClient
 from core.interface import RecordingDeviceStatus, DATETIME_FORMAT
 
-DEVICE_MAX_AGE_SECONDS = 2
+DEVICE_MAX_AGE_SECONDS = 20
 TIME_TIL_DEATHBED = 3
-
-
-@pytest.yield_fixture
-def tmpdirPath(tmpdir):
-    yield str(tmpdir)
-    # required due to https://github.com/pytest-dev/pytest/issues/1120
-    cleanUpTmpDir(tmpdir)
 
 
 def cleanUpTmpDir(tmpdir):
@@ -50,14 +43,14 @@ def targetStateController():
     return mm
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def deviceController(tmpdirPath, targetStateController, httpclient):
     controller = DeviceController(targetStateController, tmpdirPath, httpclient, maxAgeSeconds=DEVICE_MAX_AGE_SECONDS)
     yield controller
     controller.shutdown()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def measurementController(tmpdirPath, targetStateProvider, deviceController):
     controller = MeasurementController(targetStateProvider, tmpdirPath, deviceController,
                                        maxTimeTilDeathbedSeconds=TIME_TIL_DEATHBED,
@@ -89,7 +82,7 @@ def test_scheduledMeasurementWithNoDevice_fails(measurementController, tmpdirPat
     assert am[0].status == MeasurementStatus.SCHEDULED
     # TODO should actually be failed because we've given it no devices
     # wait for it to be swept away
-    sleep(1.5)
+    sleep(2)
     am = measurementController.getMeasurements(MeasurementStatus.SCHEDULED)
     assert am is not None
     assert len(am) == 0
@@ -311,7 +304,7 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
     assert devices[0].deviceId is not None
     assert devices[0].deviceId == 'd1'
 
-    startTime = datetime.datetime.now()
+    startTime = datetime.datetime.now() + datetime.timedelta(seconds=0.5)
     accepted, message = measurementController.schedule('first', 0.2, startTime, 'desc')
     assert accepted
     assert message is None
@@ -365,7 +358,7 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
     assert am[0].description == 'desc'
     assert am[0].status == MeasurementStatus.FAILED
     assert am[0].recordingDevices.get('d1')
-    assert am[0].recordingDevices.get('d1')['state'] == RecordStatus.RECORDING.name
+    assert am[0].recordingDevices.get('d1')['state'] == RecordStatus.FAILED.name
 
     # check we have the metadata but no data
     dataFile = os.path.join(tmpdirPath, 'first', 'd1', 'data.out')
@@ -388,7 +381,8 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
         assert metadata['duration'] == 0.2
         assert metadata['description'] == 'desc'
         assert metadata['measurementParameters'] == targetStateAsDict(False)
-        assert metadata['recordingDevices'] == {'d1': {'state': MeasurementStatus.RECORDING.name, 'reason': None}}
+        assert metadata['recordingDevices'] == {
+            'd1': {'state': MeasurementStatus.FAILED.name, 'reason': 'Evicting from deathbed'}}
 
 
 def test_scheduledMeasurement_FailsDuringMeasurement_IsStoredAsFailed(measurementController, deviceController,

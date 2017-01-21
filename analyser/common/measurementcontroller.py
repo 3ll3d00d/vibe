@@ -189,34 +189,33 @@ class MeasurementController(object):
                         logger.warning("Detected failed and incomplete measurement " + am.name + ", assumed dead")
                         self._moveToFailed(am)
                     elif all(entry['state'] == RecordStatus.RECORDING.name for entry in am.recordingDevices.values()):
-                        self._handleDeathbed(am, now)
+                        self._handleDeathbed(am)
             # TODO should we delete failed measurements or just provide the option via the UI?
-            time.sleep(0.5)
+            time.sleep(0.1)
         logger.warning("MeasurementCaretaker is now shutdown")
 
-    def _handleDeathbed(self, am, now):
+    def _handleDeathbed(self, am):
         # check if in the deathbed, if not add it
-        if am in self.deathBed.values():
+        now = datetime.datetime.now()
+        if am in self.deathBed.keys():
             # if it is, check if it's been there for too long
-            if now > (am.endTime + datetime.timedelta(days=0, seconds=self.maxTimeOnDeathbedSeconds)):
+            if now > (self.deathBed[am] + datetime.timedelta(days=0, seconds=self.maxTimeOnDeathbedSeconds)):
                 logger.warning(am.name + " has been on the deathbed since " +
-                               am.endTime.strftime(DATETIME_FORMAT) + ", evicting")
+                               self.deathBed[am].strftime(DATETIME_FORMAT) + ", max time allowed is " +
+                               str(self.maxTimeOnDeathbedSeconds) + ", evicting")
                 # ensure all recording devices that have not completed are marked as failed
                 for deviceName, status in am.recordingDevices.items():
                     if status['state'] == RecordStatus.RECORDING.name or status['state'] == RecordStatus.SCHEDULED.name:
                         logger.warning("Marking " + deviceName + " as failed due to deathbed eviction")
-                        self.failMeasurement(am.name, deviceName, failureReason='Evicting from deathbed')
+                        if not self.failMeasurement(am.name, deviceName, failureReason='Evicting from deathbed'):
+                            logger.warning("Failed to mark " + deviceName + " as failed")
                 self._moveToFailed(am)
-                for key in [key for key, value in self.deathBed.items() if value == am]:
-                    del self.deathBed[key]
-            else:
-                logger.debug(am.name + " has been on the deathbed since " + am.endTime.strftime(DATETIME_FORMAT) +
-                             ", death is knocking on the door...")
+                del self.deathBed[am]
         else:
             logger.warning(am.name + " was expected to finish at " +
                            am.endTime.strftime(DATETIME_FORMAT) + ", adding to deathbed")
             am.status = MeasurementStatus.DYING
-            self.deathBed.update({now: am})
+            self.deathBed.update({am: now})
 
     def _moveToComplete(self, am):
         am.status = MeasurementStatus.COMPLETE
@@ -396,13 +395,13 @@ class MeasurementController(object):
         """
         if measurementStatus is None:
             return self.activeMeasurements + self.completeMeasurements \
-                   + self.failedMeasurements + list(self.deathBed.values())
+                   + self.failedMeasurements + list(self.deathBed.keys())
         elif measurementStatus == MeasurementStatus.COMPLETE:
             return self.completeMeasurements
         elif measurementStatus == MeasurementStatus.FAILED:
             return self.failedMeasurements
         elif measurementStatus == MeasurementStatus.DYING:
-            return list(self.deathBed.values())
+            return list(self.deathBed.keys())
         else:
             return [x for x in self.activeMeasurements if x.status == measurementStatus]
 

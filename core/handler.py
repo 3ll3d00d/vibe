@@ -94,6 +94,7 @@ class CSVLogger(DataHandler):
         :param data: the samples.
         :return:
         """
+        self.logger.debug("Handling " + str(len(data)) + " data items")
         for datum in data:
             if isinstance(datum, dict):
                 # these have to wrapped in a list for python 3.4 due to a change in the implementation
@@ -109,6 +110,7 @@ class CSVLogger(DataHandler):
 
     def stop(self, measurementName, failureReason=None):
         if self._csvfile is not None:
+            self.logger.debug("Closing csvfile for " + measurementName)
             self._csvfile.close()
 
 
@@ -149,7 +151,6 @@ class AsyncHandler(DataHandler):
         remaining = -1
         while self.working:
             try:
-                self.logger.debug('async handle')
                 event = self.queue.get(timeout=1)
                 if event is not None:
                     self.delegate.handle(event)
@@ -162,7 +163,7 @@ class AsyncHandler(DataHandler):
                         self.logger.info('Closing down asynchandler, ' + str(remaining) + ' items remaining')
                         remaining -= 1
             except Empty:
-                self.logger.debug('async handle EMPTY')
+                pass
 
 
 class HttpPoster(DataHandler):

@@ -1,5 +1,4 @@
 import datetime
-import shutil
 from time import sleep
 from unittest.mock import MagicMock, Mock
 
@@ -10,13 +9,6 @@ from core.httpclient import RecordingHttpClient
 from core.interface import RecordingDeviceStatus, DATETIME_FORMAT
 
 DEVICE_MAX_AGE_SECONDS = 1
-
-
-@pytest.yield_fixture
-def tmpdirPath(tmpdir):
-    yield str(tmpdir)
-    # required due to https://github.com/pytest-dev/pytest/issues/1120
-    shutil.rmtree(str(tmpdir))
 
 
 @pytest.fixture
@@ -31,7 +23,7 @@ def targetStateController():
     return mm
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def deviceController(tmpdirPath, targetStateController, httpclient):
     controller = DeviceController(targetStateController, tmpdirPath, httpclient, maxAgeSeconds=DEVICE_MAX_AGE_SECONDS)
     yield controller
