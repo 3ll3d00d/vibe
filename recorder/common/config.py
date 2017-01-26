@@ -14,6 +14,32 @@ class Config(BaseConfig):
         self.recordingDevices = self._loadRecordingDevices()
         self.measurements = self._loadMeasurements()
 
+    def loadDefaultConfig(self):
+        return {
+            'debug': False,
+            'debugLogging': False,
+            'useAsyncHandler': True,
+            'accelerometers': [
+                {
+                    'name': 'mpu6050',
+                    'type': 'mpu6050',
+                    'fs': 500,
+                    'handler': 'local log',
+                    'io': {
+                        'type': 'smbus',
+                        'busId': 1
+                    }
+                }
+            ],
+            'handlers': [
+                {
+                    'name': 'remote',
+                    'type': 'post',
+                    'target': 'http://localhost:10001'
+                }
+            ]
+        }
+
     def useAsyncHandlers(self):
         """
         :return: if async handling is on, defaults to True.

@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from flask_restful import Api
 
@@ -10,15 +12,17 @@ from analyser.resources.measurement import InitialiseMeasurement, RecordData, Co
     FailMeasurement
 from analyser.resources.measurementdevices import MeasurementDevices, MeasurementDevice
 from analyser.resources.measurements import Measurements, ReloadMeasurement
+from core.httpclient import RequestsBasedHttpClient
 from core.reactor import Reactor
 
 app = Flask(__name__)
 api = Api(app)
 cfg = Config()
+httpclient = RequestsBasedHttpClient()
 reactor = Reactor(name='analyser')
 targetStateProvider = TargetStateProvider(cfg.targetState)
-targetStateController = TargetStateController(targetStateProvider, reactor)
-deviceController = DeviceController(targetStateController, cfg.dataDir)
+targetStateController = TargetStateController(targetStateProvider, reactor, httpclient)
+deviceController = DeviceController(targetStateController, cfg.dataDir, httpclient)
 measurementController = MeasurementController(targetStateProvider, cfg.dataDir, deviceController)
 resourceArgs = {
     'deviceController': deviceController,
@@ -59,7 +63,52 @@ api.add_resource(FailMeasurement, '/measurements/<measurementName>/<deviceName>/
 # PUT: analyse the measurement
 api.add_resource(Analyse, '/measurements/<measurementName>/analyse', resource_class_kwargs=resourceArgs)
 
+# TODO wrap flask with twisted and use twisted to serve the react app to avoid flask static file oddness
+# http://stackoverflow.com/questions/36880184/how-to-run-twisted-with-flask
+
 if __name__ == '__main__':
     cfg.configureLogger()
-    # get config from a flask standard place not our config yml
-    app.run(debug=cfg.runInDebug(), host='0.0.0.0', port=cfg.getPort())
+    if cfg.useTwisted:
+        from twisted.internet import reactor
+        from twisted.web.resource import Resource
+        from twisted.web import static, server
+        from twisted.web.wsgi import WSGIResource
+        from twisted.application import service
+        from twisted.internet import endpoints
+
+
+        class FlaskAppWrapper(Resource):
+            """
+            wraps the flask app as a WSGI resource while allow the react index.html (and its associated static content)
+            to be served as the default page
+            """
+
+            def __init__(self):
+                super().__init__()
+                self.wsgi = WSGIResource(reactor, reactor.getThreadPool(), app)
+                self.indexHtml = static.File(os.path.join(os.path.dirname(__file__), 'static', 'index.html'))
+                # makes the react static content available at /static
+                self.static = static.File(os.path.join(os.path.dirname(__file__), 'static', 'static'))
+
+            def getChild(self, path, request):
+                if path == b'':
+                    return self.indexHtml
+                elif path == b'static':
+                    return self.static
+                else:
+                    request.prepath.pop()
+                    request.postpath.insert(0, path)
+                    return self.wsgi
+
+            def render(self, request):
+                return self.wsgi.render(request)
+
+
+        application = service.Application('analyser')
+        site = server.Site(FlaskAppWrapper())
+        endpoint = endpoints.TCP4ServerEndpoint(reactor, cfg.getPort(), interface='0.0.0.0')
+        endpoint.listen(site)
+        reactor.run()
+    else:
+        # get config from a flask standard place not our config yml
+        app.run(debug=cfg.runInDebug(), host='0.0.0.0', port=cfg.getPort())

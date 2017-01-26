@@ -1,4 +1,6 @@
+import abc
 import logging
+import os
 from logging import handlers
 from os import environ
 from os import path
@@ -52,9 +54,19 @@ class BaseConfig(object):
         :return: the config.
         """
         configPath = path.join(self._getConfigPath(), self._name + ".yml")
-        self.logger.warning("Loading config from " + configPath)
-        with open(configPath, 'r') as yml:
-            return yaml.load(yml)
+        if os.path.exists(configPath):
+            self.logger.warning("Loading config from " + configPath)
+            with open(configPath, 'r') as yml:
+                return yaml.load(yml)
+        return self.loadDefaultConfig()
+
+    @abc.abstractmethod
+    def loadDefaultConfig(self):
+        """
+        Creates a default config bundle.
+        :return:
+        """
+        pass
 
     def _getConfigPath(self):
         """

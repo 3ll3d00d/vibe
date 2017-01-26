@@ -7,3 +7,4 @@ flask
 flask-restful
 pyyaml
 requests
+twisted
