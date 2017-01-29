@@ -1,34 +1,41 @@
-import React, { Component } from 'react';
-import { Grid, Navbar, Jumbotron, Button } from 'react-bootstrap';
+import React, {Component} from "react";
+import {Grid, Navbar, Nav, NavItem, Image, Row, Col} from "react-bootstrap";
+import {Link} from "react-router";
+import logo from "../public/vibe.png";
 
 class App extends Component {
     render() {
         return (
             <div>
-                <Navbar inverse fixedTop>
-                    <Grid>
-                        <Navbar.Header>
-                            <Navbar.Brand>
-                                <a href="/">React App</a>
-                            </Navbar.Brand>
-                            <Navbar.Toggle />
-                        </Navbar.Header>
-                    </Grid>
-                </Navbar>
-                <Jumbotron>
-                    <Grid>
-                        <h1>Welcome to React</h1>
-                        <p>
-                            <Button
-                                bsStyle="success"
-                                bsSize="large"
-                                href="http://react-bootstrap.github.io/components.html"
-                                target="_blank">
-                                View React Bootstrap Docs
-                            </Button>
-                        </p>
-                    </Grid>
-                </Jumbotron>
+                <Grid>
+                    <Row>
+                        <Col>
+                            <Navbar fixedTop>
+                                <Navbar.Header>
+                                    <Navbar.Brand>
+                                        <Image src={logo} rounded alt="Vibe"/>
+                                    </Navbar.Brand>
+                                    <Navbar.Toggle/>
+                                </Navbar.Header>
+                                <Navbar.Collapse>
+                                    <Nav bsStyle="tabs">
+                                        <NavItem eventKey={1}><Link to="/configure"
+                                                                    activeStyle={{color: 'red'}}>Configure</Link></NavItem>
+                                        <NavItem eventKey={2}><Link to="/measure"
+                                                                    activeStyle={{color: 'red'}}>Measure</Link></NavItem>
+                                        <NavItem eventKey={3}><Link to="/analyse"
+                                                                    activeStyle={{color: 'red'}}>Analyse</Link></NavItem>
+                                        <NavItem eventKey={3}><Link to="/rta"
+                                                                    activeStyle={{color: 'red'}}>RTA</Link></NavItem>
+                                    </Nav>
+                                </Navbar.Collapse>
+                            </Navbar>
+                        </Col>
+                    </Row>
+                    <Row>
+                        {this.props.children}
+                    </Row>
+                </Grid>
             </div>
         );
     }
