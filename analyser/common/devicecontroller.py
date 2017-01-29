@@ -82,7 +82,7 @@ class DeviceController(object):
         storedDevice.payload = device
         storedDevice.lastUpdateTime = datetime.datetime.now()
         self.devices.update({deviceId: storedDevice})
-        self.targetStateController.update(storedDevice.payload)
+        self.targetStateController.updateDeviceState(storedDevice.payload)
 
     def getDevices(self, status=None):
         """

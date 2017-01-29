@@ -2,6 +2,7 @@ import logging
 
 from flask_restful import marshal
 
+from analyser.common.config import loadTargetState
 from core.interface import targetStateFields
 from recorder.common.accelerometer import RecordingDeviceStatus
 
@@ -11,7 +12,7 @@ REACH_TARGET_STATE = 'RTS'
 
 
 class TargetStateController(object):
-    def __init__(self, targetStateProvider, reactor, httpclient):
+    def __init__(self, targetStateProvider, deviceController, reactor, httpclient):
         """
         Registers with the reactor.
         :param reactor:
@@ -20,8 +21,9 @@ class TargetStateController(object):
         self._httpclient = httpclient
         self._reactor.register(REACH_TARGET_STATE, _applyTargetState)
         self._targetStateProvider = targetStateProvider
+        self._deviceController = deviceController
 
-    def update(self, device):
+    def updateDeviceState(self, device):
         """
         Updates the target state on the specified device.
         :param targetState: the target state to reach.
@@ -31,6 +33,23 @@ class TargetStateController(object):
         # this is only threadsafe because the targetstate is effectively immutable, if it becomes mutable in future then
         # funkiness may result
         self._reactor.offer(REACH_TARGET_STATE, [self._targetStateProvider.state, device, self._httpclient])
+
+    def updateTargetState(self, newState):
+        """
+        Updates the system target state and propagates that to all devices.
+        :param newState:
+        :return:
+        """
+        self._targetStateProvider.state = loadTargetState(newState, self._targetStateProvider.state)
+        for device in self._deviceController.getDevices():
+            self.updateDeviceState(device.payload)
+
+    def getTargetState(self):
+        """
+        The current system target state.
+        :return: the state.
+        """
+        return self._targetStateProvider.state
 
 
 class TargetStateProvider(object):

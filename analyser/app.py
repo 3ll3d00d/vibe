@@ -12,6 +12,7 @@ from analyser.resources.measurement import InitialiseMeasurement, RecordData, Co
     FailMeasurement
 from analyser.resources.measurementdevices import MeasurementDevices, MeasurementDevice
 from analyser.resources.measurements import Measurements, ReloadMeasurement
+from analyser.resources.state import State
 from core.httpclient import RequestsBasedHttpClient
 from core.reactor import Reactor
 
@@ -26,13 +27,15 @@ deviceController = DeviceController(targetStateController, cfg.dataDir, httpclie
 measurementController = MeasurementController(targetStateProvider, cfg.dataDir, deviceController)
 resourceArgs = {
     'deviceController': deviceController,
-    'targetStateProvider': targetStateProvider,
     'targetStateController': targetStateController,
     'measurementController': measurementController,
 }
 
-# GET: the state of currently available measurementDevices
+# GET: gets the current target state
 # PATCH: mutate specific aspects of device configuration, delegates to the underlying measurementDevices
+api.add_resource(State, '/state', resource_class_kwargs=resourceArgs)
+
+# GET: the state of currently available measurementDevices
 api.add_resource(MeasurementDevices, '/devices', resource_class_kwargs=resourceArgs)
 
 # PUT: puts the current state of a measurement device into the analyser, called by the recorder
@@ -62,9 +65,6 @@ api.add_resource(FailMeasurement, '/measurements/<measurementName>/<deviceName>/
 
 # PUT: analyse the measurement
 api.add_resource(Analyse, '/measurements/<measurementName>/analyse', resource_class_kwargs=resourceArgs)
-
-# TODO wrap flask with twisted and use twisted to serve the react app to avoid flask static file oddness
-# http://stackoverflow.com/questions/36880184/how-to-run-twisted-with-flask
 
 if __name__ == '__main__':
     cfg.configureLogger()
