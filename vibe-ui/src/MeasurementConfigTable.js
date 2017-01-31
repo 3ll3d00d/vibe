@@ -16,7 +16,8 @@ class MeasurementConfigTable extends Component {
 
         return (
             <div>
-                <BootstrapTable data={ this.props.stateByAttribute } striped={ true } hover={ true } cellEdit={ cellEditProp }>
+                <BootstrapTable data={ this.props.stateByAttribute } striped={ true } hover={ true }
+                                cellEdit={ cellEditProp }>
                     <TableHeaderColumn isKey dataField='attribute' editable={ false }/>
                     <TableHeaderColumn dataField='target'>Target State</TableHeaderColumn>
                     {deviceColumns}
