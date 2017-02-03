@@ -1,49 +1,14 @@
 import React, {Component} from "react";
-import MeasurementConfig from "./MeasurementConfig";
-import Status from "./Status";
+import Message from "./Message";
 import {Grid, Row, Col} from "react-bootstrap";
 import {connect, PromiseState} from "react-refetch";
+import DeviceStatusTable from "./DeviceStatusTable";
+import TargetState from "./TargetState";
 
 // TODO maintain targetstate vals as state and accept updates from the contained table
 // TODO on click in SetState post current state back to server
-// TODO show last message from the server in the Status
 
 class Configure extends Component {
-
-    extractDeviceNames() {
-        return this.props.deviceState.map((device) => device.deviceId);
-    }
-
-    /**
-     * Combines the target state and the device state into a shape that allows a bootstrap table to render it as
-     * attribute by device name (where we assume the target state is a type of device). The properties of the
-     * target state are used as the canonical list of attributes we want to render.
-     * @returns {Array}
-     */
-    getStateByAttribute() {
-        return Reflect.ownKeys(this.props.targetState).map((attr) => {
-            let target = {attribute: attr, target: this.props.targetState[attr]};
-            let devices = this.props.deviceState.map((device) => {
-                return {[device.deviceId]: device.state[attr]}
-            });
-            return Object.assign(target, ...devices);
-        });
-    }
-
-    /**
-     * Exposes the current health state of each device.
-     * @returns {Array}
-     */
-    getCurrentDeviceState() {
-        return this.props.deviceState.map((device) => {
-            return {
-                deviceName: device.deviceId,
-                lastUpdate: device.lastUpdateTime,
-                status: device.state.status,
-                failureCode: device.state.failureCode
-            }
-        });
-    }
 
     render() {
         const {deviceState, targetState} = this.props;
@@ -52,13 +17,13 @@ class Configure extends Component {
         if (allFetches.pending) {
             return (
                 <div>
-                    <Status alert="false" message="Loading"/>
+                    <Message type="info" message="Loading"/>
                 </div>
             );
         } else if (allFetches.rejected) {
             return (
                 <div>
-                    <Status alert="true" message={ allFetches.reason }/>
+                    <Message title="Unable to fetch data" type="danger" message={allFetches.reason.toString()}/>
                 </div>
             );
         } else if (allFetches.fulfilled) {
@@ -67,13 +32,12 @@ class Configure extends Component {
                     <Grid>
                         <Row>
                             <Col>
-                                <Status alert="false" deviceState={ this.getCurrentDeviceState() }/>
+                                <DeviceStatusTable deviceState={ this.props.deviceState.value }/>
                             </Col>
                         </Row>
                         <Row>
                             <Col>
-                                <MeasurementConfig deviceNames={ this.extractDeviceNames() }
-                                                   stateByAttribute={ this.getStateByAttribute() }/>
+                                <TargetState targetState={ this.props.targetState.value }/>
                             </Col>
                         </Row>
                     </Grid>
@@ -82,4 +46,7 @@ class Configure extends Component {
         }
     }
 }
-export default connect(props => ( {deviceState: `/devices`, targetState: `/state`} ))(Configure)
+export default connect(props => ( {
+    deviceState: {url: `/devices`, refreshInterval: 1000},
+    targetState: {url: `/state`, refreshInterval: 1000}
+} ))(Configure)

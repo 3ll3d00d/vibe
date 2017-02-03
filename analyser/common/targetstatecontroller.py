@@ -12,7 +12,7 @@ REACH_TARGET_STATE = 'RTS'
 
 
 class TargetStateController(object):
-    def __init__(self, targetStateProvider, deviceController, reactor, httpclient):
+    def __init__(self, targetStateProvider, reactor, httpclient, deviceController=None):
         """
         Registers with the reactor.
         :param reactor:
@@ -21,7 +21,7 @@ class TargetStateController(object):
         self._httpclient = httpclient
         self._reactor.register(REACH_TARGET_STATE, _applyTargetState)
         self._targetStateProvider = targetStateProvider
-        self._deviceController = deviceController
+        self.deviceController = deviceController
 
     def updateDeviceState(self, device):
         """
@@ -41,7 +41,7 @@ class TargetStateController(object):
         :return:
         """
         self._targetStateProvider.state = loadTargetState(newState, self._targetStateProvider.state)
-        for device in self._deviceController.getDevices():
+        for device in self.deviceController.getDevices():
             self.updateDeviceState(device.payload)
 
     def getTargetState(self):

@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import {Grid, Navbar, Nav, NavItem, Image, Row, Col} from "react-bootstrap";
-import {Link} from "react-router";
+import {LinkContainer} from 'react-router-bootstrap';
 import logo from "../public/vibe.png";
 
 class App extends Component {
@@ -10,7 +10,7 @@ class App extends Component {
                 <Grid>
                     <Row>
                         <Col>
-                            <Navbar fixedTop>
+                            <Navbar>
                                 <Navbar.Header>
                                     <Navbar.Brand>
                                         <Image src={logo} rounded alt="Vibe"/>
@@ -19,14 +19,18 @@ class App extends Component {
                                 </Navbar.Header>
                                 <Navbar.Collapse>
                                     <Nav bsStyle="tabs">
-                                        <NavItem eventKey={1}><Link to="/configure"
-                                                                    activeStyle={{color: 'red'}}>Configure</Link></NavItem>
-                                        <NavItem eventKey={2}><Link to="/measure"
-                                                                    activeStyle={{color: 'red'}}>Measure</Link></NavItem>
-                                        <NavItem eventKey={3}><Link to="/analyse"
-                                                                    activeStyle={{color: 'red'}}>Analyse</Link></NavItem>
-                                        <NavItem eventKey={3}><Link to="/rta"
-                                                                    activeStyle={{color: 'red'}}>RTA</Link></NavItem>
+                                        <LinkContainer to="/configure">
+                                            <NavItem eventKey={1}>Configure</NavItem>
+                                        </LinkContainer>
+                                        <LinkContainer to="/measure">
+                                            <NavItem eventKey={2}>Measure</NavItem>
+                                        </LinkContainer>
+                                        <LinkContainer to="/rta">
+                                            <NavItem eventKey={3}>RTA</NavItem>
+                                        </LinkContainer>
+                                        <LinkContainer to="/analyse">
+                                            <NavItem eventKey={4}>Analyse</NavItem>
+                                        </LinkContainer>
                                     </Nav>
                                 </Navbar.Collapse>
                             </Navbar>

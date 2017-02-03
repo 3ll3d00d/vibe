@@ -24,6 +24,7 @@ reactor = Reactor(name='analyser')
 targetStateProvider = TargetStateProvider(cfg.targetState)
 targetStateController = TargetStateController(targetStateProvider, reactor, httpclient)
 deviceController = DeviceController(targetStateController, cfg.dataDir, httpclient)
+targetStateController.deviceController = deviceController
 measurementController = MeasurementController(targetStateProvider, cfg.dataDir, deviceController)
 resourceArgs = {
     'deviceController': deviceController,
