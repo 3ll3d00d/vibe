@@ -20,7 +20,7 @@ class DeviceStatusTable extends Component {
         }
         return (
             <Panel header="Measurement Devices" bsStyle="info">
-                <Table striped bordered condensed hover fill>
+                <Table striped bordered condensed hover fill responsive>
                     <DeviceStatusHeader/>
                     <tbody>
                     {rows}
