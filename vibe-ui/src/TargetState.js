@@ -21,19 +21,19 @@ class TargetState extends Component {
     }
 
     handleFs = (event) => {
-        this.setState({fs: event.target.value});
+        this.setState({fs: parseInt(event.target.value, 10)});
     };
 
     handleSamplesPerBatch = (event) => {
-        this.setState({samplesPerBatch: event.target.value});
+        this.setState({samplesPerBatch: parseInt(event.target.value, 10)});
     };
 
     handleAccelerometerSens = (event) => {
-        this.setState({accelerometerSens: event.target.value});
+        this.setState({accelerometerSens: parseInt(event.target.value, 10)});
     };
 
     handleGyroSens = (event) => {
-        this.setState({gyroSens: event.target.value});
+        this.setState({gyroSens: parseInt(event.target.value, 10)});
     };
 
     getFs() {
@@ -74,7 +74,7 @@ class TargetState extends Component {
         if (this.hasSamplesPerBatch()) targetState.samplesPerBatch = this.getSamplesPerBatch();
         if (this.hasAccelerometerSens()) {
             let sens = this.getAccelerometerSens();
-            if (sens === "0") {
+            if (sens === -1) {
                 targetState.accelerometerEnabled = false;
             } else {
                 targetState.accelerometerEnabled = true;
@@ -83,7 +83,7 @@ class TargetState extends Component {
         }
         if (this.hasGyroSens()) {
             let sens = this.getGyroSens();
-            if (sens === "0") {
+            if (sens === -1) {
                 targetState.gyroEnabled = false;
             } else {
                 targetState.gyroEnabled = true;
@@ -158,7 +158,7 @@ class SensorControl extends Component {
                              placeholder="select"
                              value={this.props.sens}
                              onChange={this.props.sensHandler}>
-                    <option value="0">Disabled</option>
+                    <option value="-1">Disabled</option>
                     {options}
                 </FormControl>
             </FormGroup>

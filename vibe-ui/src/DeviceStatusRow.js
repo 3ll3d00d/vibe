@@ -31,11 +31,12 @@ export class DeviceStatusHeader extends Component {
 
 class HeaderOne extends Component {
     render() {
+        let headerStyle = { textAlign: "center" };
         return (
             <tr key="header1">
                 <th colSpan="5"/>
-                <th colSpan="2">Accelerometer</th>
-                <th colSpan="2">Gyro</th>
+                <th colSpan="2" style={headerStyle}>Accelerometer</th>
+                <th colSpan="2" style={headerStyle}>Gyro</th>
             </tr>
         );
     }

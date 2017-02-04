@@ -86,7 +86,6 @@ def _applyTargetState(targetState, md, httpclient):
     :param httpclient: the http client
     :return:
     """
-    logger.debug("Processing targetStateProvider for " + md['name'])
     anyUpdate = False
     if md['fs'] != targetState.fs:
         logger.info("Updating fs from " + str(md['fs']) + " to " + str(targetState.fs) + " for " + md['name'])
@@ -119,7 +118,11 @@ def _applyTargetState(targetState, md, httpclient):
         anyUpdate = True
 
     if anyUpdate:
+        payload = marshal(targetState, targetStateFields)
+        logger.info("Applying target state change " + md['name'] + " - " + str(payload))
         if RecordingDeviceStatus.INITIALISED.name == md.get('status'):
-            httpclient.patch(md['serviceURL'], json=marshal(targetState, targetStateFields))
+            httpclient.patch(md['serviceURL'], json=payload)
         else:
-            logger.debug("Ignoring update until device is idle")
+            logger.warning("Ignoring target state change until " + md['name'] + " is idle")
+    else:
+        logger.debug("Device " + md['name'] + " is at target state, we continue")
