@@ -8,7 +8,7 @@ class DeviceStatusTable extends Component {
         let rows = <div/>;
         if (this.props.deviceState) {
             rows = this.props.deviceState.map((state) => {
-                return <DeviceStatusRow key={state.deviceId} deviceState={state}/>
+                return <DeviceStatusRow key={state.deviceId} deviceState={state} targetState={this.props.targetState}/>
             });
         }
         if (rows.length === 0) {

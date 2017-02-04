@@ -32,7 +32,8 @@ class Configure extends Component {
                     <Grid>
                         <Row>
                             <Col>
-                                <DeviceStatusTable deviceState={ this.props.deviceState.value }/>
+                                <DeviceStatusTable deviceState={ this.props.deviceState.value }
+                                                   targetState={ this.props.targetState.value }/>
                             </Col>
                         </Row>
                         <Row>
