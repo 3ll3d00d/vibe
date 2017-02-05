@@ -200,11 +200,13 @@ class SampleRate extends Component {
             <FormGroup>
                 <FormGroup controlId="fs" validationState={this.props.fsValidationState}>
                     <ControlLabel>Sample Rate (Hz) {currentFs}</ControlLabel>
-                    <FormControl componentClass="input" value={this.props.fs} onChange={this.props.fsHandler}/>
+                    <FormControl type="number" min="1" max="1000" step="1" value={this.props.fs}
+                                 onChange={this.props.fsHandler}/>
                 </FormGroup>
                 <FormGroup controlId="batch" validationState={this.props.batchValidationState}>
                     <ControlLabel>Samples per Batch {currentBatch}</ControlLabel>
-                    <FormControl componentClass="input" value={this.props.batch} onChange={this.props.batchHandler}/>
+                    <FormControl type="number" min="1" step="1" value={this.props.batch}
+                                 onChange={this.props.batchHandler}/>
                 </FormGroup>
             </FormGroup>
         );

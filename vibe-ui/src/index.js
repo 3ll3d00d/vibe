@@ -8,13 +8,14 @@ import "./index.css";
 import App from "./App";
 import About from "./About";
 import Configure from "./Configure";
+import Measure from "./Measure";
 
 ReactDOM.render(
     (
         <Router history={browserHistory}>
             <Route path="/" component={App}>
                 <Route path="/configure" component={Configure}/>
-                <Route path="/measure" component={About}/>
+                <Route path="/measure" component={Measure}/>
                 <Route path="/analyse" component={About}/>
                 <Route path="/rta" component={About}/>
             </Route>

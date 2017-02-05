@@ -9,7 +9,7 @@ const right = {float: 'right'};
 export class DeviceStatusRow extends Component {
     render() {
         return (
-            <tr>
+            <tr key={this.props.deviceState.state.name}>
                 <td>{this.props.deviceState.state.name}</td>
                 <DeviceStatusCell deviceState={this.props.deviceState}/>
                 <td>

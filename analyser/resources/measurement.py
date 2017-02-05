@@ -85,7 +85,7 @@ class Measurement(Resource):
     def delete(self, measurementName):
         """
         Deletes the named measurement.
-        :return: 200 if something was deleted, 404 if the measurement doesn't exist, 500 in any other caes.
+        :return: 200 if something was deleted, 404 if the measurement doesn't exist, 500 in any other case.
         """
         message, count, deleted = self._measurementController.delete(measurementName)
         if count == 0:

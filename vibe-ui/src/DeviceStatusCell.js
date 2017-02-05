@@ -1,4 +1,6 @@
 import React, {Component} from "react";
+import {Label, OverlayTrigger, Tooltip} from "react-bootstrap";
+import FontAwesome from "react-fontawesome";
 
 class DeviceStatusCell extends Component {
     render() {
@@ -16,9 +18,15 @@ class DeviceStatusCell extends Component {
 
 class InitialisedCell extends Component {
     render() {
+        const label = <Label bsStyle="success"><FontAwesome name="check"/></Label>;
+        const tooltip = <Tooltip id="ok">OK</Tooltip>;
+        const body = <div>{label}&nbsp;{this.props.deviceState.lastUpdateTime.toString()}</div>;
         return (
             <td colSpan="2">
-                OK - {this.props.deviceState.lastUpdateTime.toString()}
+                <OverlayTrigger placement="top"
+                                overlay={tooltip}>
+                    {body}
+                </OverlayTrigger>
             </td>
         );
     }
@@ -26,13 +34,31 @@ class InitialisedCell extends Component {
 
 class RecordingCell extends Component {
     render() {
-        return <div></div>
+        const label = <Label bsStyle="warning"><FontAwesome name="spinner" spin/></Label>;
+        const tooltip = <Tooltip id="recording">RECORDING</Tooltip>;
+        return (
+            <td colSpan="2">
+                <OverlayTrigger placement="top"
+                                overlay={tooltip}>
+                    {label}&nbsp;{this.props.deviceState.lastUpdateTime.toString()}
+                </OverlayTrigger>;
+            </td>
+        );
     }
 }
 
 class FailedCell extends Component {
     render() {
-        return <div></div>
+        const label = <Label bsStyle="danger"><FontAwesome name="exclamation"/></Label>;
+        const tooltip = <Tooltip id="failed">FAILED</Tooltip>;
+        return (
+            <td colSpan="2">
+                <OverlayTrigger placement="top"
+                                overlay={tooltip}>
+                    {label}&nbsp;{this.props.deviceState.lastUpdateTime.toString()}
+                </OverlayTrigger>;
+            </td>
+        );
     }
 }
 

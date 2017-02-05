@@ -5,11 +5,7 @@ import {connect, PromiseState} from "react-refetch";
 import DeviceStatusTable from "./DeviceStatusTable";
 import TargetState from "./TargetState";
 
-// TODO maintain targetstate vals as state and accept updates from the contained table
-// TODO on click in SetState post current state back to server
-
 class Configure extends Component {
-
     render() {
         const {deviceState, targetState} = this.props;
         // compose multiple PromiseStates together to wait on them as a whole

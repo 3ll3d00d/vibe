@@ -18,7 +18,7 @@ class Measurements(Resource):
         Gets the currently available measurements.
         :return:
         """
-        return [self._measurementController.getMeasurements()], 200
+        return self._measurementController.getMeasurements(), 200
 
 
 class ReloadMeasurement(Resource):
