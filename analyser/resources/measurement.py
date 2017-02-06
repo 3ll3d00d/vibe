@@ -82,6 +82,7 @@ class Measurement(Resource):
         """
         return start + datetime.timedelta(days=0, seconds=delay)
 
+    @marshal_with(measurementFields)
     def delete(self, measurementName):
         """
         Deletes the named measurement.

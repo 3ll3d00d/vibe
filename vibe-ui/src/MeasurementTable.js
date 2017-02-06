@@ -17,12 +17,31 @@ class MeasurementTable extends Component {
 
     dataRow(measurement) {
         let deleteButton = null;
-        // TODO only set this row to a spinner
-        if (this.props.deleteMeasurementResponse) {
-            deleteButton =
-                <Button bsStyle="danger" disabled>
-                    <FontAwesome name="spinner" spin size="lg"/>&nbsp;Deleting
-                </Button>;
+        let deletePromise = this.props[`deleteMeasurementResponse_${measurement.name}`];
+        if (deletePromise) {
+            if (deletePromise.pending) {
+                deleteButton =
+                    <Button bsStyle="danger" disabled>
+                        <FontAwesome name="spinner" spin size="lg"/>&nbsp;Deleting
+                    </Button>;
+            } else if (deletePromise.rejected) {
+                const code = deletePromise.meta.response.status;
+                const text = deletePromise.meta.response.statusText;
+                const tooltip = <Tooltip id={measurement.name}>{code} - {text}</Tooltip>;
+                deleteButton =
+                    <OverlayTrigger placement="top" overlay={tooltip}>
+                        <div>
+                            <Button bsStyle="warning">
+                                <FontAwesome name="exclamation" size="lg"/>&nbsp;FAILED
+                            </Button>
+                        </div>
+                    </OverlayTrigger>;
+            } else if (deletePromise.fulfilled) {
+                deleteButton =
+                    <Button bsStyle="success" disabled>
+                        <FontAwesome name="check" size="lg"/>&nbsp;Deleted
+                    </Button>;
+            }
         } else {
             deleteButton =
                 <Button bsStyle="danger" onClick={() => this.props.deleteMeasurement(measurement.name)}>
@@ -70,6 +89,8 @@ class MeasurementTable extends Component {
                 return this.dataRow(measurement)
             });
         }
+        // TODO find a way to reuse a name so we can recreate measurements without refreshing
+        // const deleted = Reflect.ownKeys(this.props).filter(s => s.startsWith("deleteMeasurementResponse_"));
         const sortInfo = [
             'status',
             'fs',
@@ -143,8 +164,8 @@ class SensorCell extends Component {
 
 export default connect(props => ({
     deleteMeasurement: measurementId => ({
-        deleteMeasurementResponse: {
-            url: `/measurement/${measurementId}`,
+        [`deleteMeasurementResponse_${measurementId}`]: {
+            url: `/measurements/${measurementId}`,
             method: 'DELETE'
         }
     })

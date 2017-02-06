@@ -61,9 +61,26 @@ class ScheduleMeasurement extends Component {
     }
 
     render() {
+        let submitButton =
+            <Button type="submit" onClick={this.handleSubmit}>
+                <FontAwesome name="play"/>&nbsp;Go!
+            </Button>;
+        if (this.props.createMeasurementResponse) {
+            if (this.props.createMeasurementResponse.pending) {
+                submitButton =
+                    <Button type="submit" disabled>
+                        <FontAwesome name="spinner" size="2x" spin/>&nbsp;Go!
+                    </Button>;
+            } else if (this.props.createMeasurementResponse.rejected) {
+                submitButton =
+                    <Button type="submit" bsStyle="danger">
+                        <FontAwesome name="exclamation" size="2x"/>&nbsp;Error!
+                    </Button>;
+            }
+        }
         return (
             <Well>
-                <Form onSubmit={this.handleSubmit}>
+                <Form onSubmit={false}>
                     <Row>
                         <Col md={2}>
                             <FormGroup controlId="name">
@@ -100,7 +117,7 @@ class ScheduleMeasurement extends Component {
                     </Row>
                     <Row>
                         <Col md={2}>
-                            <Button type="submit"><FontAwesome name="play"/>&nbsp; Go!</Button>
+                            {submitButton}
                         </Col>
                     </Row>
                 </Form>

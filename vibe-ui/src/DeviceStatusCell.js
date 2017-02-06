@@ -23,10 +23,7 @@ class InitialisedCell extends Component {
         const body = <div>{label}&nbsp;{this.props.deviceState.lastUpdateTime.toString()}</div>;
         return (
             <td colSpan="2">
-                <OverlayTrigger placement="top"
-                                overlay={tooltip}>
-                    {body}
-                </OverlayTrigger>
+                <OverlayTrigger placement="left" overlay={tooltip}>{body}</OverlayTrigger>
             </td>
         );
     }

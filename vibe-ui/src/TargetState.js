@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {Panel, Button, ControlLabel, FormGroup, FormControl} from "react-bootstrap";
+import {Row, Col, Panel, Button, ControlLabel, FormGroup, FormControl} from "react-bootstrap";
 import {connect} from "react-refetch";
 
 class TargetState extends Component {
@@ -155,26 +155,32 @@ class TargetState extends Component {
             <Panel header="Target State" bsStyle="info">
                 <form onSubmit={this.handleSubmit}>
                     <FormGroup controlId="foo">
-                        <SampleRate fs={this.getFs()}
-                                    serverFs={this.props.targetState.fs}
-                                    fsHandler={this.handleFs}
-                                    fsValidationState={this.getFsValidationState()}
-                                    batch={this.getSamplesPerBatch()}
-                                    serverBatch={this.props.targetState.samplesPerBatch}
-                                    batchHandler={this.handleSamplesPerBatch}
-                                    batchValidationState={this.getBatchValidationState()}/>
-                        <SensorControl name="Accelerometer Sensitivity"
-                                       sens={this.getAccelerometerSens()}
-                                       serverSens={serverAccelerometerSens}
-                                       options={accelOptions}
-                                       sensHandler={this.handleAccelerometerSens}
-                                       unit="G"/>
-                        <SensorControl name="Gyro Sensitivity"
-                                       sens={this.getGyroSens()}
-                                       serverSens={serverGyroSens}
-                                       options={gyroOptions}
-                                       sensHandler={this.handleGyroSens}
-                                       unit="Degrees/s"/>
+                        <Row>
+                            <Col md={6}>
+                                <SampleRate fs={this.getFs()}
+                                            serverFs={this.props.targetState.fs}
+                                            fsHandler={this.handleFs}
+                                            fsValidationState={this.getFsValidationState()}
+                                            batch={this.getSamplesPerBatch()}
+                                            serverBatch={this.props.targetState.samplesPerBatch}
+                                            batchHandler={this.handleSamplesPerBatch}
+                                            batchValidationState={this.getBatchValidationState()}/>
+                            </Col>
+                            <Col md={6}>
+                                <SensorControl name="Accelerometer Sensitivity"
+                                               sens={this.getAccelerometerSens()}
+                                               serverSens={serverAccelerometerSens}
+                                               options={accelOptions}
+                                               sensHandler={this.handleAccelerometerSens}
+                                               unit="G"/>
+                                <SensorControl name="Gyro Sensitivity"
+                                               sens={this.getGyroSens()}
+                                               serverSens={serverGyroSens}
+                                               options={gyroOptions}
+                                               sensHandler={this.handleGyroSens}
+                                               unit="Degrees/s"/>
+                            </Col>
+                        </Row>
                     </FormGroup>
                     <Button type="submit">
                         Update Device

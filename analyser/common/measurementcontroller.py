@@ -360,7 +360,14 @@ class MeasurementController(object):
             String: error messages
             Integer: count of measurements deleted
         """
-        if measurementName in self.completeMeasurements:
+        message, count, deleted = self.deleteFrom(measurementName, self.completeMeasurements)
+        if count is 0:
+            message, count, deleted = self.deleteFrom(measurementName, self.failedMeasurements)
+        return message, count, deleted
+
+    def deleteFrom(self, measurementName, data):
+        toDeleteIdx = [ind for ind, x in enumerate(data) if x.name == measurementName]
+        if toDeleteIdx:
             errors = []
 
             def logError(func, path, exc_info):
@@ -372,11 +379,12 @@ class MeasurementController(object):
             logger.info("Deleting measurement: " + measurementName)
             shutil.rmtree(self._getPathToMeasurementMetaDir(measurementName), ignore_errors=False, onerror=logError)
             if len(errors) is 0:
-                return None, 1 if self.completeMeasurements.pop(measurementName) else 0
+                popped = data.pop(toDeleteIdx[0])
+                return None, 1 if popped else 0, popped
             else:
-                return errors, 0
+                return errors, 0, None
         else:
-            return measurementName + " does not exist", 0
+            return measurementName + " does not exist", 0, None
 
     def reloadCompletedMeasurements(self):
         """
