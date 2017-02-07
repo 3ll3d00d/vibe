@@ -128,5 +128,7 @@ class DeviceController(object):
             logger.info('Sending measurement ' + measurementName + ' to ' + device.payload['serviceURL'])
             resp = self.httpclient.put(device.payload['serviceURL'] + '/measurements/' + measurementName,
                                        json={'duration': duration, 'at': start.strftime(DATETIME_FORMAT)})
+            logger.info('Response for ' + measurementName + ' from ' + device.payload['serviceURL'] + ' is ' +
+                        str(resp.status_code))
             results[device] = resp.status_code
         return results

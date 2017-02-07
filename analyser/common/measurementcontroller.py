@@ -91,6 +91,7 @@ class ActiveMeasurement(object):
         :param reason: the reason.
         :return:
         """
+        logger.info('Updating recording device state for ' + deviceName + ' to ' + state.name + '[reason: '  + reason + ']')
         self.recordingDevices[deviceName] = {'state': state.name, 'reason': reason}
 
     def __str__(self):
@@ -115,7 +116,7 @@ class CompleteMeasurement(object):
         self.measurementParameters = meta['measurementParameters']
         self.description = meta['description']
         self.recordingDevices = meta['recordingDevices']
-        self.status = MeasurementStatus.COMPLETE
+        self.status = MeasurementStatus[meta['status']]
 
     def inflate(self):
         """
@@ -170,17 +171,19 @@ class MeasurementController(object):
             for am in list(self.activeMeasurements):
                 now = datetime.datetime.now()
                 # devices were allocated and have completed == complete
-                if len(am.recordingDevices) > 0:
+                recordingDeviceCount = len(am.recordingDevices)
+                if recordingDeviceCount > 0:
                     if all(entry['state'] == RecordStatus.COMPLETE.name for entry in am.recordingDevices.values()):
                         logger.info("Detected completedmeasurement " + am.name)
                         self._moveToComplete(am)
 
                 # we have reached the end time and we have either all failed devices or no devices == kill
                 if now > (am.endTime + datetime.timedelta(days=0, seconds=1)):
-                    if (len(am.recordingDevices) > 0
-                        and all(entry['state'] == RecordStatus.FAILED.name for entry in am.recordingDevices.values())) \
-                            or len(am.recordingDevices) == 0:
-                        logger.warning("Detected failed measurement " + am.name)
+                    allFailed = all(entry['state'] == RecordStatus.FAILED.name
+                                    for entry in am.recordingDevices.values())
+                    if (recordingDeviceCount > 0 and allFailed) or recordingDeviceCount == 0:
+                        logger.warning("Detected failed measurement " + am.name + " with " + str(recordingDeviceCount)
+                                       + " devices, allFailed: " + str(allFailed))
                         self._moveToFailed(am)
 
                 # we are well past the end time and we have failed devices or an ongoing recording == kill or deathbed
@@ -190,7 +193,6 @@ class MeasurementController(object):
                         self._moveToFailed(am)
                     elif all(entry['state'] == RecordStatus.RECORDING.name for entry in am.recordingDevices.values()):
                         self._handleDeathbed(am)
-            # TODO should we delete failed measurements or just provide the option via the UI?
             time.sleep(0.1)
         logger.warning("MeasurementCaretaker is now shutdown")
 
@@ -245,13 +247,23 @@ class MeasurementController(object):
         elif any([m for m in self.getMeasurements() if m.name == name]):
             return False, "Duplicate measurement name [" + name + "]"
         else:
+            logger.info("Scheduling measurement " + name + " at " + str(startTime) + " for " + str(duration) + "s")
             am = ActiveMeasurement(name, startTime, duration, self.targetStateProvider.state, description=description)
             self.activeMeasurements.append(am)
             devices = self.deviceController.scheduleMeasurement(name, duration, startTime)
+            anyFail = False
             for device, status in devices.items():
-                am.updateDeviceStatus(device.deviceId, RecordStatus.SCHEDULED if status == 200 else RecordStatus.FAILED)
-            # TODO if any fail then abort the measurement and throw it in the bin
-            am.status = MeasurementStatus.SCHEDULED
+                if status == 200:
+                    deviceStatus = RecordStatus.SCHEDULED
+                else:
+                    deviceStatus = RecordStatus.FAILED
+                    anyFail = True
+                am.updateDeviceStatus(device.deviceId, deviceStatus)
+            if anyFail:
+                am.status = MeasurementStatus.FAILED
+            else:
+                if am.status is MeasurementStatus.NEW:
+                    am.status = MeasurementStatus.SCHEDULED
             return True, None
 
     def _clashes(self, startTime, duration):
@@ -393,7 +405,8 @@ class MeasurementController(object):
         reloaded = [self.load(name) for name in os.listdir(self.dataDir) if
                     os.path.isdir(os.path.join(self.dataDir, name))]
         logger.info('Reloaded ' + str(len(reloaded)) + ' completed measurements')
-        self.completeMeasurements = reloaded
+        self.completeMeasurements = [x for x in reloaded if x.status == MeasurementStatus.COMPLETE]
+        self.failedMeasurements = [x for x in reloaded if x.status == MeasurementStatus.FAILED]
 
     def getMeasurements(self, measurementStatus=None):
         """

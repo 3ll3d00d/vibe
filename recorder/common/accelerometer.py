@@ -91,6 +91,7 @@ class Accelerometer(object):
             self.failureCode = str(sys.exc_info())
             logger.exception(measurementName + " failed")
         finally:
+            # TODO post the status to the server instead of logging it here
             self.dataHandler.stop(measurementName)
             expectedSamples = self.fs * (durationInSeconds if durationInSeconds is not None else elapsedTime)
             if self._sampleIdx < expectedSamples:

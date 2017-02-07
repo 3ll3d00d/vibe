@@ -59,6 +59,10 @@ class Measurement(Resource):
         record = self.measurements.get(deviceId)
         if record is not None:
             measurement = record.get(measurementName)
+            if measurement is not None:
+                if len([x.name for x in measurement.statuses if x.name is 'COMPLETE' or x.name is 'FAILED']) > 0:
+                    logger.info('Overwriting existing completed measurement ' + x.name)
+                    measurement = None
             if measurement is None:
                 logger.info('Initiating measurement ' + measurementName)
                 measurement = ScheduledMeasurement(measurementName, self.recordingDevices.get(deviceId))
@@ -161,6 +165,7 @@ class ScheduledMeasurement:
             self.device.start(self.name, durationInSeconds=duration)
         finally:
             self.recording = False
+        # remove this and just delete the measurement, we only need to know about it for as long as the measurement is active
         if self.device.status == RecordingDeviceStatus.FAILED:
             self.statuses.append({'name': ScheduledMeasurementStatus.FAILED.name,
                                   'time': datetime.now(),
