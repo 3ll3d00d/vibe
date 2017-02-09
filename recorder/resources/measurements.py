@@ -68,7 +68,11 @@ class Measurement(Resource):
                 measurement = ScheduledMeasurement(measurementName, self.recordingDevices.get(deviceId))
                 body = request.get_json()
                 duration_ = body['duration']
-                measurement.schedule(duration_, at=body.get('at'), delay=body.get('delay'))
+                def _cleanup():
+                    logger.info('Removing ' + measurementName + ' from ' + deviceId)
+                    record.pop(measurementName)
+                measurement.schedule(duration_, at=body.get('at'), delay=body.get('delay'), callback=_cleanup)
+                # a quick hack to enable the measurement to be cleaned up by the ScheduledMeasurement
                 record[measurementName] = measurement
                 return measurement, 200
             else:
@@ -139,16 +143,19 @@ class ScheduledMeasurement:
         self.device = device
         self.recording = False
         self.statuses = [{'name': ScheduledMeasurementStatus.INITIALISING.name, 'time': datetime.now()}]
+        self.callback = None
 
-    def schedule(self, duration, at=None, delay=None):
+    def schedule(self, duration, at=None, delay=None, callback=None):
         """
         schedules the measurement (to execute asynchronously).
         :param duration: how long to run for.
         :param at: the time to start at.
         :param delay: the time to wait til starting (use at or delay).
+        :param callback: a callback.
         :return: nothing.
         """
         delay = self.calculateDelay(at, delay)
+        self.callback = callback
         logger.info('Initiating measurement ' + self.name + ' for ' + str(duration) + 's in ' + str(delay) + 's')
         self.statuses.append({'name': ScheduledMeasurementStatus.SCHEDULED.name, 'time': datetime.now()})
         threading.Timer(delay, self.execute, [duration]).start()
@@ -165,13 +172,15 @@ class ScheduledMeasurement:
             self.device.start(self.name, durationInSeconds=duration)
         finally:
             self.recording = False
-        # remove this and just delete the measurement, we only need to know about it for as long as the measurement is active
         if self.device.status == RecordingDeviceStatus.FAILED:
             self.statuses.append({'name': ScheduledMeasurementStatus.FAILED.name,
                                   'time': datetime.now(),
                                   'reason': self.device.failureCode})
         else:
             self.statuses.append({'name': ScheduledMeasurementStatus.COMPLETE.name, 'time': datetime.now()})
+        # this is a bit of a hack, need to remove this at some point by refactoring the way measurements are stored
+        if self.callback is not None:
+            self.callback()
 
     def calculateDelay(self, at, delay):
         """

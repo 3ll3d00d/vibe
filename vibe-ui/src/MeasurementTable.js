@@ -134,10 +134,13 @@ class StatusCell extends Component {
                 label = <Label bsStyle="success"><FontAwesome name="check"/></Label>;
                 break;
             case "RECORDING":
-                label = <Label bsStyle="primary"><FontAwesome name="spinner" spin/></Label>;
+                label = <Label bsStyle="success"><FontAwesome name="spinner" spin/></Label>;
                 break;
             case "FAILED":
                 label = <Label bsStyle="danger"><FontAwesome name="exclamation-triangle"/></Label>;
+                break;
+            case "SCHEDULED":
+                label = <Label bsStyle="success"><FontAwesome name="clock-o"/></Label>;
                 break;
             default:
                 label = <Label bsStyle="warning"><FontAwesome name="question"/></Label>;
@@ -150,8 +153,8 @@ class StatusCell extends Component {
 
 class SensorCell extends Component {
     render() {
-        const gyroIcon = this.props.gyro ? "check-square-o" : "square-o";
-        const accelIcon = this.props.accel ? "check-square-o" : "square-o";
+        const gyroIcon = this.props.gyro ? "check-square-o" : "minus-square-o";
+        const accelIcon = this.props.accel ? "check-square-o" : "minus-square-o";
         return (
             <span>
                 <Label bsStyle="primary">Accelerometer  <FontAwesome name={accelIcon}/></Label>

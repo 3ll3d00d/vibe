@@ -1,4 +1,5 @@
 import copy
+import faulthandler
 import logging.handlers
 
 from flask import Flask
@@ -24,6 +25,12 @@ inject = {
 }
 app = Flask(__name__)
 api = Api(app)
+
+# register a thread dumper
+faulthandler.enable()
+if hasattr(faulthandler, 'register'):
+    import signal
+    faulthandler.register(signal.SIGUSR2, all_threads=True)
 
 # GET: the recordingDevices on this host
 api.add_resource(RecordingDevices, '/devices', resource_class_kwargs=inject)

@@ -108,9 +108,12 @@ class InitialiseMeasurement(Resource):
         :param deviceName:
         :return:
         """
+        logger.info('Starting measurement ' + measurementName + ' for ' + deviceName)
         if self._measurementController.startMeasurement(measurementName, deviceName):
+            logger.info('Started measurement ' + measurementName + ' for ' + deviceName)
             return None, 200
         else:
+            logger.warning('Failed to start measurement ' + measurementName + ' for ' + deviceName)
             return None, 404
 
 
@@ -133,8 +136,10 @@ class RecordData(Resource):
             if self._measurementController.recordData(measurementName, deviceName, parsedData):
                 return None, 200
             else:
+                logger.warning('Unable to record payload ' + measurementName + '/' + deviceName)
                 return None, 404
         else:
+            logger.error('Invalid data payload received ' + measurementName + '/' + deviceName)
             return None, 400
 
 
@@ -149,9 +154,12 @@ class CompleteMeasurement(Resource):
         :param deviceName:
         :return:
         """
+        logger.info('Completing measurement ' + measurementName + ' for ' + deviceName)
         if self._measurementController.completeMeasurement(measurementName, deviceName):
+            logger.info('Completed measurement ' + measurementName + ' for ' + deviceName)
             return None, 200
         else:
+            logger.warning('Unable to complete measurement ' + measurementName + ' for ' + deviceName)
             return None, 404
 
 
@@ -167,7 +175,10 @@ class FailMeasurement(Resource):
         :return: 200 if
         """
         failureReason = request.get_json().pop('failureReason')
+        logger.warning('Failing measurement ' + measurementName + ' for ' + deviceName + ' because ' + failureReason)
         if self._measurementController.failMeasurement(measurementName, deviceName, failureReason=failureReason):
+            logger.warning('Failed measurement ' + measurementName + ' for ' + deviceName)
             return None, 200
         else:
+            logger.error('Unable to fail measurement ' + measurementName + ' for ' + deviceName)
             return None, 404

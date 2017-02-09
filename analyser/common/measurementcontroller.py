@@ -91,7 +91,8 @@ class ActiveMeasurement(object):
         :param reason: the reason.
         :return:
         """
-        logger.info('Updating recording device state for ' + deviceName + ' to ' + state.name + '[reason: '  + reason + ']')
+        logger.info('Updating recording device state for ' + deviceName + ' to ' + state.name +
+                    ('' if reason is None else '[reason: ' + reason + ']'))
         self.recordingDevices[deviceName] = {'state': state.name, 'reason': reason}
 
     def __str__(self):

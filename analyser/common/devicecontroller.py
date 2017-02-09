@@ -78,7 +78,7 @@ class DeviceController(object):
             # message bus so unlucky :P
             storedDevice.dataHandler = AsyncHandler('analyser', CSVLogger('analyser', deviceId, self.dataDir))
         else:
-            logger.debug('Pinging by device ' + deviceId)
+            logger.debug('Pinged by device ' + deviceId)
         storedDevice.payload = device
         storedDevice.lastUpdateTime = datetime.datetime.now()
         self.devices.update({deviceId: storedDevice})

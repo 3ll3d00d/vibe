@@ -1,3 +1,4 @@
+import faulthandler
 import os
 
 from flask import Flask
@@ -15,6 +16,11 @@ from analyser.resources.measurements import Measurements, ReloadMeasurement
 from analyser.resources.state import State
 from core.httpclient import RequestsBasedHttpClient
 from core.reactor import Reactor
+
+faulthandler.enable()
+if hasattr(faulthandler, 'register'):
+    import signal
+    faulthandler.register(signal.SIGUSR2, all_threads=True)
 
 app = Flask(__name__)
 api = Api(app)

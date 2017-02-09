@@ -48,6 +48,7 @@ class Accelerometer(object):
         self.breakRead = False
         self.startTime = 0
         self.failureCode = None
+        self.measurementOverflowed = False
         self._sampleIdx = 0
         self.status = RecordingDeviceStatus.NEW
 
@@ -69,6 +70,8 @@ class Accelerometer(object):
         """
         logger.info(">> measurement " + measurementName +
                     ((" for " + str(durationInSeconds)) if durationInSeconds is not None else " until break"))
+        self.failureCode = None
+        self.measurementOverflowed = False
         self.dataHandler.start(measurementName)
         self.breakRead = False
         self.startTime = time.time()
@@ -91,19 +94,21 @@ class Accelerometer(object):
             self.failureCode = str(sys.exc_info())
             logger.exception(measurementName + " failed")
         finally:
-            # TODO post the status to the server instead of logging it here
-            self.dataHandler.stop(measurementName)
             expectedSamples = self.fs * (durationInSeconds if durationInSeconds is not None else elapsedTime)
             if self._sampleIdx < expectedSamples:
                 self.status = RecordingDeviceStatus.FAILED
                 self.failureCode = "Insufficient samples " + str(self._sampleIdx) + " for " + \
                                    str(elapsedTime) + " second long run, expected " + str(expectedSamples)
             self._sampleIdx = 0
+            if self.measurementOverflowed:
+                self.status = RecordingDeviceStatus.FAILED
+                self.failureCode = "Measurement overflow detected"
             if self.status == RecordingDeviceStatus.FAILED:
                 logger.error("<< measurement " + measurementName + " - FAILED - " + self.failureCode)
             else:
                 self.status = RecordingDeviceStatus.INITIALISED
                 logger.info("<< measurement " + measurementName + " - " + self.status.name)
+            self.dataHandler.stop(measurementName, self.failureCode)
 
     def signalStop(self):
         """

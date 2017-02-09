@@ -509,10 +509,12 @@ class mpu6050(Accelerometer):
             logger.debug("Start sample loop [available: %d , required: %d]", fifoBytesAvailable, self.sampleSizeBytes)
             if interrupt & 0x10:
                 logger.error("FIFO OVERFLOW, RESETTING [available: %d , interrupt: %d]", fifoBytesAvailable, interrupt)
+                self.measurementOverflowed = True
                 self.resetFifo()
                 fifoWasReset = True
             elif fifoBytesAvailable == 1024:
                 logger.error("FIFO FULL, RESETTING [available: %d , interrupt: %d]", fifoBytesAvailable, interrupt)
+                self.measurementOverflowed = True
                 self.resetFifo()
                 fifoWasReset = True
             elif interrupt & 0x02 or interrupt & 0x01:
