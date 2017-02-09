@@ -174,8 +174,10 @@ class FailMeasurement(Resource):
         :param deviceName: the device name.
         :return: 200 if
         """
-        failureReason = request.get_json().pop('failureReason')
-        logger.warning('Failing measurement ' + measurementName + ' for ' + deviceName + ' because ' + failureReason)
+        payload = request.get_json()
+        failureReason = json.loads(payload).get('failureReason') if payload is not None else None
+        logger.warning('Failing measurement ' + measurementName + ' for ' + deviceName + ' because ' +
+                       str(failureReason))
         if self._measurementController.failMeasurement(measurementName, deviceName, failureReason=failureReason):
             logger.warning('Failed measurement ' + measurementName + ' for ' + deviceName)
             return None, 200

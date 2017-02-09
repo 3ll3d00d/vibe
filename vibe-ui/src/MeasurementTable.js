@@ -53,6 +53,7 @@ class MeasurementTable extends Component {
                 <FontAwesome name="line-chart" size="lg"/>&nbsp;Analyse
             </Button>;
 
+        // TODO add failure reasons if a device fails
         return (
             <Tr key={measurement.name + "_" + measurement.startTime}>
                 <Td column="status"><StatusCell status={measurement.status}/></Td>

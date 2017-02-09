@@ -73,7 +73,7 @@ class ScheduleMeasurement extends Component {
                     </Button>;
             } else if (this.props.createMeasurementResponse.rejected) {
                 submitButton =
-                    <Button type="submit" bsStyle="danger">
+                    <Button type="submit" bsStyle="danger" disabled>
                         <FontAwesome name="exclamation" size="2x"/>&nbsp;Error!
                     </Button>;
             }
