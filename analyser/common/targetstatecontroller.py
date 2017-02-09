@@ -123,6 +123,6 @@ def _applyTargetState(targetState, md, httpclient):
         if RecordingDeviceStatus.INITIALISED.name == md.get('status'):
             httpclient.patch(md['serviceURL'], json=payload)
         else:
-            logger.warning("Ignoring target state change until " + md['name'] + " is idle")
+            logger.warning("Ignoring target state change until " + md['name'] + " is idle, currently " + md['status'])
     else:
         logger.debug("Device " + md['name'] + " is at target state, we continue")

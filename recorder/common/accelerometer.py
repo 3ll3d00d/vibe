@@ -54,6 +54,7 @@ class Accelerometer(object):
 
     def doInit(self):
         try:
+            logger.info("Initialising device")
             self.initialiseDevice()
             self.status = RecordingDeviceStatus.INITIALISED
             logger.info("Initialisation complete")
@@ -109,6 +110,9 @@ class Accelerometer(object):
                 self.status = RecordingDeviceStatus.INITIALISED
                 logger.info("<< measurement " + measurementName + " - " + self.status.name)
             self.dataHandler.stop(measurementName, self.failureCode)
+            if self.status == RecordingDeviceStatus.FAILED:
+                logger.warning("Reinitialising device after measurement failure")
+                self.doInit()
 
     def signalStop(self):
         """

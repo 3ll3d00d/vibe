@@ -81,6 +81,7 @@ class DeviceController(object):
             logger.debug('Pinged by device ' + deviceId)
         storedDevice.payload = device
         storedDevice.lastUpdateTime = datetime.datetime.now()
+        # TODO if device has FAILED, do something?
         self.devices.update({deviceId: storedDevice})
         self.targetStateController.updateDeviceState(storedDevice.payload)
 
