@@ -2,7 +2,7 @@ import collections
 import logging
 import struct
 from _ctypes import ArgumentError
-from time import sleep
+from time import sleep, time
 
 from .accelerometer import Accelerometer, ACCEL_X, ACCEL_Y, ACCEL_Z, GYRO_X, GYRO_Y, GYRO_Z, TEMP, SAMPLE_TIME
 
@@ -501,7 +501,16 @@ class mpu6050(Accelerometer):
         fifoBytesAvailable = 0
         fifoWasReset = False
         logger.debug(">> provideData target %d samples", self.samplesPerBatch)
-        while len(samples) < self.samplesPerBatch:
+        iterations = 0
+        # allow 1.5x the expected duration of the batch
+        breakTime = time() + ((self.samplesPerBatch / self.fs) * 1.5)
+        overdue = False
+        while len(samples) < self.samplesPerBatch and not overdue:
+            iterations += 1
+            if iterations > self.samplesPerBatch and iterations % 10 == 0:
+                if time() > breakTime:
+                    logger.warning("Breaking measurement after %d iterations, batch overdue", iterations)
+                    overdue = True
             if fifoBytesAvailable < self.sampleSizeBytes or fifoWasReset:
                 interrupt = self.getInterruptStatus()
                 fifoBytesAvailable = self.getFifoCount()
