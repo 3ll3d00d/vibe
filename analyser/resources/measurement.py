@@ -64,7 +64,7 @@ class Measurement(Resource):
             if target <= datetime.datetime.now():
                 time = self._getAbsoluteTime(datetime.datetime.now(), 2)
                 logger.warning('Date requested is in the past (' + start + '), defaulting to ' +
-                               datetime.datetime.strftime(time, DATETIME_FORMAT))
+                               time.strftime(DATETIME_FORMAT))
                 return time
             else:
                 return target
