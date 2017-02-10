@@ -10,7 +10,7 @@ import pytest
 
 from analyser.common.devicecontroller import DeviceController
 from analyser.common.measurementcontroller import MeasurementController, MeasurementStatus, MEASUREMENT_TIMES_CLASH, \
-    RecordStatus, CompleteMeasurement
+    RecordStatus, CompleteMeasurement, getMeasurementId
 from analyser.common.targetstatecontroller import TargetState, TargetStateProvider
 from core.httpclient import RecordingHttpClient
 from core.interface import RecordingDeviceStatus, DATETIME_FORMAT
@@ -114,21 +114,6 @@ def test_clashingMeasurement_isRejected(measurementController, tmpdirPath):
     verifyNothingOnDisk(tmpdirPath, 'second')
 
 
-def test_dupeMeasurement_isRejected(measurementController, tmpdirPath):
-    am = measurementController.getMeasurements(MeasurementStatus.SCHEDULED)
-    assert am is not None
-    assert len(am) == 0
-
-    startTime = datetime.datetime.now()
-    accepted, message = measurementController.schedule('first', 0.2, startTime, 'desc')
-    assert accepted
-    assert message is None
-    accepted, message = measurementController.schedule('first', 0.2, startTime + datetime.timedelta(seconds=10), 'desc')
-    assert not accepted
-    assert message.startswith("Duplicate")
-    verifyNothingOnDisk(tmpdirPath, 'first')
-
-
 def test_scheduledMeasurement_IsSentToDevice(measurementController, deviceController, tmpdirPath):
     am = measurementController.getMeasurements(MeasurementStatus.SCHEDULED)
     assert am is not None
@@ -179,13 +164,16 @@ def test_scheduledMeasurementThatReceivesData_CompletesNormally(measurementContr
     assert devices[0].deviceId == 'd1'
 
     startTime = datetime.datetime.now()
-    accepted, message = measurementController.schedule('first', 0.2, startTime, 'desc')
+    measurementName = 'first'
+    measurementId = getMeasurementId(startTime, measurementName)
+    accepted, message = measurementController.schedule(measurementName, 0.2, startTime, 'desc')
     assert accepted
     assert message is None
     am = measurementController.getMeasurements(MeasurementStatus.SCHEDULED)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].id == measurementId
+    assert am[0].name == measurementName
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
@@ -194,11 +182,12 @@ def test_scheduledMeasurementThatReceivesData_CompletesNormally(measurementContr
     assert am[0].recordingDevices.get('d1')['state'] == RecordStatus.SCHEDULED.name
 
     # start the measurement & verify the device states update
-    assert measurementController.startMeasurement('first', 'd1')
+    assert measurementController.startMeasurement(measurementId, 'd1')
     am = measurementController.getMeasurements(MeasurementStatus.RECORDING)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].id == measurementId
+    assert am[0].name == measurementName
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
@@ -207,25 +196,26 @@ def test_scheduledMeasurementThatReceivesData_CompletesNormally(measurementContr
     assert am[0].recordingDevices.get('d1')['state'] == RecordStatus.RECORDING.name
 
     # verify that some other device is rejected
-    assert not measurementController.startMeasurement('first', 'd2')
+    assert not measurementController.startMeasurement(measurementId, 'd2')
 
     # now send some data and assert it's all accepted
     data1 = [0, 1, 1, 1]
     data2 = [1, 2, 2, 2]
     data3 = [2, 3, 3, 3]
-    assert measurementController.recordData('first', 'd1', [data1])
-    assert measurementController.recordData('first', 'd1', [data2])
-    assert measurementController.recordData('first', 'd1', [data3])
+    assert measurementController.recordData(measurementId, 'd1', [data1])
+    assert measurementController.recordData(measurementId, 'd1', [data2])
+    assert measurementController.recordData(measurementId, 'd1', [data3])
 
     # verify that data from some other device is rejected
-    assert not measurementController.startMeasurement('first', 'd2')
+    assert not measurementController.startMeasurement(measurementId, 'd2')
 
     # complete the measurement and assert the states update
-    assert measurementController.completeMeasurement('first', 'd1')
+    assert measurementController.completeMeasurement(measurementId, 'd1')
     am = measurementController.getMeasurements(MeasurementStatus.RECORDING)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].name == measurementName
+    assert am[0].id == measurementId
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
@@ -238,14 +228,15 @@ def test_scheduledMeasurementThatReceivesData_CompletesNormally(measurementContr
     am = measurementController.getMeasurements(MeasurementStatus.COMPLETE)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].name == measurementName
+    assert am[0].id == measurementId
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
     assert am[0].status == MeasurementStatus.COMPLETE
 
     # check the data is on the disk
-    dataFile = os.path.join(tmpdirPath, 'first', 'd1', 'data.out')
+    dataFile = os.path.join(tmpdirPath, am[0].idAsPath, 'd1', 'data.out')
     data = []
     with open(dataFile, newline='') as csvfile:
         dr = csv.reader(csvfile)
@@ -256,14 +247,15 @@ def test_scheduledMeasurementThatReceivesData_CompletesNormally(measurementContr
     assert data[1] == [str(i) for i in data2]
     assert data[2] == [str(i) for i in data3]
 
-    metapath = os.path.join(tmpdirPath, 'first', 'metadata.json')
+    metapath = os.path.join(tmpdirPath, am[0].idAsPath, 'metadata.json')
     assert os.path.isfile(metapath)
     with open(metapath) as jsonfile:
         metadata = json.load(jsonfile)
         assert metadata is not None
-        cm = CompleteMeasurement('first', metadata)
+        cm = CompleteMeasurement(metadata)
         assert cm is not None
-        assert cm.name == 'first'
+        assert cm.id == measurementId
+        assert cm.name == measurementName
         assert cm.startTime == datetime.datetime.strptime(startTime.strftime(DATETIME_FORMAT), DATETIME_FORMAT)
         assert cm.duration == 0.2
         assert cm.description == 'desc'
@@ -305,13 +297,16 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
     assert devices[0].deviceId == 'd1'
 
     startTime = datetime.datetime.now() + datetime.timedelta(seconds=0.5)
-    accepted, message = measurementController.schedule('first', 0.2, startTime, 'desc')
+    measurementName = 'first'
+    measurementId = getMeasurementId(startTime, measurementName)
+    accepted, message = measurementController.schedule(measurementName, 0.2, startTime, 'desc')
     assert accepted
     assert message is None
     am = measurementController.getMeasurements(MeasurementStatus.SCHEDULED)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].name == measurementName
+    assert am[0].id == measurementId
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
@@ -320,11 +315,12 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
     assert am[0].recordingDevices.get('d1')['state'] == RecordStatus.SCHEDULED.name
 
     # start the measurement & verify the device states update
-    assert measurementController.startMeasurement('first', 'd1')
+    assert measurementController.startMeasurement(measurementId, 'd1')
     am = measurementController.getMeasurements(MeasurementStatus.RECORDING)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].name == measurementName
+    assert am[0].id == measurementId
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
@@ -339,7 +335,8 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
     am = measurementController.getMeasurements(MeasurementStatus.DYING)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].name == measurementName
+    assert am[0].id == measurementId
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
@@ -352,7 +349,8 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
     am = measurementController.getMeasurements(MeasurementStatus.FAILED)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].name == measurementName
+    assert am[0].id == measurementId
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
@@ -361,7 +359,7 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
     assert am[0].recordingDevices.get('d1')['state'] == RecordStatus.FAILED.name
 
     # check we have the metadata but no data
-    dataFile = os.path.join(tmpdirPath, 'first', 'd1', 'data.out')
+    dataFile = os.path.join(tmpdirPath, am[0].idAsPath, 'd1', 'data.out')
     data = []
     assert os.path.exists(dataFile)
     with open(dataFile, newline='') as csvfile:
@@ -370,19 +368,20 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
             data.append(row)
     assert len(data) == 0
 
-    metapath = os.path.join(tmpdirPath, 'first', 'metadata.json')
+    metapath = os.path.join(tmpdirPath, am[0].idAsPath, 'metadata.json')
     assert os.path.isfile(metapath)
     with open(metapath) as jsonfile:
         metadata = json.load(jsonfile)
         assert metadata is not None
         assert metadata['status'] == MeasurementStatus.FAILED.name
-        assert metadata['name'] == 'first'
+        assert metadata['name'] == measurementName
         assert metadata['startTime'] == startTime.strftime(DATETIME_FORMAT)
         assert metadata['duration'] == 0.2
         assert metadata['description'] == 'desc'
         assert metadata['measurementParameters'] == targetStateAsDict(False)
         assert metadata['recordingDevices'] == {
-            'd1': {'state': MeasurementStatus.FAILED.name, 'reason': 'Evicting from deathbed'}}
+            'd1': {'state': MeasurementStatus.FAILED.name, 'reason': 'Evicting from deathbed'}
+        }
 
 
 def test_scheduledMeasurement_FailsDuringMeasurement_IsStoredAsFailed(measurementController, deviceController,
@@ -401,13 +400,16 @@ def test_scheduledMeasurement_FailsDuringMeasurement_IsStoredAsFailed(measuremen
     assert devices[0].deviceId == 'd1'
 
     startTime = datetime.datetime.now()
-    accepted, message = measurementController.schedule('first', 0.2, startTime, 'desc')
+    measurementName = 'first'
+    measurementId = getMeasurementId(startTime, measurementName)
+    accepted, message = measurementController.schedule(measurementName, 0.2, startTime, 'desc')
     assert accepted
     assert message is None
     am = measurementController.getMeasurements(MeasurementStatus.SCHEDULED)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].name == measurementName
+    assert am[0].id == measurementId
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
@@ -416,11 +418,12 @@ def test_scheduledMeasurement_FailsDuringMeasurement_IsStoredAsFailed(measuremen
     assert am[0].recordingDevices.get('d1')['state'] == RecordStatus.SCHEDULED.name
 
     # start the measurement & verify the device states update
-    assert measurementController.startMeasurement('first', 'd1')
+    assert measurementController.startMeasurement(measurementId, 'd1')
     am = measurementController.getMeasurements(MeasurementStatus.RECORDING)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].name == measurementName
+    assert am[0].id == measurementId
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
@@ -432,16 +435,17 @@ def test_scheduledMeasurement_FailsDuringMeasurement_IsStoredAsFailed(measuremen
     data1 = [0, 1, 1, 1]
     data2 = [1, 2, 2, 2]
     data3 = [2, 3, 3, 3]
-    assert measurementController.recordData('first', 'd1', [data1])
-    assert measurementController.recordData('first', 'd1', [data2])
-    assert measurementController.recordData('first', 'd1', [data3])
+    assert measurementController.recordData(measurementId, 'd1', [data1])
+    assert measurementController.recordData(measurementId, 'd1', [data2])
+    assert measurementController.recordData(measurementId, 'd1', [data3])
 
     # fail the measurement
-    assert measurementController.failMeasurement('first', 'd1', 'oh noes')
+    assert measurementController.failMeasurement(measurementId, 'd1', 'oh noes')
     am = measurementController.getMeasurements(MeasurementStatus.RECORDING)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].name == measurementName
+    assert am[0].id == measurementId
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
@@ -458,14 +462,15 @@ def test_scheduledMeasurement_FailsDuringMeasurement_IsStoredAsFailed(measuremen
     am = measurementController.getMeasurements(MeasurementStatus.FAILED)
     assert am is not None
     assert len(am) == 1
-    assert am[0].name == 'first'
+    assert am[0].name == measurementName
+    assert am[0].id == measurementId
     assert am[0].startTime == startTime
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
     assert am[0].status == MeasurementStatus.FAILED
 
     # check data is still recorded but marked as FAILED
-    dataFile = os.path.join(tmpdirPath, 'first', 'd1', 'data.out')
+    dataFile = os.path.join(tmpdirPath, am[0].idAsPath, 'd1', 'data.out')
     data = []
     with open(dataFile, newline='') as csvfile:
         dr = csv.reader(csvfile)
@@ -476,13 +481,13 @@ def test_scheduledMeasurement_FailsDuringMeasurement_IsStoredAsFailed(measuremen
     assert data[1] == [str(i) for i in data2]
     assert data[2] == [str(i) for i in data3]
 
-    metapath = os.path.join(tmpdirPath, 'first', 'metadata.json')
+    metapath = os.path.join(tmpdirPath, am[0].idAsPath, 'metadata.json')
     assert os.path.isfile(metapath)
     with open(metapath) as jsonfile:
         metadata = json.load(jsonfile)
         assert metadata is not None
         assert metadata['status'] == MeasurementStatus.FAILED.name
-        assert metadata['name'] == 'first'
+        assert metadata['name'] == measurementName
         assert metadata['startTime'] == startTime.strftime(DATETIME_FORMAT)
         assert metadata['duration'] == 0.2
         assert metadata['description'] == 'desc'

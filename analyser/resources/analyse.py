@@ -2,10 +2,10 @@ from flask_restful import Resource
 
 
 class Analyse(Resource):
-    def put(self, measurementName):
+    def put(self, measurementId):
         """
         Analyses the measurement with the given parameters
-        :param measurementName:
+        :param measurementId:
         :return:
         """
         pass

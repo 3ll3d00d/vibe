@@ -39,41 +39,41 @@ class Measurement(Resource):
         self.recordingDevices = kwargs['recordingDevices']
 
     @marshal_with(scheduledMeasurementFields)
-    def get(self, deviceId, measurementName):
+    def get(self, deviceId, measurementId):
         """
         details the specific measurement.
         """
         record = self.measurements.get(deviceId)
         if record is not None:
-            return record.get(measurementName)
+            return record.get(measurementId)
         return None
 
     @marshal_with(scheduledMeasurementFields)
-    def put(self, deviceId, measurementName):
+    def put(self, deviceId, measurementId):
         """
         Schedules a new measurement at the specified time.
         :param deviceId: the device to measure.
-        :param measurementName: the name of the measurement.
+        :param measurementId: the name of the measurement.
         :return: 200 if it was scheduled, 400 if the device is busy, 500 if the device is bad.
         """
         record = self.measurements.get(deviceId)
         if record is not None:
-            measurement = record.get(measurementName)
+            measurement = record.get(measurementId)
             if measurement is not None:
                 if len([x.name for x in measurement.statuses if x.name is 'COMPLETE' or x.name is 'FAILED']) > 0:
                     logger.info('Overwriting existing completed measurement ' + x.name)
                     measurement = None
             if measurement is None:
-                logger.info('Initiating measurement ' + measurementName)
-                measurement = ScheduledMeasurement(measurementName, self.recordingDevices.get(deviceId))
+                logger.info('Initiating measurement ' + measurementId)
+                measurement = ScheduledMeasurement(measurementId, self.recordingDevices.get(deviceId))
                 body = request.get_json()
                 duration_ = body['duration']
                 def _cleanup():
-                    logger.info('Removing ' + measurementName + ' from ' + deviceId)
-                    record.pop(measurementName)
+                    logger.info('Removing ' + measurementId + ' from ' + deviceId)
+                    record.pop(measurementId)
                 measurement.schedule(duration_, at=body.get('at'), delay=body.get('delay'), callback=_cleanup)
                 # a quick hack to enable the measurement to be cleaned up by the ScheduledMeasurement
-                record[measurementName] = measurement
+                record[measurementId] = measurement
                 return measurement, 200
             else:
                 return measurement, 400
@@ -81,16 +81,16 @@ class Measurement(Resource):
             return 'unknown device ' + deviceId, 400
 
     @marshal_with(scheduledMeasurementFields)
-    def delete(self, deviceId, measurementName):
+    def delete(self, deviceId, measurementId):
         """
         Deletes a stored measurement.
         :param deviceId: the device to measure.
-        :param measurementName: the name of the measurement.
+        :param measurementId: the name of the measurement.
         :return: 200 if it was deleted, 400 if no such measurement (or device).
         """
         record = self.measurements.get(deviceId)
         if record is not None:
-            popped = record.pop(measurementName, None)
+            popped = record.pop(measurementId, None)
             return popped, 200 if popped else 400
         return None, 400
 
@@ -101,16 +101,16 @@ class AbortMeasurement(Resource):
         self.recordingDevices = kwargs['recordingDevices']
 
     @marshal_with(scheduledMeasurementFields)
-    def get(self, deviceId, measurementName):
+    def get(self, deviceId, measurementId):
         """
         signals a stop for the given measurement.
         :param deviceId: the device to measure.
-        :param measurementName: the name of the measurement.
+        :param measurementId: the name of the measurement.
         :return: 200 if stop is signalled, 400 if it doesn't exist or is not running.
         """
         record = self.measurements.get(deviceId)
         if record is not None:
-            measurement = record.get(measurementName)
+            measurement = record.get(measurementId)
             if measurement.recording:
                 device = self.recordingDevices.get(deviceId)
                 device.signalStop()

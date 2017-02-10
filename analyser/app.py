@@ -56,22 +56,22 @@ api.add_resource(ReloadMeasurement, '/measurements/reload', resource_class_kwarg
 # PUT: create a new measurement (duration, start time)
 # DELETE: remove the named measurement
 # GET: details of this measurement
-api.add_resource(Measurement, '/measurements/<measurementName>', resource_class_kwargs=resourceArgs)
+api.add_resource(Measurement, '/measurements/<measurementId>', resource_class_kwargs=resourceArgs)
 
 # PUT: starts a recording session
-api.add_resource(InitialiseMeasurement, '/measurements/<measurementName>/<deviceName>',
+api.add_resource(InitialiseMeasurement, '/measurements/<measurementId>/<deviceId>',
                  resource_class_kwargs=resourceArgs)
 # PUT: receive some data payload for the measurement
-api.add_resource(RecordData, '/measurements/<measurementName>/<deviceName>/data', resource_class_kwargs=resourceArgs)
+api.add_resource(RecordData, '/measurements/<measurementId>/<deviceId>/data', resource_class_kwargs=resourceArgs)
 # PUT: mark the measurement as complete
-api.add_resource(CompleteMeasurement, '/measurements/<measurementName>/<deviceName>/complete',
+api.add_resource(CompleteMeasurement, '/measurements/<measurementId>/<deviceId>/complete',
                  resource_class_kwargs=resourceArgs)
 # PUT: mark the measurement as failed
-api.add_resource(FailMeasurement, '/measurements/<measurementName>/<deviceName>/failed',
+api.add_resource(FailMeasurement, '/measurements/<measurementId>/<deviceId>/failed',
                  resource_class_kwargs=resourceArgs)
 
 # PUT: analyse the measurement
-api.add_resource(Analyse, '/measurements/<measurementName>/analyse', resource_class_kwargs=resourceArgs)
+api.add_resource(Analyse, '/measurements/<measurementId>/analyse', resource_class_kwargs=resourceArgs)
 
 if __name__ == '__main__':
     cfg.configureLogger()

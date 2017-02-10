@@ -105,7 +105,7 @@ def test_measurementsAreScheduledForInitialisedDevices(deviceController, httpcli
     assert len(httpclient.record) == 1  # measurement was sent to the device
     args = httpclient.record[0]
     assert len(args) == 3
-    # we sent a put to serviceURL/measurements/measurementName with a json payload
+    # we sent a put to serviceURL/measurements/measurementId with a json payload
     assert args[0] == 'put'
     assert args[1] == 'hello/measurements/next'
     assert type(args[2]) is dict

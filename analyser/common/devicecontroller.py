@@ -93,13 +93,13 @@ class DeviceController(object):
         """
         return [d for d in self.devices.values() if status is None or d.payload.get('status') == status]
 
-    def getDevice(self, name):
+    def getDevice(self, id):
         """
         gets the named device.
-        :param name: the name.
+        :param id: the id.
         :return: the device
         """
-        return next(iter([d for d in self.devices.values() if d.deviceId == name]), None)
+        return next(iter([d for d in self.devices.values() if d.deviceId == id]), None)
 
     def _evictStaleDevices(self):
         """
@@ -115,10 +115,10 @@ class DeviceController(object):
             # TODO send reset after a device fails
         logger.warning("DeviceCaretaker is now shutdown")
 
-    def scheduleMeasurement(self, measurementName, duration, start):
+    def scheduleMeasurement(self, measurementId, duration, start):
         """
         Schedules the requested measurement session with all INITIALISED devices.
-        :param measurementName:
+        :param measurementId:
         :param duration:
         :param start:
         :return: a dict of device vs status.
@@ -126,10 +126,10 @@ class DeviceController(object):
         # TODO subtract 1s from start and format
         results = {}
         for device in self.getDevices(RecordingDeviceStatus.INITIALISED.name):
-            logger.info('Sending measurement ' + measurementName + ' to ' + device.payload['serviceURL'])
-            resp = self.httpclient.put(device.payload['serviceURL'] + '/measurements/' + measurementName,
+            logger.info('Sending measurement ' + measurementId + ' to ' + device.payload['serviceURL'])
+            resp = self.httpclient.put(device.payload['serviceURL'] + '/measurements/' + measurementId,
                                        json={'duration': duration, 'at': start.strftime(DATETIME_FORMAT)})
-            logger.info('Response for ' + measurementName + ' from ' + device.payload['serviceURL'] + ' is ' +
+            logger.info('Response for ' + measurementId + ' from ' + device.payload['serviceURL'] + ' is ' +
                         str(resp.status_code))
             results[device] = resp.status_code
         return results

@@ -44,9 +44,9 @@ api.add_resource(Measurements, '/devices/<deviceId>/measurements', resource_clas
 # GET: the state of this measurement
 # PUT: create a new measurement (duration, start time)
 # DELETE: remove the named measurement
-api.add_resource(Measurement, '/devices/<deviceId>/measurements/<measurementName>', resource_class_kwargs=inject)
+api.add_resource(Measurement, '/devices/<deviceId>/measurements/<measurementId>', resource_class_kwargs=inject)
 # GET: triggers a stop of the named measurement
-api.add_resource(AbortMeasurement, '/devices/<deviceId>/measurements/<measurementName>/abort',
+api.add_resource(AbortMeasurement, '/devices/<deviceId>/measurements/<measurementId>/abort',
                  resource_class_kwargs=inject)
 
 

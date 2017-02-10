@@ -16,10 +16,10 @@ class DataHandler:
     """
 
     @abc.abstractmethod
-    def start(self, measurementName):
+    def start(self, measurementId):
         """
         Initialises a handling session.
-        :param measurementName: the name of the measurement that is about to start.
+        :param measurementId: the name of the measurement that is about to start.
         :param converter: an optional converter to apply before the raw data is handled.
         :return:
         """
@@ -35,10 +35,10 @@ class DataHandler:
         pass
 
     @abc.abstractmethod
-    def stop(self, measurementName, failureReason=None):
+    def stop(self, measurementId, failureReason=None):
         """
         Allows for cleanup on end of measurement.
-        :param measurementName the measurement that is stopping.
+        :param measurementId the measurement that is stopping.
         :param failureReason the reason it failed if any, if None then it completed ok.
         :return:
         """
@@ -50,19 +50,19 @@ class Discarder(DataHandler):
     a data handler that simply throws the data away
     """
 
-    def start(self, measurementName):
+    def start(self, measurementId):
         pass
 
     def handle(self, data):
         pass
 
-    def stop(self, measurementName, failureReason=None):
+    def stop(self, measurementId, failureReason=None):
         pass
 
 
 class CSVLogger(DataHandler):
     """
-    A handler which logs the received data to CSV into target/measurementName/loggerName/data.out
+    A handler which logs the received data to CSV into target/measurementId/loggerName/data.out
     """
 
     def __init__(self, owner, name, target):
@@ -74,8 +74,8 @@ class CSVLogger(DataHandler):
         self._csvfile = None
         self._first = True
 
-    def start(self, measurementName):
-        targetDir = os.path.join(self.target, measurementName, self.name)
+    def start(self, measurementId):
+        targetDir = os.path.join(self.target, measurementId, self.name)
         if not os.path.exists(targetDir):
             os.makedirs(targetDir, exist_ok=True)
         targetPath = os.path.join(targetDir, 'data.out')
@@ -108,9 +108,9 @@ class CSVLogger(DataHandler):
             else:
                 self.logger.warning("Ignoring unsupported data type " + str(type(datum)) + " : " + str(datum))
 
-    def stop(self, measurementName, failureReason=None):
+    def stop(self, measurementId, failureReason=None):
         if self._csvfile is not None:
-            self.logger.debug("Closing csvfile for " + measurementName)
+            self.logger.debug("Closing csvfile for " + measurementId)
             self._csvfile.close()
 
 
@@ -128,23 +128,23 @@ class AsyncHandler(DataHandler):
         self.working = False
         self.stopping = False
 
-    def start(self, measurementName):
-        self.delegate.start(measurementName)
+    def start(self, measurementId):
+        self.delegate.start(measurementId)
         self.worker = threading.Thread(target=self.asyncHandle, daemon=True)
         self.working = True
-        self.logger.info('Starting async handler for ' + measurementName)
+        self.logger.info('Starting async handler for ' + measurementId)
         self.worker.start()
 
     def handle(self, data):
         self.queue.put(data)
 
-    def stop(self, measurementName, failureReason=None):
+    def stop(self, measurementId, failureReason=None):
         # TODO do we need to link this stop to the status of the accelerometer
-        self.logger.info('Stopping async handler for ' + measurementName)
+        self.logger.info('Stopping async handler for ' + measurementId)
         self.stopping = True
         self.queue.join()
-        self.delegate.stop(measurementName, failureReason=failureReason)
-        self.logger.info('Stopped async handler for ' + measurementName)
+        self.delegate.stop(measurementId, failureReason=failureReason)
+        self.logger.info('Stopped async handler for ' + measurementId)
         self.working = False
 
     def asyncHandle(self):
@@ -182,12 +182,12 @@ class HttpPoster(DataHandler):
         self.dataResponseCode = []
         self.endResponseCode = None
 
-    def start(self, measurementName):
+    def start(self, measurementId):
         """
         Posts to the target to tell it a named measurement is starting.
-        :param measurementName:
+        :param measurementId:
         """
-        self.sendURL = self.rootURL + measurementName + '/' + self.deviceName
+        self.sendURL = self.rootURL + measurementId + '/' + self.deviceName
         self.startResponseCode = self._doPut(self.sendURL)
 
     def _doPut(self, url, data=None):
@@ -202,10 +202,10 @@ class HttpPoster(DataHandler):
         """
         self.dataResponseCode.append(self._doPut(self.sendURL + '/data', data=data))
 
-    def stop(self, measurementName, failureReason=None):
+    def stop(self, measurementId, failureReason=None):
         """
         informs the target the named measurement has completed
-        :param measurementName: the measurement that has completed.
+        :param measurementId: the measurement that has completed.
         :return:
         """
         if failureReason is None:
