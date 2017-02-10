@@ -449,6 +449,7 @@ class mpu6050(Accelerometer):
         self.i2c_io.write(self.MPU6050_ADDRESS, self.MPU6050_RA_USER_CTRL, 0b00000100)
         pass
         self.i2c_io.write(self.MPU6050_ADDRESS, self.MPU6050_RA_USER_CTRL, 0b01000000)
+        self.getInterruptStatus()
 
     def enableFifo(self):
         """
@@ -507,7 +508,7 @@ class mpu6050(Accelerometer):
         overdue = False
         while len(samples) < self.samplesPerBatch and not overdue:
             iterations += 1
-            if iterations > self.samplesPerBatch and iterations % 10 == 0:
+            if iterations > self.samplesPerBatch and iterations % 100 == 0:
                 if time() > breakTime:
                     logger.warning("Breaking measurement after %d iterations, batch overdue", iterations)
                     overdue = True
