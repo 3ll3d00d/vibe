@@ -388,7 +388,7 @@ class MeasurementController(object):
         return message, count, deleted
 
     def deleteFrom(self, measurementId, data):
-        toDeleteIdx = [ind for ind, x in enumerate(data) if x.id == measurementId]
+        toDeleteIdx = [(ind, x) for ind, x in enumerate(data) if x.id == measurementId]
         if toDeleteIdx:
             errors = []
 
@@ -399,9 +399,9 @@ class MeasurementController(object):
                 errors.append(path)
 
             logger.info("Deleting measurement: " + measurementId)
-            shutil.rmtree(self._getPathToMeasurementMetaDir(measurementId), ignore_errors=False, onerror=logError)
+            shutil.rmtree(self._getPathToMeasurementMetaDir(toDeleteIdx[0][1].idAsPath), ignore_errors=False, onerror=logError)
             if len(errors) is 0:
-                popped = data.pop(toDeleteIdx[0])
+                popped = data.pop(toDeleteIdx[0][0])
                 return None, 1 if popped else 0, popped
             else:
                 return errors, 0, None

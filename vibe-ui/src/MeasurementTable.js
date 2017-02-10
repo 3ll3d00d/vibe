@@ -17,7 +17,7 @@ class MeasurementTable extends Component {
 
     dataRow(measurement) {
         let deleteButton = null;
-        let deletePromise = this.props[`deleteMeasurementResponse_${measurement.name}`];
+        let deletePromise = this.props[`deleteMeasurementResponse_${measurement.id}`];
         if (deletePromise) {
             if (deletePromise.pending) {
                 deleteButton =
@@ -44,7 +44,7 @@ class MeasurementTable extends Component {
             }
         } else {
             deleteButton =
-                <Button bsStyle="danger" onClick={() => this.props.deleteMeasurement(measurement.name)}>
+                <Button bsStyle="danger" onClick={() => this.props.deleteMeasurement(measurement.id)}>
                     <FontAwesome name="trash" size="lg"/>&nbsp;Delete
                 </Button>;
         }
@@ -90,8 +90,6 @@ class MeasurementTable extends Component {
                 return this.dataRow(measurement)
             });
         }
-        // TODO find a way to reuse a name so we can recreate measurements without refreshing
-        // const deleted = Reflect.ownKeys(this.props).filter(s => s.startsWith("deleteMeasurementResponse_"));
         const sortInfo = [
             'status',
             'fs',
