@@ -10,7 +10,7 @@ from analyser.common import signal as ms
 class HandlerTestCase(object):
     def showSpectrum(self):
         # measurementPath = 'C:\\Users\\\Matt\\OneDrive\\Documents\\eot\\Edge of Tomorrow - Opening.wav'
-        measurementPath = os.path.join(os.path.dirname(__file__), 'data', 'eot.wav')
+        measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
         measurement = ms.loadSignalFromWav(measurementPath, bitDepth=16)
         plt.xlim(0, 160)
         plt.ylim(-60, 0)
@@ -156,3 +156,8 @@ class HandlerTestCase(object):
         from scipy import signal
         y = signal.lfilter(b, a, data, 0)
         return y
+
+
+t = HandlerTestCase()
+t.showSpectrum()
+

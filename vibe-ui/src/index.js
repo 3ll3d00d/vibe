@@ -9,6 +9,7 @@ import App from "./App";
 import About from "./About";
 import Configure from "./Configure";
 import Measure from "./Measure";
+import Analyse from "./Analyse";
 
 ReactDOM.render(
     (
@@ -16,7 +17,9 @@ ReactDOM.render(
             <Route path="/" component={App}>
                 <Route path="/configure" component={Configure}/>
                 <Route path="/measure" component={Measure}/>
-                <Route path="/analyse" component={About}/>
+                <Route path="/analyse" component={Analyse}>
+                    <Route path="/analyse/:measurementId" component={Analyse}/>
+                </Route>
                 <Route path="/rta" component={About}/>
             </Route>
         </Router>

@@ -57,6 +57,7 @@ class RecordStatus(Enum):
     COMPLETE = 3,
     FAILED = 4
 
+
 def getMeasurementId(measurementStartTime, measurementName):
     """
     the unique id for this measurement.
@@ -65,6 +66,7 @@ def getMeasurementId(measurementStartTime, measurementName):
     :return: the id.
     """
     return measurementStartTime.strftime('%Y%m%d_%H%M%S') + '_' + measurementName
+
 
 class ActiveMeasurement(object):
     """
@@ -142,7 +144,7 @@ class CompleteMeasurement(object):
     The system only keeps, and can analyse, complete measurements.
     """
 
-    def __init__(self, meta):
+    def __init__(self, meta, dataDir):
         self.name = meta['name']
         self.startTime = datetime.datetime.strptime(meta['startTime'], DATETIME_FORMAT)
         self.duration = meta['duration']
@@ -153,15 +155,30 @@ class CompleteMeasurement(object):
         self.status = MeasurementStatus[meta['status']]
         self.id = getMeasurementId(self.startTime, self.name)
         self.idAsPath = self.id.replace('_', '/')
+        self.dataDir = dataDir
+        self.data = {}
 
     def inflate(self):
         """
         loads the recording into memory and returns it as a Signal
         :return:
         """
-        # scan the dir, each subdir is a device and each dir contains a data.out file & meta.data file that describes
-        #  the data set
-        pass
+        if self.measurementParameters['accelerometerEnabled']:
+            if len(self.data) == 0:
+                logger.info('Loading measurement data for ' + self.name)
+                self.data = {name: self._loadXYZ(name) for name, value in self.recordingDevices.items()}
+            return True
+        else:
+            # TODO error handling
+            return False
+
+    def _loadXYZ(self, name):
+        dataPath = os.path.join(self.dataDir, self.idAsPath, name, 'data.out')
+        if os.path.exists(dataPath):
+            from analyser.common.signal import loadTriAxisSignalFromFile
+            return loadTriAxisSignalFromFile(dataPath)
+        else:
+            raise ValueError("Data does not exist")
 
     def __str__(self):
         """
@@ -423,7 +440,8 @@ class MeasurementController(object):
                 errors.append(path)
 
             logger.info("Deleting measurement: " + measurementId)
-            shutil.rmtree(self._getPathToMeasurementMetaDir(toDeleteIdx[0][1].idAsPath), ignore_errors=False, onerror=logError)
+            shutil.rmtree(self._getPathToMeasurementMetaDir(toDeleteIdx[0][1].idAsPath), ignore_errors=False,
+                          onerror=logError)
             if len(errors) is 0:
                 popped = data.pop(toDeleteIdx[0][0])
                 return None, 1 if popped else 0, popped
@@ -459,13 +477,14 @@ class MeasurementController(object):
         else:
             return [x for x in self.activeMeasurements if x.status == measurementStatus]
 
-    def getMeasurement(self, measurementId):
+    def getMeasurement(self, measurementId, measurementStatus=None):
         """
         Gets the measurement with the given id.
         :param measurementId: the id.
+        :param measurementStatus: the status of the requested measurement.
         :return: the matching measurement or none if it doesn't exist.
         """
-        return next((x for x in self.getMeasurements() if x.id == measurementId), None)
+        return next((x for x in self.getMeasurements(measurementStatus) if x.id == measurementId), None)
 
     def store(self, measurement):
         """
@@ -483,7 +502,7 @@ class MeasurementController(object):
         :return: the measurement
         """
         meta = self._loadMetaFromJson(path)
-        return CompleteMeasurement(meta) if meta is not None else None
+        return CompleteMeasurement(meta, self.dataDir) if meta is not None else None
 
     def _loadMetaFromJson(self, path):
         """

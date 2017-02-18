@@ -49,7 +49,7 @@ class MeasurementTable extends Component {
                 </Button>;
         }
         const analyseButton =
-            <Button bsStyle="primary" href={`/analyse/${measurement.name}`} bsSize="xsmall">
+            <Button bsStyle="primary" href={`/analyse/${measurement.id}`} bsSize="xsmall">
                 <FontAwesome name="line-chart"/>
             </Button>;
 
