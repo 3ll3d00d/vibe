@@ -1,9 +1,9 @@
 import React, {Component} from "react";
 import LogStepNumericInput from "./LogStepNumericInput";
-import {Button, Tooltip, OverlayTrigger, Grid, Row, Col, InputGroup, Glyphicon} from "react-bootstrap";
+import {Button, Tooltip, OverlayTrigger, Grid, Row, Col, InputGroup} from "react-bootstrap";
 import Chart from "./Chart";
-import Toggle from 'react-toggle';
-import 'react-toggle/style.css';
+import ToggleButton from 'react-toggle-button'
+import FontAwesome from "react-fontawesome";
 
 export default class ChartController extends Component {
 
@@ -21,9 +21,11 @@ export default class ChartController extends Component {
             maxX: maxX,
             minY: minY,
             maxY: maxY,
-            series: ['x', 'y', 'z']
+            xLog: true,
+            yLog: true,
+            dots: false
         };
-        state = Object.assign(state, ...state.series.map((s) => {
+        state = Object.assign(state, ...this.extractSeries().map((s) => {
             return {[`show${s}`]: true}
         }));
         this.state = Object.assign(state, this.createChartConfig(state));
@@ -31,11 +33,17 @@ export default class ChartController extends Component {
         this.handleMaxX.bind(this);
         this.handleMinY.bind(this);
         this.handleMaxY.bind(this);
+        this.handleLinLogChange.bind(this);
+        this.handleDotsChange.bind(this);
         this.updateChartConfig.bind(this);
     }
 
+    extractSeries() {
+        return Object.keys(this.props.data);
+    }
+
     createChartConfig(state) {
-        const seriesToShow = state.series.map((s) => {
+        const seriesToShow = this.extractSeries().map((s) => {
             if (state[`show${s}`]) return s;
             else return null;
         }).filter((s) => s !== null);
@@ -43,6 +51,9 @@ export default class ChartController extends Component {
             chartConfig: {
                 x: [state.minX, state.maxX],
                 y: [state.minY, state.maxY],
+                xLog: state.xLog,
+                yLog: state.yLog,
+                showDots: state.dots,
                 series: seriesToShow
             }
         };
@@ -68,53 +79,92 @@ export default class ChartController extends Component {
             };
         });
     };
+    handleLinLogChange = (name) => {
+        const key = `${name}Log`;
+        this.setState((previousState, props) => {
+            return {
+                [key]: !previousState[key]
+            };
+        });
+    };
+    handleDotsChange = () => {
+        this.setState((previousState, props) => {
+            return {
+                dots: !previousState.dots
+            };
+        });
+    };
+
     updateChartConfig = () => {
         this.setState((previousState, props) => {
             return this.createChartConfig(previousState);
         });
     };
 
-    render() {
-        const xTip = <Tooltip id={"x"}>X Axis Range</Tooltip>;
+    makeYFields() {
         const yTip = <Tooltip id={"y"}>Y Axis Range</Tooltip>;
-        const toggles = this.state.series.map((name) => {
+        return <OverlayTrigger placement="top" overlay={yTip} trigger="click" rootClose>
+            <InputGroup bsSize="small">
+                <InputGroup.Addon>
+                    <FontAwesome name="arrows-v"/>
+                </InputGroup.Addon>
+                <LogStepNumericInput value={this.state.maxY} handler={this.handleMaxY}/>
+                <LogStepNumericInput value={this.state.minY} handler={this.handleMinY}/>
+            </InputGroup>
+        </OverlayTrigger>;
+    }
+
+    makeXFields() {
+        const xTip = <Tooltip id={"x"}>X Axis Range</Tooltip>;
+        return <OverlayTrigger placement="top" overlay={xTip} trigger="click" rootClose>
+            <InputGroup>
+                <InputGroup.Addon>
+                    <FontAwesome name="arrows-h"/>
+                </InputGroup.Addon>
+                <LogStepNumericInput value={this.state.minX} handler={this.handleMinX}
+                                     defaultPrecision={1}/>
+                <LogStepNumericInput value={this.state.maxX} handler={this.handleMaxX}
+                                     defaultPrecision={1}/>
+            </InputGroup>
+        </OverlayTrigger>;
+    }
+
+    render() {
+        const dataToggles = this.extractSeries().map((name) => {
             return <ShowSeriesToggle key={name} name={name} show={this.state[`show${name}`]}
                                      handler={() => this.handleSeriesChange(name)}/>
         });
+        const xRange = this.makeXFields();
+        const yRange = this.makeYFields();
+        const updateButton = <Button onClick={this.updateChartConfig}>Update</Button>;
         return (
             <Grid>
                 <Row>
-                    <Col md={3}>
-                        <OverlayTrigger placement="top" overlay={xTip} trigger="click" rootClose>
-                            <InputGroup>
-                                <InputGroup.Addon>
-                                    <Glyphicon glyph="glyphicon glyphicon-resize-horizontal"/>
-                                </InputGroup.Addon>
-                                <LogStepNumericInput value={this.state.minX} handler={this.handleMinX}/>
-                                <LogStepNumericInput value={this.state.maxX} handler={this.handleMaxX}/>
-                            </InputGroup>
-                        </OverlayTrigger>
+                    <Col md={2} xs={4}>{xRange}</Col>
+                    <Col md={1} xs={2}>
+                        <ToggleButton activeLabel="x log"
+                                      inactiveLabel="x lin"
+                                      value={this.state.xLog}
+                                      onToggle={() => this.handleLinLogChange("x")}/>
+                        <ToggleButton activeLabel="dots"
+                                      inactiveLabel="dots"
+                                      value={this.state.dots}
+                                      onToggle={this.handleDotsChange}/>
+                        <ToggleButton activeLabel="y log"
+                                      inactiveLabel="y lin"
+                                      value={this.state.yLog}
+                                      onToggle={() => this.handleLinLogChange("y")}/>
                     </Col>
-                    <Col md={3}>
-                        <OverlayTrigger placement="top" overlay={yTip} trigger="click" rootClose>
-                            <InputGroup>
-                                <InputGroup.Addon>
-                                    <Glyphicon glyph="glyphicon glyphicon-resize-vertical"/>
-                                </InputGroup.Addon>
-                                <LogStepNumericInput value={this.state.minY} handler={this.handleMinY}/>
-                                <LogStepNumericInput value={this.state.maxY} handler={this.handleMaxY}/>
-                            </InputGroup>
-                        </OverlayTrigger>
-                    </Col>
-                    <Col md={2}>
-                        {toggles}
-                    </Col>
-                    <Col md={1}>
-                        <Button onClick={this.updateChartConfig}>Update</Button>
-                    </Col>
+                    <Col md={2} xs={4}>{yRange}</Col>
+                    <Col md={1} xsHidden={true}>{dataToggles}</Col>
+                    <Col md={1} xsHidden={true}>{updateButton}</Col>
                 </Row>
                 <Row>
-                    <Col md={12}>
+                    <Col lgHidden={true} mdHidden={true} xs={6}>{dataToggles}</Col>
+                    <Col lgHidden={true} mdHidden={true} xs={6}>{updateButton}</Col>
+                </Row>
+                <Row>
+                    <Col>
                         <Chart data={this.props.data}
                                chartConfig={this.state.chartConfig}/>
                     </Col>
@@ -127,13 +177,10 @@ export default class ChartController extends Component {
 class ShowSeriesToggle extends Component {
     render() {
         return (
-            <div>
-                <Toggle
-                    id={this.props.name}
-                    defaultChecked={this.props.show}
-                    onChange={this.props.handler}/>
-                <label htmlFor={this.props.name}>{this.props.name}</label>
-            </div>
+            <ToggleButton inactiveLabel={this.props.name}
+                          activeLabel={this.props.name}
+                          value={this.props.show}
+                          onToggle={this.props.handler}/>
         );
     }
 }

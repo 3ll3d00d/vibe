@@ -18,7 +18,11 @@ ReactDOM.render(
                 <Route path="/configure" component={Configure}/>
                 <Route path="/measure" component={Measure}/>
                 <Route path="/analyse" component={Analyse}>
-                    <Route path="/analyse/:measurementId" component={Analyse}/>
+                    <Route path="/analyse/:measurementId" component={Analyse}>
+                        <Route path="/analyse/:measurementId/:deviceId" component={Analyse}>
+                            <Route path="/analyse/:measurementId/:deviceId/:analyserId" component={Analyse}/>
+                        </Route>
+                    </Route>
                 </Route>
                 <Route path="/rta" component={About}/>
             </Route>

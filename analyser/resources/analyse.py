@@ -27,6 +27,16 @@ class Analyse(Resource):
                             'x': self._jsonify(data.x.spectrum()),
                             'y': self._jsonify(data.y.spectrum()),
                             'z': self._jsonify(data.z.spectrum())
+                        },
+                        'psd': {
+                            'x': self._jsonify(data.x.psd()),
+                            'y': self._jsonify(data.y.psd()),
+                            'z': self._jsonify(data.z.psd())
+                        },
+                        'peakSpectrum': {
+                            'x': self._jsonify(data.x.peakSpectrum()),
+                            'y': self._jsonify(data.y.peakSpectrum()),
+                            'z': self._jsonify(data.z.peakSpectrum())
                         }
                     }
                     for name, data in measurement.data.items()

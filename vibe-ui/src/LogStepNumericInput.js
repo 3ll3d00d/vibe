@@ -7,7 +7,7 @@ export default class LogStepNumericInput extends Component {
         super(props);
         this.state = {
             step: 10e-5,
-            precision: 6
+            precision: props.defaultPrecision || 6
         };
         this.handleStep = this.handleStep.bind(this);
     }

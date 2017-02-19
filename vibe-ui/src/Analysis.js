@@ -1,15 +1,11 @@
 import React, {Component} from "react";
 import {connect} from "react-refetch";
+import {Panel} from "react-bootstrap";
 import Message from "./Message";
-import ControllableChart from "./ControllableChart";
+import ChartController from "./ChartController";
+import AnalysisNavigator from "./AnalysisNavigator";
 
 class Analysis extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            open: true
-        }
-    }
 
     extractSeries(series) {
         const vals = [];
@@ -34,16 +30,26 @@ class Analysis extends Component {
                 </div>
             );
         } else if (this.props.data.fulfilled) {
-            // TODO repeat for each measurement available
-            const input = this.props.data.value.mpu6050.spectrum;
-            // TODO do this dynamically based on the available datasets
-            const x = this.extractSeries(input.x);
-            const y = this.extractSeries(input.y);
-            const z = this.extractSeries(input.z);
-            const data = {x: x, y: y, z: z};
-            return (
-                <ControllableChart data={data} name="mpu6050 - spectrum"/>
-            );
+            const {measurementId, deviceId, analyserId} = this.props.params;
+            if (measurementId && deviceId && analyserId) {
+                // TODO repeat for each measurement available
+                const input = this.props.data.value[deviceId][analyserId];
+                // TODO do this dynamically based on the available datasets
+                const x = this.extractSeries(input.x);
+                const y = this.extractSeries(input.y);
+                const z = this.extractSeries(input.z);
+                const data = {x: x, y: y, z: z};
+                return (
+                    <div>
+                        <AnalysisNavigator params={this.props.params} data={this.props.data.value}/>
+                        <Panel bsStyle="info">
+                            <ChartController data={data}/>
+                        </Panel>
+                    </div>
+                );
+            } else {
+                return <AnalysisNavigator params={this.props.params} data={this.props.data.value}/>;
+            }
         }
     }
 }
