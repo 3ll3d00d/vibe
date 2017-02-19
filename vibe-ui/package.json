@@ -15,6 +15,7 @@
     "react-addons-shallow-compare": "^15.4.2",
     "react-addons-transition-group": "^15.4.2",
     "react-bootstrap": "^0.30.7",
+    "react-bootstrap-multiselect": "^2.3.0",
     "react-dom": "^15.4.2",
     "react-fontawesome": "^1.5.0",
     "react-numeric-input": "^2.0.7",

@@ -1,10 +1,15 @@
 import React, {Component} from "react";
-import {ButtonGroup, Button, MenuItem, SplitButton} from "react-bootstrap";
+import {Button, ButtonGroup, ButtonToolbar, MenuItem, SplitButton} from "react-bootstrap";
 import {LinkContainer} from "react-router-bootstrap";
-import FontAwesome from "react-fontawesome";
 import {connect} from "react-refetch";
+import MultiSelect from "react-bootstrap-multiselect";
+import "react-bootstrap-multiselect/css/bootstrap-multiselect.css";
 
 class AnalysisNavigator extends Component {
+    constructor(props) {
+        super(props);
+    }
+
     createMeasurementLinks() {
         let measurementSelector = null;
         if (this.props.measurements.pending) {
@@ -102,15 +107,91 @@ class AnalysisNavigator extends Component {
         return analyserSelector;
     }
 
+    createSeriesLinks() {
+        const {measurementId, deviceId, analyserId} = this.props.params;
+        if (measurementId && deviceId && analyserId) {
+            const seriesAvailable = Object.keys(this.props.data[deviceId][analyserId]);
+            return (
+                <RoutingMultiSelect selected={this.props.params.series}
+                                    available={seriesAvailable}
+                                    linkURL={`/analyse/${measurementId}/${deviceId}/${analyserId}`}/>
+            );
+        } else {
+            return <Button disabled>Series: ?</Button>;
+        }
+    }
+
     render() {
         return (
-            <ButtonGroup>
-                {this.createMeasurementLinks()}
-                {this.createDeviceLinks()}
-                {this.createAnalysisLinks()}
-            </ButtonGroup>
+            <ButtonToolbar>
+                <ButtonGroup>
+                    {this.createMeasurementLinks()}
+                </ButtonGroup>
+                <ButtonGroup>
+                    {this.createDeviceLinks()}
+                </ButtonGroup>
+                <ButtonGroup>
+                    {this.createAnalysisLinks()}
+                </ButtonGroup>
+                {this.createSeriesLinks()}
+            </ButtonToolbar>
         );
     };
+}
+
+class RoutingMultiSelect extends Component {
+    constructor(props) {
+        super(props);
+        if (this.props.selected) {
+            this.state = {selected: this.props.selected};
+        } else {
+            this.state = {selected: props.available.sort().join("-")};
+        }
+        this.handleChange.bind(this);
+    }
+
+    makeValues() {
+        return this.props.available.sort().map((s) => {
+            return {value: s, selected: this.isSelected(s)};
+        });
+    }
+
+    isSelected(series) {
+        return this.state.selected.split("-").includes(series);
+    }
+
+    handleChange = (element, checked) => {
+        const selectedOption = element[0].value;
+        this.setState((previousState, props) => {
+            let previous = previousState.selected.split("-");
+            if (previous.length === 1 && previous[0] === "") {
+                previous = [];
+            }
+            const idx = previous.indexOf(selectedOption);
+            if (idx >= 0 && !checked) {
+                previous.splice(idx, 1);
+            } else if (idx < 0 && checked) {
+                previous.push(selectedOption);
+            }
+            return {selected: previous.sort().join("-")};
+        });
+    };
+
+    render() {
+        let bsStyle = "warning";
+        if (this.props.selected === this.state.selected) {
+            bsStyle = "success";
+        }
+        return (
+            <ButtonGroup>
+                <MultiSelect buttonClass={`btn btn-${bsStyle}`} data={this.makeValues()} multiple
+                             onChange={this.handleChange}/>
+                <LinkContainer to={{pathname: `${this.props.linkURL}/${this.state.selected}`}}>
+                    <Button bsStyle={bsStyle}>Analyse</Button>
+                </LinkContainer>
+            </ButtonGroup>
+        );
+    }
 }
 
 export default connect(props => ({

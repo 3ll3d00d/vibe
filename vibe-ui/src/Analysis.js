@@ -30,20 +30,18 @@ class Analysis extends Component {
                 </div>
             );
         } else if (this.props.data.fulfilled) {
-            const {measurementId, deviceId, analyserId} = this.props.params;
-            if (measurementId && deviceId && analyserId) {
-                // TODO repeat for each measurement available
+            const {measurementId, deviceId, analyserId, series} = this.props.params;
+            if (measurementId && deviceId && analyserId && series) {
                 const input = this.props.data.value[deviceId][analyserId];
-                // TODO do this dynamically based on the available datasets
-                const x = this.extractSeries(input.x);
-                const y = this.extractSeries(input.y);
-                const z = this.extractSeries(input.z);
-                const data = {x: x, y: y, z: z};
+                const selectedSeries = series.split("-");
+                const data = Object.keys(input).filter((k) => selectedSeries.includes(k)).map((key) => {
+                    return {[key]: this.extractSeries(input[key])};
+                });
                 return (
                     <div>
                         <AnalysisNavigator params={this.props.params} data={this.props.data.value}/>
                         <Panel bsStyle="info">
-                            <ChartController data={data}/>
+                            <ChartController data={Object.assign(...data)}/>
                         </Panel>
                     </div>
                 );
@@ -54,7 +52,9 @@ class Analysis extends Component {
     }
 }
 
-// TODO work out multiple charts, chart controller
 export default connect(props => ({
     data: props.sourceURL
 }))(Analysis);
+
+// TODO move series into the URL
+// TODO allow user to add additional measurements to compare against

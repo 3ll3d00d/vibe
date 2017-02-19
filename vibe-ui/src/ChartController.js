@@ -71,14 +71,6 @@ export default class ChartController extends Component {
     handleMaxY = (value) => {
         this.setState({maxY: value});
     };
-    handleSeriesChange = (name) => {
-        const key = `show${name}`;
-        this.setState((previousState, props) => {
-            return {
-                [key]: !previousState[key]
-            };
-        });
-    };
     handleLinLogChange = (name) => {
         const key = `${name}Log`;
         this.setState((previousState, props) => {
@@ -130,10 +122,6 @@ export default class ChartController extends Component {
     }
 
     render() {
-        const dataToggles = this.extractSeries().map((name) => {
-            return <ShowSeriesToggle key={name} name={name} show={this.state[`show${name}`]}
-                                     handler={() => this.handleSeriesChange(name)}/>
-        });
         const xRange = this.makeXFields();
         const yRange = this.makeYFields();
         const updateButton = <Button onClick={this.updateChartConfig}>Update</Button>;
@@ -156,11 +144,9 @@ export default class ChartController extends Component {
                                       onToggle={() => this.handleLinLogChange("y")}/>
                     </Col>
                     <Col md={2} xs={4}>{yRange}</Col>
-                    <Col md={1} xsHidden={true}>{dataToggles}</Col>
                     <Col md={1} xsHidden={true}>{updateButton}</Col>
                 </Row>
                 <Row>
-                    <Col lgHidden={true} mdHidden={true} xs={6}>{dataToggles}</Col>
                     <Col lgHidden={true} mdHidden={true} xs={6}>{updateButton}</Col>
                 </Row>
                 <Row>
@@ -170,17 +156,6 @@ export default class ChartController extends Component {
                     </Col>
                 </Row>
             </Grid>
-        );
-    }
-}
-
-class ShowSeriesToggle extends Component {
-    render() {
-        return (
-            <ToggleButton inactiveLabel={this.props.name}
-                          activeLabel={this.props.name}
-                          value={this.props.show}
-                          onToggle={this.props.handler}/>
         );
     }
 }

@@ -20,7 +20,9 @@ ReactDOM.render(
                 <Route path="/analyse" component={Analyse}>
                     <Route path="/analyse/:measurementId" component={Analyse}>
                         <Route path="/analyse/:measurementId/:deviceId" component={Analyse}>
-                            <Route path="/analyse/:measurementId/:deviceId/:analyserId" component={Analyse}/>
+                            <Route path="/analyse/:measurementId/:deviceId/:analyserId" component={Analyse}>
+                                <Route path="/analyse/:measurementId/:deviceId/:analyserId/:series" component={Analyse}/>
+                            </Route>
                         </Route>
                     </Route>
                 </Route>
