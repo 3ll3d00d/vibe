@@ -6,9 +6,6 @@ import MultiSelect from "react-bootstrap-multiselect";
 import "react-bootstrap-multiselect/css/bootstrap-multiselect.css";
 
 class AnalysisNavigator extends Component {
-    constructor(props) {
-        super(props);
-    }
 
     createMeasurementLinks() {
         let measurementSelector = null;
@@ -48,19 +45,20 @@ class AnalysisNavigator extends Component {
 
     createDeviceLinks() {
         let deviceSelector = null;
-        if (this.props.params.measurementId) {
+        const {measurementId, deviceId} = this.props.params;
+        if (measurementId) {
             const devices = Object.keys(this.props.data);
             const deviceOptions = devices.map((d) => {
                 return (
-                    <LinkContainer key={d} to={{pathname: `/analyse/${this.props.params.measurementId}/${d}`}}>
+                    <LinkContainer key={d} to={{pathname: `/analyse/${measurementId}/${d}`}}>
                         <MenuItem eventKey={d}>{d}</MenuItem>
                     </LinkContainer>
                 );
             });
             let style = "";
             let title = "";
-            if (this.props.params.deviceId) {
-                title = `Device: ${this.props.params.deviceId}`;
+            if (deviceId) {
+                title = `Device: ${deviceId}`;
                 style = "success";
             } else {
                 title = `Select a device`;
@@ -78,20 +76,22 @@ class AnalysisNavigator extends Component {
 
     createAnalysisLinks() {
         let analyserSelector = null;
-        if (this.props.params.measurementId && this.props.params.deviceId) {
-            const analysers = Object.keys(this.props.data[this.props.params.deviceId]);
+        const {measurementId, deviceId, analyserId, series} = this.props.params;
+        if (measurementId && deviceId) {
+            const analysers = Object.keys(this.props.data[deviceId]);
+            const seriesParams = series ? `/${series}` : "";
             const analyserOptions = analysers.map((a) => {
                 return (
                     <LinkContainer key={a}
-                                   to={{pathname: `/analyse/${this.props.params.measurementId}/${this.props.params.deviceId}/${a}`}}>
+                                   to={{pathname: `/analyse/${measurementId}/${deviceId}/${a}${seriesParams}`}}>
                         <MenuItem eventKey={a}>{a}</MenuItem>
                     </LinkContainer>
                 );
             });
             let style = "";
             let title = "";
-            if (this.props.params.analyserId) {
-                title = `Analysis: ${this.props.params.analyserId}`;
+            if (analyserId) {
+                title = `Analysis: ${analyserId}`;
                 style = "success";
             } else {
                 title = `Select an analysis`;
@@ -108,11 +108,11 @@ class AnalysisNavigator extends Component {
     }
 
     createSeriesLinks() {
-        const {measurementId, deviceId, analyserId} = this.props.params;
+        const {measurementId, deviceId, analyserId, series} = this.props.params;
         if (measurementId && deviceId && analyserId) {
             const seriesAvailable = Object.keys(this.props.data[deviceId][analyserId]);
             return (
-                <RoutingMultiSelect selected={this.props.params.series}
+                <RoutingMultiSelect selected={series}
                                     available={seriesAvailable}
                                     linkURL={`/analyse/${measurementId}/${deviceId}/${analyserId}`}/>
             );
@@ -182,12 +182,13 @@ class RoutingMultiSelect extends Component {
         if (this.props.selected === this.state.selected) {
             bsStyle = "success";
         }
+        // note that https://github.com/twbs/bootstrap/issues/2724 causes the last button to lose the left radius
         return (
             <ButtonGroup>
                 <MultiSelect buttonClass={`btn btn-${bsStyle}`} data={this.makeValues()} multiple
                              onChange={this.handleChange}/>
                 <LinkContainer to={{pathname: `${this.props.linkURL}/${this.state.selected}`}}>
-                    <Button bsStyle={bsStyle}>Analyse</Button>
+                    <Button bsStyle={bsStyle} style={{}}>Analyse</Button>
                 </LinkContainer>
             </ButtonGroup>
         );

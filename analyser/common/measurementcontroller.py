@@ -274,8 +274,7 @@ class MeasurementController(object):
     def _moveToComplete(self, am):
         am.status = MeasurementStatus.COMPLETE
         self.activeMeasurements.remove(am)
-        self.completeMeasurements.append(am)
-        self.store(am)
+        self.completeMeasurements.append(CompleteMeasurement(self.store(am), self.dataDir))
 
     def _moveToFailed(self, am):
         am.status = MeasurementStatus.FAILED
@@ -490,10 +489,13 @@ class MeasurementController(object):
         """
         Writes the measurement metadata to disk on completion.
         :param activeMeasurement: the measurement that has completed.
+        :returns the persisted metadata.
         """
         os.makedirs(self._getPathToMeasurementMetaDir(measurement.idAsPath), exist_ok=True)
+        output = marshal(measurement, measurementFields)
         with open(self._getPathToMeasurementMetaFile(measurement.idAsPath), 'w') as outfile:
-            json.dump(marshal(measurement, measurementFields), outfile)
+            json.dump(output, outfile)
+        return output
 
     def load(self, path):
         """

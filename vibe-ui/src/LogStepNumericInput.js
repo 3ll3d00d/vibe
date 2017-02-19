@@ -5,11 +5,27 @@ export default class LogStepNumericInput extends Component {
 
     constructor(props) {
         super(props);
-        this.state = {
-            step: 10e-5,
-            precision: props.defaultPrecision || 6
-        };
+        if (props.defaultPrecision) {
+            this.state = {
+                step: 10 ** -(props.defaultPrecision-1),
+                precision: props.defaultPrecision
+            };
+        } else {
+            const precision = this.calculatePrecision(this.props.value);
+            this.state = {
+                step: 10 ** -(precision),
+                precision: precision
+            };
+        }
         this.handleStep = this.handleStep.bind(this);
+    }
+
+    calculatePrecision(val) {
+        let precision = Math.floor(Math.log10(val));
+        if (this.props.value < 1) {
+            precision = -precision+1;
+        }
+        return precision;
     }
 
     handleStep = (valNum, valStr) => {
@@ -36,12 +52,17 @@ export default class LogStepNumericInput extends Component {
         this.props.handler(valNum);
     };
 
+    round(number, precision) {
+        const factor = Math.pow(10, precision);
+        return Math.round(number * factor) / factor;
+    }
+
     render() {
         return (
             <NumericInput step={this.state.step}
                           precision={this.state.precision}
-                          value={this.props.value}
-                          min={0}
+                          value={this.round(this.props.value, this.state.precision)}
+                          min={10e-12}
                           onChange={this.handleStep}
                           className="form-control"
                           style={false}/>

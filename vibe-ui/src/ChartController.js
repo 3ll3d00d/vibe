@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import LogStepNumericInput from "./LogStepNumericInput";
-import {Button, Tooltip, OverlayTrigger, Grid, Row, Col, InputGroup} from "react-bootstrap";
+import {Button, Tooltip, OverlayTrigger, Well, Row, Col, InputGroup} from "react-bootstrap";
 import Chart from "./Chart";
 import ToggleButton from 'react-toggle-button'
 import FontAwesome from "react-fontawesome";
@@ -9,25 +9,15 @@ export default class ChartController extends Component {
 
     constructor(props) {
         super(props);
-        const x = this.props.data.x.map(x => x.x);
-        const y = this.props.data.x.map(x => x.y);
-        // this means user input is overwritten if the data changes, not an issue until we get to the RTA view
-        let minX = Math.min(...x);
-        let maxX = Math.max(...x);
-        let minY = Math.min(...y);
-        let maxY = Math.max(...y);
         let state = {
-            minX: minX,
-            maxX: maxX,
-            minY: minY,
-            maxY: maxY,
+            minX: -1,
+            maxX: -1,
+            minY: -1,
+            maxY: -1,
             xLog: true,
             yLog: true,
             dots: false
         };
-        state = Object.assign(state, ...this.extractSeries().map((s) => {
-            return {[`show${s}`]: true}
-        }));
         this.state = Object.assign(state, this.createChartConfig(state));
         this.handleMinX.bind(this);
         this.handleMaxX.bind(this);
@@ -38,23 +28,25 @@ export default class ChartController extends Component {
         this.updateChartConfig.bind(this);
     }
 
-    extractSeries() {
-        return Object.keys(this.props.data);
+    calculateRange(data) {
+        const series = Object.keys(data);
+        return {
+            minX: Math.min(...series.map((s) => Math.min(...this.props.data[s].map(x => x.x)))),
+            minY: Math.min(...series.map((s) => Math.min(...this.props.data[s].map(x => x.y)))),
+            maxX: Math.max(...series.map((s) => Math.max(...this.props.data[s].map(x => x.x)))),
+            maxY: Math.max(...series.map((s) => Math.max(...this.props.data[s].map(x => x.y))))
+        };
     }
 
     createChartConfig(state) {
-        const seriesToShow = this.extractSeries().map((s) => {
-            if (state[`show${s}`]) return s;
-            else return null;
-        }).filter((s) => s !== null);
+        const range = this.calculateRange(this.props.data);
         return {
             chartConfig: {
-                x: [state.minX, state.maxX],
-                y: [state.minY, state.maxY],
+                x: [this.chooseValue('minX', state, range), this.chooseValue('maxX', state, range)],
+                y: [this.chooseValue('minY', state, range), this.chooseValue('maxY', state, range)],
                 xLog: state.xLog,
                 yLog: state.yLog,
-                showDots: state.dots,
-                series: seriesToShow
+                showDots: state.dots
             }
         };
     }
@@ -93,69 +85,78 @@ export default class ChartController extends Component {
         });
     };
 
-    makeYFields() {
+    makeYFields(range) {
         const yTip = <Tooltip id={"y"}>Y Axis Range</Tooltip>;
         return <OverlayTrigger placement="top" overlay={yTip} trigger="click" rootClose>
             <InputGroup bsSize="small">
                 <InputGroup.Addon>
                     <FontAwesome name="arrows-v"/>
                 </InputGroup.Addon>
-                <LogStepNumericInput value={this.state.maxY} handler={this.handleMaxY}/>
-                <LogStepNumericInput value={this.state.minY} handler={this.handleMinY}/>
+                <LogStepNumericInput value={this.chooseValue('maxY', this.state, range)} handler={this.handleMaxY}/>
+                <LogStepNumericInput value={this.chooseValue('minY', this.state, range)} handler={this.handleMinY}/>
             </InputGroup>
         </OverlayTrigger>;
     }
 
-    makeXFields() {
+    makeXFields(range) {
         const xTip = <Tooltip id={"x"}>X Axis Range</Tooltip>;
         return <OverlayTrigger placement="top" overlay={xTip} trigger="click" rootClose>
             <InputGroup>
                 <InputGroup.Addon>
                     <FontAwesome name="arrows-h"/>
                 </InputGroup.Addon>
-                <LogStepNumericInput value={this.state.minX} handler={this.handleMinX}
+                <LogStepNumericInput value={this.chooseValue('minX', this.state, range)}
+                                     handler={this.handleMinX}
                                      defaultPrecision={1}/>
-                <LogStepNumericInput value={this.state.maxX} handler={this.handleMaxX}
+                <LogStepNumericInput value={this.chooseValue('maxX', this.state, range)}
+                                     handler={this.handleMaxX}
                                      defaultPrecision={1}/>
             </InputGroup>
         </OverlayTrigger>;
     }
 
+    chooseValue(name, state, range) {
+        return state[name] > -1 ? state[name] : range[name];
+    }
+
     render() {
-        const xRange = this.makeXFields();
-        const yRange = this.makeYFields();
+        const range = this.calculateRange(this.props.data);
+        const xRange = this.makeXFields(range);
+        const yRange = this.makeYFields(range);
         const updateButton = <Button onClick={this.updateChartConfig}>Update</Button>;
         return (
-            <Grid>
-                <Row>
-                    <Col md={2} xs={4}>{xRange}</Col>
-                    <Col md={1} xs={2}>
-                        <ToggleButton activeLabel="x log"
-                                      inactiveLabel="x lin"
-                                      value={this.state.xLog}
-                                      onToggle={() => this.handleLinLogChange("x")}/>
-                        <ToggleButton activeLabel="dots"
-                                      inactiveLabel="dots"
-                                      value={this.state.dots}
-                                      onToggle={this.handleDotsChange}/>
-                        <ToggleButton activeLabel="y log"
-                                      inactiveLabel="y lin"
-                                      value={this.state.yLog}
-                                      onToggle={() => this.handleLinLogChange("y")}/>
-                    </Col>
-                    <Col md={2} xs={4}>{yRange}</Col>
-                    <Col md={1} xsHidden={true}>{updateButton}</Col>
-                </Row>
-                <Row>
-                    <Col lgHidden={true} mdHidden={true} xs={6}>{updateButton}</Col>
-                </Row>
+            <div>
+                <Well bsSize="small">
+                    <Row>
+                        <Col md={2} xs={4}>{xRange}</Col>
+                        <Col md={1} xs={2}>
+                            <ToggleButton activeLabel="x log"
+                                          inactiveLabel="x lin"
+                                          value={this.state.xLog}
+                                          onToggle={() => this.handleLinLogChange("x")}/>
+                            <ToggleButton activeLabel="dots"
+                                          inactiveLabel="dots"
+                                          value={this.state.dots}
+                                          onToggle={this.handleDotsChange}/>
+                            <ToggleButton activeLabel="y log"
+                                          inactiveLabel="y lin"
+                                          value={this.state.yLog}
+                                          onToggle={() => this.handleLinLogChange("y")}/>
+                        </Col>
+                        <Col md={2} xs={4}>{yRange}</Col>
+                        <Col md={1} xsHidden={true}>{updateButton}</Col>
+                    </Row>
+                    <Row>
+                        <Col lgHidden={true} mdHidden={true} xs={6}>{updateButton}</Col>
+                    </Row>
+                </Well>
                 <Row>
                     <Col>
                         <Chart data={this.props.data}
-                               chartConfig={this.state.chartConfig}/>
+                               config={this.state.chartConfig}/>
                     </Col>
                 </Row>
-            </Grid>
+            </div>
         );
     }
 }
