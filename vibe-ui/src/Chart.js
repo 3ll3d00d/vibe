@@ -3,8 +3,8 @@ import {
     CartesianGrid,
     Legend,
     ResponsiveContainer,
-    ScatterChart,
     Scatter,
+    ScatterChart,
     Tooltip,
     XAxis,
     YAxis,
@@ -15,11 +15,11 @@ import {format} from "d3-format";
 export default class Chart extends PureComponent {
     constructor(props) {
         super(props);
-        this.state = { height: 600 }
+        this.state = {height: 600}
     }
 
     updateHeight() {
-        this.setState({ height: window.innerHeight-250});
+        this.setState({height: window.innerHeight - 250});
     }
 
     componentDidMount() {
@@ -43,7 +43,12 @@ export default class Chart extends PureComponent {
             return <Scatter key={s} legendType='line' name={s} data={this.props.data[s]} fill={colour} line/>
         });
         const zRange = this.props.config.showDots ? [20, 20] : [1, 1];
-        const yFormat = format(",.1g");
+        let yFormat = null;
+        if (this.props.config.y[0] < 0.001) {
+            yFormat = format("0.0e");
+        } else {
+            yFormat = format("0.0g");
+        }
         const xLinLog = this.props.config.xLog ? "log" : "linear";
         const yLinLog = this.props.config.yLog ? "log" : "linear";
         return (

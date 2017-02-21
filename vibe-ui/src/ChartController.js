@@ -1,15 +1,27 @@
 import React, {Component} from "react";
 import LogStepNumericInput from "./LogStepNumericInput";
-import {Button, Tooltip, OverlayTrigger, Well, Row, Col, InputGroup} from "react-bootstrap";
+import {Button, Col, InputGroup, OverlayTrigger, Row, Tooltip, Well} from "react-bootstrap";
 import Chart from "./Chart";
-import ToggleButton from 'react-toggle-button'
+import ToggleButton from "react-toggle-button";
 import FontAwesome from "react-fontawesome";
 
 export default class ChartController extends Component {
 
     constructor(props) {
         super(props);
-        let state = {
+        this.state = this.createInitialState(props);
+        this.handleMinX.bind(this);
+        this.handleMaxX.bind(this);
+        this.handleMinY.bind(this);
+        this.handleMaxY.bind(this);
+        this.handleLinLogChange.bind(this);
+        this.handleDotsChange.bind(this);
+        this.renderChart.bind(this);
+        this.resetChart.bind(this);
+    }
+
+    createInitialState(props) {
+        const state = {
             minX: -1,
             maxX: -1,
             minY: -1,
@@ -18,30 +30,12 @@ export default class ChartController extends Component {
             yLog: true,
             dots: false
         };
-        this.state = Object.assign(state, this.createChartConfig(state));
-        this.handleMinX.bind(this);
-        this.handleMaxX.bind(this);
-        this.handleMinY.bind(this);
-        this.handleMaxY.bind(this);
-        this.handleLinLogChange.bind(this);
-        this.handleDotsChange.bind(this);
-        this.updateChartConfig.bind(this);
+        return Object.assign(state, this.createChartConfig(state, props.range));
     }
 
-    calculateRange(data) {
-        const series = Object.keys(data);
+    createChartConfig(state, range) {
         return {
-            minX: Math.min(...series.map((s) => Math.min(...this.props.data[s].map(x => x.x)))),
-            minY: Math.min(...series.map((s) => Math.min(...this.props.data[s].map(x => x.y)))),
-            maxX: Math.max(...series.map((s) => Math.max(...this.props.data[s].map(x => x.x)))),
-            maxY: Math.max(...series.map((s) => Math.max(...this.props.data[s].map(x => x.y))))
-        };
-    }
-
-    createChartConfig(state) {
-        const range = this.calculateRange(this.props.data);
-        return {
-            chartConfig: {
+            config: {
                 x: [this.chooseValue('minX', state, range), this.chooseValue('maxX', state, range)],
                 y: [this.chooseValue('minY', state, range), this.chooseValue('maxY', state, range)],
                 xLog: state.xLog,
@@ -51,37 +45,49 @@ export default class ChartController extends Component {
         };
     }
 
-    handleMinX = (value) => {
-        this.setState({minX: value});
+    handleMinX = (valNum, valStr) => {
+        this.setState((previousState, props) => {
+            const val = props.range.minX !== valNum ? valNum : previousState.minX;
+            return {minX: val};
+        });
     };
-    handleMaxX = (value) => {
-        this.setState({maxX: value});
+    handleMaxX = (valNum, valStr) => {
+        this.setState((previousState, props) => {
+            const val = props.range.maxX !== valNum ? valNum : previousState.maxX;
+            return {maxX: val};
+        });
     };
-    handleMinY = (value) => {
-        this.setState({minY: value});
+    handleMinY = (valNum, valStr) => {
+        this.setState((previousState, props) => {
+            const val = props.range.minY !== valNum ? valNum : previousState.minY;
+            return {minY: val};
+        });
     };
-    handleMaxY = (value) => {
-        this.setState({maxY: value});
+    handleMaxY = (valNum, valStr) => {
+        this.setState((previousState, props) => {
+            const val = props.range.maxY !== valNum ? valNum : previousState.maxY;
+            return {maxY: val};
+        });
     };
     handleLinLogChange = (name) => {
         const key = `${name}Log`;
         this.setState((previousState, props) => {
-            return {
-                [key]: !previousState[key]
-            };
+            return {[key]: !previousState[key]};
         });
     };
     handleDotsChange = () => {
         this.setState((previousState, props) => {
-            return {
-                dots: !previousState.dots
-            };
+            return {dots: !previousState.dots};
         });
     };
-
-    updateChartConfig = () => {
+    renderChart = () => {
         this.setState((previousState, props) => {
-            return this.createChartConfig(previousState);
+            return this.createChartConfig(previousState, props.range);
+        });
+    };
+    resetChart = () => {
+        this.setState((previousState, props) => {
+            return this.createInitialState(props);
         });
     };
 
@@ -119,11 +125,19 @@ export default class ChartController extends Component {
         return state[name] > -1 ? state[name] : range[name];
     }
 
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.forceUpdate && (nextProps.forceUpdate !== this.props.forceUpdate)) {
+            this.setState((previousState, props) => {
+                return this.createChartConfig(previousState, nextProps.range);
+            });
+        }
+    }
+
     render() {
-        const range = this.calculateRange(this.props.data);
-        const xRange = this.makeXFields(range);
-        const yRange = this.makeYFields(range);
-        const updateButton = <Button onClick={this.updateChartConfig}>Update</Button>;
+        const xRange = this.makeXFields(this.props.range);
+        const yRange = this.makeYFields(this.props.range);
+        const updateButton = <Button onClick={this.renderChart}>Update</Button>;
+        const resetButton = <Button onClick={this.resetChart}>Reset</Button>;
         return (
             <div>
                 <Well bsSize="small">
@@ -144,16 +158,19 @@ export default class ChartController extends Component {
                                           onToggle={() => this.handleLinLogChange("y")}/>
                         </Col>
                         <Col md={2} xs={4}>{yRange}</Col>
-                        <Col md={1} xsHidden={true}>{updateButton}</Col>
+                        <Col md={1} xsHidden={true}>
+                            {updateButton}{resetButton}
+                        </Col>
                     </Row>
                     <Row>
-                        <Col lgHidden={true} mdHidden={true} xs={6}>{updateButton}</Col>
+                        <Col lgHidden={true} mdHidden={true} xs={6}>
+                            {updateButton}{resetButton}
+                        </Col>
                     </Row>
                 </Well>
                 <Row>
                     <Col>
-                        <Chart data={this.props.data}
-                               config={this.state.chartConfig}/>
+                        <Chart data={this.props.data} config={this.state.config}/>
                     </Col>
                 </Row>
             </div>

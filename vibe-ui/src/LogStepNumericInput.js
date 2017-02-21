@@ -18,6 +18,7 @@ export default class LogStepNumericInput extends Component {
             };
         }
         this.handleStep = this.handleStep.bind(this);
+        this.round = this.round.bind(this);
     }
 
     calculatePrecision(val) {
@@ -49,19 +50,20 @@ export default class LogStepNumericInput extends Component {
             }
         }
         // pass the value up the chain to the parent
-        this.props.handler(valNum);
+        this.props.handler(valNum, valStr);
     };
 
-    round(number, precision) {
-        const factor = Math.pow(10, precision);
-        return Math.round(number * factor) / factor;
-    }
+    round = (number) => {
+        const factor = Math.pow(10, this.state.precision);
+        return (Math.round(number * factor) / factor).toFixed(this.state.precision);
+    };
 
     render() {
         return (
             <NumericInput step={this.state.step}
-                          precision={this.state.precision}
-                          value={this.round(this.props.value, this.state.precision)}
+                          precision={12}
+                          value={this.props.value}
+                          format={this.round}
                           min={10e-12}
                           onChange={this.handleStep}
                           className="form-control"
