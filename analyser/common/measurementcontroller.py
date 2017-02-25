@@ -30,11 +30,16 @@ measurementFields = {
     'description': fields.String,
     'measurementParameters': fields.Raw,
     'status': EnumField,
-    'recordingDevices': fields.Raw
+    'recordingDevices': fields.Raw,
+    'analysis': fields.Raw
 }
 
 logger = logging.getLogger('analyser.measurementcontroller')
 
+DEFAULT_ANALYSIS = {
+    'series': ['x', 'y', 'z'],
+    'analysis': ['spectrum', 'peakSpectrum', 'psd']
+}
 
 class MeasurementStatus(Enum):
     """
@@ -84,6 +89,8 @@ class ActiveMeasurement(object):
         self.status = MeasurementStatus.NEW
         self.id = getMeasurementId(self.startTime, self.name)
         self.idAsPath = self.id.replace('_', '/')
+        # hardcoded here rather than in the UI
+        self.analysis = DEFAULT_ANALYSIS
 
     def overlapsWith(self, targetStartTime, duration):
         """
@@ -154,6 +161,7 @@ class CompleteMeasurement(object):
         self.recordingDevices = meta['recordingDevices']
         self.status = MeasurementStatus[meta['status']]
         self.id = getMeasurementId(self.startTime, self.name)
+        self.analysis = meta.get('analysis', DEFAULT_ANALYSIS)
         self.idAsPath = self.id.replace('_', '/')
         self.dataDir = dataDir
         self.data = {}
@@ -499,7 +507,7 @@ class MeasurementController(object):
 
     def load(self, path):
         """
-        Loads a CompletedMeasurement from the path.
+        Loads a CompletedMeasurement from the path.á
         :param path: the path at which the data is found.
         :return: the measurement
         """

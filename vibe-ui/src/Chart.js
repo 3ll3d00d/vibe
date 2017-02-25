@@ -13,6 +13,49 @@ import {
 import {format} from "d3-format";
 
 export default class Chart extends PureComponent {
+    defaultColours = {
+        x: [
+            '#00ff00',
+            '#009900',
+            '#99ff99',
+            '#ccffcc',
+            '#006600',
+            '#004c00',
+        ],
+        y: [
+            '#ff0000',
+            '#990000',
+            '#ff6666',
+            '#ff9999',
+            '#660000',
+            '#4c0000',
+        ],
+        z: [
+            '#0000ff',
+            '#000099',
+            '#4c4cff',
+            '#7f7fff',
+            '#000066',
+            '#00004c',
+        ],
+        sum: [
+            '#ff00ff',
+            '#990099',
+            '#ff66ff',
+            '#ff99ff',
+            '#660066',
+            '#4c004c',
+        ],
+        unknown: [
+            '#000000',
+            '#323232',
+            '#4c4c4c',
+            '#666666',
+            '#7f7f7f',
+            '#cccccc'
+        ]
+    };
+
     constructor(props) {
         super(props);
         this.state = {height: 600}
@@ -31,16 +74,29 @@ export default class Chart extends PureComponent {
         window.removeEventListener("resize", this.updateHeight.bind(this));
     }
 
+    // credit to https://www.paulirish.com/2009/random-hex-color-code-snippets/
+    generateRandomColour() {
+        return '#' + ~~(Math.random() * (1 << 24)).toString(16);
+    }
+
     render() {
-        const defaultColours = {
-            x: 'green',
-            y: 'red',
-            z: 'blue',
-            sum: 'black'
-        };
-        const series = Object.keys(this.props.data).sort().map((s) => {
-            const colour = defaultColours[s] || 'grey';
-            return <Scatter key={s} legendType='line' name={s} data={this.props.data[s]} fill={colour} line/>
+        let seriesCount = {x: 0, y: 0, z: 0, sum: 0, unknown: 0};
+        const series = this.props.series.map((s) => {
+            let colour;
+            if (this.defaultColours[s.series]) {
+                if (seriesCount[s.series] < this.defaultColours[s.series].length) {
+                    colour = this.defaultColours[s.series][seriesCount[s.series]];
+                    seriesCount[s.series] += 1
+                }
+            } else {
+                if (seriesCount.unknown < this.defaultColours.unknown.length) {
+                    colour = this.defaultColours.unknown[seriesCount.unknown];
+                    seriesCount.unknown += 1
+                }
+            }
+            if (!colour) colour = this.generateRandomColour();
+            return <Scatter key={s} legendType='line' name={s.id} data={s.xyz} fill={colour}
+                            line={{stroke: colour, strokeWidth: 1}}/>
         });
         const zRange = this.props.config.showDots ? [20, 20] : [1, 1];
         let yFormat = null;
