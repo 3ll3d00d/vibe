@@ -58,11 +58,11 @@ export default class Chart extends PureComponent {
 
     constructor(props) {
         super(props);
-        this.state = {height: 600}
+        this.state = {height: window.innerHeight - (210+(this.props.pathCount*33))};
     }
 
     updateHeight() {
-        this.setState({height: window.innerHeight - 250});
+        this.setState({height: window.innerHeight - (210+(this.props.pathCount*33))});
     }
 
     componentDidMount() {
@@ -80,18 +80,15 @@ export default class Chart extends PureComponent {
     }
 
     render() {
-        let seriesCount = {x: 0, y: 0, z: 0, sum: 0, unknown: 0};
         const series = this.props.series.map((s) => {
             let colour;
             if (this.defaultColours[s.series]) {
-                if (seriesCount[s.series] < this.defaultColours[s.series].length) {
-                    colour = this.defaultColours[s.series][seriesCount[s.series]];
-                    seriesCount[s.series] += 1
+                if (s.seriesIdx < this.defaultColours[s.series].length) {
+                    colour = this.defaultColours[s.series][s.seriesIdx];
                 }
             } else {
-                if (seriesCount.unknown < this.defaultColours.unknown.length) {
-                    colour = this.defaultColours.unknown[seriesCount.unknown];
-                    seriesCount.unknown += 1
+                if (s.seriesIdx < this.defaultColours.unknown.length) {
+                    colour = this.defaultColours.unknown[s.seriesIdx];
                 }
             }
             if (!colour) colour = this.generateRandomColour();

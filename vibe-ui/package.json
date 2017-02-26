@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "babel-plugin-transform-object-assign": "^6.22.0",
+    "babel-polyfill": "^6.23.0",
     "bootstrap": "3",
     "font-awesome": "^4.7.0",
     "promise-polyfill": "^6.0.2",

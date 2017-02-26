@@ -34,6 +34,7 @@ export default class Analysis extends Component {
             <Panel bsStyle="info">
                 <ChartController range={this.calculateRange()}
                                  series={this.props.series}
+                                 pathCount={this.props.pathCount}
                                  forceUpdate={this.state.updateChartOnNavigatorChange}/>
             </Panel>
         );

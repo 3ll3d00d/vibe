@@ -44,10 +44,39 @@ class Analyse extends Component {
     };
 
     /**
+     * Marks this path as unloaded so it doesn't show on the chart.
+     * @param id the path id.
+     */
+    unloadPath = (id) => {
+        this.setState((previousState, props) => {
+            const paths = previousState.paths.slice();
+            const pathIdx = paths.findIndex(p => p.id === id);
+            const newPath = Object.assign(paths[pathIdx], {unloaded: true});
+            if (newPath.data) newPath.data = null;
+            paths.splice(pathIdx, 1, newPath);
+            return {paths: paths};
+        });
+    };
+
+    /**
      * Triggers an analysis from the available paths.
      */
-    triggerAnalysis = () => {
-        [...new Set(this.state.paths.map(p => p.measurementId))].forEach(m => this.props.fetchData(m));
+    triggerAnalysis = (id) => {
+        this.setState((previousState, props) => {
+            const paths = previousState.paths.slice();
+            const pathIdx = paths.findIndex(p => p.id === id);
+            let newPath = Object.assign(paths[pathIdx], {unloaded: false});
+            const promise = this.extractDataPromises(props).find(p => p.name === newPath.measurementId);
+            if (promise) {
+                newPath = Object.assign(newPath, promise);
+            }
+            paths.splice(pathIdx, 1, newPath);
+            return {paths: paths};
+        });
+        const toLoad = [...new Set(this.state.paths.filter(p => !(p.data && p.data.fulfilled)).map(p => p.measurementId))];
+        toLoad.forEach(m => {
+            this.props.fetchData(m)
+        });
     };
 
     /**
@@ -155,11 +184,15 @@ class Analyse extends Component {
      * @param nextProps the new props.
      */
     componentWillReceiveProps(nextProps) {
+        this.appendFetchedDataToPaths(nextProps);
+    }
+
+    appendFetchedDataToPaths(nextProps) {
         const namedPromises = this.extractDataPromises(nextProps);
         namedPromises.forEach(promise => {
             this.setState((previousState, props) => {
                 const decoratedPaths = previousState.paths.slice().map((p) => {
-                    if (p.measurementId === promise.name) {
+                    if (p.measurementId === promise.name && !p.unloaded) {
                         return Object.assign(p, promise);
                     } else {
                         return p;
@@ -190,13 +223,13 @@ class Analyse extends Component {
      * @returns {T|*|null} true if this path has all params set.
      */
     pathIsComplete(p) {
-       return p.measurementId && p.deviceId && p.analyserId && p.series && p.data && p.data.fulfilled;
+        return p.measurementId && p.deviceId && p.analyserId && p.series && p.data && p.data.fulfilled;
     }
 
     renderLoaded() {
         let analysis = null;
         if (this.anyPathsIsComplete()) {
-            analysis = <Analysis series={this.pathsToChartData()}/>;
+            analysis = <Analysis series={this.pathsToChartData()} pathCount={this.state.paths.length}/>;
         }
         return (
             <div>
@@ -213,36 +246,43 @@ class Analyse extends Component {
      */
     pathsToChartData() {
         // convert each path to a set of data (1 per series)
-        const dataByPath = this.getCompletePaths().map(p => {
-            return p.series.split("-").map(s => {
-                const data = p.data.value[p.deviceId][p.analyserId][s];
-                const xyz = [];
-                let minX = Number.MAX_VALUE;
-                let minY = Number.MAX_VALUE;
-                let maxX = Number.MIN_VALUE;
-                let maxY = Number.MIN_VALUE;
-                for (let [idx, value] of data.freq.entries()) {
-                    if (value > 0) {
-                        xyz.push({x: value, y: data.val[idx], z: 1});
-                        if (value < minX) minX = value;
-                        if (value > maxX) maxX = value;
-                        if (data.val[idx] < minY) minY = data.val[idx];
-                        if (data.val[idx] > maxY) maxY = data.val[idx];
+        let seriesIdx = -1;
+        const dataByPath = this.state.paths.map(p => {
+            seriesIdx++;
+            if (this.pathIsComplete(p)) {
+                return p.series.split("-").map(s => {
+                    const data = p.data.value[p.deviceId][p.analyserId][s];
+                    const xyz = [];
+                    let minX = Number.MAX_VALUE;
+                    let minY = Number.MAX_VALUE;
+                    let maxX = Number.MIN_VALUE;
+                    let maxY = Number.MIN_VALUE;
+                    for (let [idx, value] of data.freq.entries()) {
+                        if (value > 0) {
+                            xyz.push({x: value, y: data.val[idx], z: 1});
+                            if (value < minX) minX = value;
+                            if (value > maxX) maxX = value;
+                            if (data.val[idx] < minY) minY = data.val[idx];
+                            if (data.val[idx] > maxY) maxY = data.val[idx];
+                        }
                     }
-                }
-                return {
-                    id: `${p.measurementId}/${p.deviceId}/${p.analyserId}`,
-                    series: s,
-                    xyz: xyz,
-                    minX: minX,
-                    maxX: maxX,
-                    minY: minY,
-                    maxY: maxY
-                };
-            });
+                    return {
+                        id: `${p.measurementId}/${p.deviceId}/${p.analyserId}`,
+                        series: s,
+                        seriesIdx: seriesIdx,
+                        xyz: xyz,
+                        minX: minX,
+                        maxX: maxX,
+                        minY: minY,
+                        maxY: maxY
+                    };
+                });
+            } else {
+                return null;
+            }
         });
         // now flatten to one list
-        return [].concat(...dataByPath);
+        return [].concat(...dataByPath).filter(p => p !== null);
     }
 
     renderNavigators() {
@@ -254,9 +294,10 @@ class Analyse extends Component {
                                       path={this.state.paths[i]}
                                       addHandler={this.addPath}
                                       removeHandler={this.removePath}
+                                      unloadHandler={this.unloadPath}
                                       analysisHandler={this.triggerAnalysis}
-                                      allowPlusAnalyse={isLast}
-                                      allowMinus={isNotFirstAndOnly}
+                                      isLastPath={isLast}
+                                      isNotFirstAndOnlyPath={isNotFirstAndOnly}
                                       navigator={this.navigate(this.state.paths[i].id)}/>;
         });
     }

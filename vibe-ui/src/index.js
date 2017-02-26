@@ -10,6 +10,7 @@ import About from "./About";
 import Configure from "./Configure";
 import Measure from "./Measure";
 import Analyse from "./Analyse";
+import "babel-polyfill";
 
 ReactDOM.render(
     (

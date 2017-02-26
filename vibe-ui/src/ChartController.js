@@ -170,7 +170,9 @@ export default class ChartController extends Component {
                 </Well>
                 <Row>
                     <Col>
-                        <Chart series={this.props.series} config={this.state.config}/>
+                        <Chart pathCount={this.props.pathCount}
+                               series={this.props.series}
+                               config={this.state.config}/>
                     </Col>
                 </Row>
             </div>

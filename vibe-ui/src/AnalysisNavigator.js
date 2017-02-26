@@ -142,10 +142,22 @@ export default class AnalysisNavigator extends Component {
         return <NavigatorMultiSelect navigate={navigateFunc} selected={series} available={available}/>;
     }
 
-    canAnalyse() {
+    /**
+     * @returns {*|null} true if this path is complete (i.e. has a value for every aspect)
+     */
+    pathIsComplete() {
         return this.props.path && this.props.path.measurementId && this.props.path.deviceId && this.props.path.analyserId;
     }
 
+    /**
+     * Calculates which buttons to show. This means;
+     * - if the path has data, indicate the state of that data (loading/loaded/failed)
+     * - on the last path, and if that path is complete, show the + button to allow the user to add a path
+     * - on every path, except when we have just 1 path, show the - button to allow the user to delete that path
+     * - on any path which is complete and has data available show the eject button to remove the path from the chart
+     * - on any path which is complete but does not have data available, show the play button to load the path into the chart.
+     * @returns {Array}
+     */
     createActionButtons() {
         const {path} = this.props;
         const actionButtons = [];
@@ -169,24 +181,32 @@ export default class AnalysisNavigator extends Component {
                 );
             }
         }
-        if (this.props.allowPlusAnalyse && this.canAnalyse()) {
+        if (this.props.isLastPath && this.pathIsComplete()) {
             actionButtons.push(
                 <Button key="add" onClick={() => this.props.addHandler()}><FontAwesome name="plus"/></Button>
             );
         }
-        if (this.props.allowMinus) {
+        if (this.props.isNotFirstAndOnlyPath) {
             actionButtons.push(
                 <Button key="minus" onClick={() => this.props.removeHandler(this.props.path.id)}>
                     <FontAwesome name="minus"/>
                 </Button>
             );
         }
-        if (!loadedOK && this.props.allowPlusAnalyse && this.canAnalyse()) {
-            actionButtons.push(
-                <Button key="analyse" onClick={() => this.props.analysisHandler()}>
-                    <FontAwesome name="line-chart"/>
-                </Button>
-            );
+        if (this.pathIsComplete()) {
+            if (loadedOK) {
+                actionButtons.push(
+                    <Button key="unload" onClick={() => this.props.unloadHandler(this.props.path.id)}>
+                        <FontAwesome name="eject"/>
+                    </Button>
+                );
+            } else {
+                actionButtons.push(
+                    <Button key="analyse" onClick={() => this.props.analysisHandler(this.props.path.id)}>
+                        <FontAwesome name="play"/>
+                    </Button>
+                );
+            }
         }
         return actionButtons;
     }
@@ -211,5 +231,6 @@ export default class AnalysisNavigator extends Component {
                 </ButtonGroup>
             </ButtonToolbar>
         );
-    };
+    }
+    ;
 }
