@@ -5,7 +5,7 @@ def readme():
         return f.read()
 
 
-setup(name='rpi-vibe',
+setup(name='rpi-vibe-analyser',
       version='0.0.1',
       description='A vibration analysis and data acquisition suite for the rpi',
       long_description=readme(),
@@ -21,7 +21,16 @@ setup(name='rpi-vibe',
       author='Matt Khan',
       author_email='mattkhan+vibe@gmail.com',
       license='MIT',
-      packages=['analyser', 'core', 'recorder'],
+      packages=['analyser', 'core'],
+      install_requires=[
+          'flask',
+          'flask-restful',
+          'numpy',
+          'pyyaml',
+          'requests',
+          'scipy',
+          'twisted'
+      ],
       setup_requires=[
           'pytest-runner'
       ],

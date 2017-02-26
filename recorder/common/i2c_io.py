@@ -1,8 +1,6 @@
 import abc
 from queue import Queue
 
-import numpy as np
-
 from .mpu6050 import mpu6050
 
 
@@ -87,6 +85,8 @@ class WhiteNoiseProvider(MockIoDataProvider):
     """
 
     def __init__(self):
+        import numpy as np
+
         self.samples = {
             'x': np.random.normal(0, 0.25, size=1000),
             'y': np.random.normal(0, 0.25, size=1000),
