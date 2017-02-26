@@ -2,7 +2,7 @@ import collections
 import logging
 import struct
 from _ctypes import ArgumentError
-from time import sleep
+from time import sleep, time
 
 from .accelerometer import Accelerometer, ACCEL_X, ACCEL_Y, ACCEL_Z, GYRO_X, GYRO_Y, GYRO_Z, TEMP, SAMPLE_TIME
 
@@ -449,6 +449,7 @@ class mpu6050(Accelerometer):
         self.i2c_io.write(self.MPU6050_ADDRESS, self.MPU6050_RA_USER_CTRL, 0b00000100)
         pass
         self.i2c_io.write(self.MPU6050_ADDRESS, self.MPU6050_RA_USER_CTRL, 0b01000000)
+        self.getInterruptStatus()
 
     def enableFifo(self):
         """
@@ -501,7 +502,16 @@ class mpu6050(Accelerometer):
         fifoBytesAvailable = 0
         fifoWasReset = False
         logger.debug(">> provideData target %d samples", self.samplesPerBatch)
-        while len(samples) < self.samplesPerBatch:
+        iterations = 0
+        # allow 1.5x the expected duration of the batch
+        breakTime = time() + ((self.samplesPerBatch / self.fs) * 1.5)
+        overdue = False
+        while len(samples) < self.samplesPerBatch and not overdue:
+            iterations += 1
+            if iterations > self.samplesPerBatch and iterations % 100 == 0:
+                if time() > breakTime:
+                    logger.warning("Breaking measurement after %d iterations, batch overdue", iterations)
+                    overdue = True
             if fifoBytesAvailable < self.sampleSizeBytes or fifoWasReset:
                 interrupt = self.getInterruptStatus()
                 fifoBytesAvailable = self.getFifoCount()
@@ -509,10 +519,12 @@ class mpu6050(Accelerometer):
             logger.debug("Start sample loop [available: %d , required: %d]", fifoBytesAvailable, self.sampleSizeBytes)
             if interrupt & 0x10:
                 logger.error("FIFO OVERFLOW, RESETTING [available: %d , interrupt: %d]", fifoBytesAvailable, interrupt)
+                self.measurementOverflowed = True
                 self.resetFifo()
                 fifoWasReset = True
             elif fifoBytesAvailable == 1024:
                 logger.error("FIFO FULL, RESETTING [available: %d , interrupt: %d]", fifoBytesAvailable, interrupt)
+                self.measurementOverflowed = True
                 self.resetFifo()
                 fifoWasReset = True
             elif interrupt & 0x02 or interrupt & 0x01:

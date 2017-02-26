@@ -1,0 +1,38 @@
+{
+  "name": "vibe-ui",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "react-scripts": "0.8.5"
+  },
+  "dependencies": {
+    "babel-plugin-transform-object-assign": "^6.22.0",
+    "babel-polyfill": "^6.23.0",
+    "bootstrap": "3",
+    "font-awesome": "^4.7.0",
+    "promise-polyfill": "^6.0.2",
+    "rc-progress": "^2.0.6",
+    "react": "^15.4.2",
+    "react-addons-shallow-compare": "^15.4.2",
+    "react-addons-transition-group": "^15.4.2",
+    "react-bootstrap": "^0.30.7",
+    "react-bootstrap-multiselect": "^2.3.0",
+    "react-dom": "^15.4.2",
+    "react-fontawesome": "^1.5.0",
+    "react-numeric-input": "^2.0.7",
+    "react-refetch": "^1.0.0",
+    "react-router": "^3.0.2",
+    "react-router-bootstrap": "^0.23.1",
+    "react-toggle-button": "^2.1.0",
+    "reactable": "^0.14.1",
+    "recharts": "^0.20.6",
+    "whatwg-fetch": "^2.0.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "proxy": "http://localhost:8080/"
+}

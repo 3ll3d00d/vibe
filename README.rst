@@ -116,7 +116,7 @@ UI -> Analyser
 ^^^^^^^^^^^^^^
 
 | Measurements are scheduled by the UI using the
-  ``/measurements/<measurementName>`` endpoint. This
+  ``/measurements/<measurementId>`` endpoint. This
 | accepts a json payload such as:
 
 ::
@@ -139,7 +139,7 @@ Analyser -> Recorder
 ^^^^^^^^^^^^^^^^^^^^
 
 | The analyser schedules a measurement using a PUT to the
-| \`/devices/<deviceId>/measurements/<measurementName>`` endpoint. This
+| \`/devices/<deviceId>/measurements/<measurementId>`` endpoint. This
   accepts a
 | json payload similar to that sent UI -> Analyser
 
@@ -158,27 +158,27 @@ Analyser -> Recorder
   transition occurred.
 
 | This data is accessible via a GET to the
-  ``/devices/<deviceId>/measurements/<measurementName>``
+  ``/devices/<deviceId>/measurements/<measurementId>``
 | endpoint.
 
 Recorder -> Analyser
 ^^^^^^^^^^^^^^^^^^^^
 
 | When a recording starts, the recorder issues a PUT to the
-  ``/measurements/<measurementName>/<deviceName>`` endpoint
+  ``/measurements/<measurementId>/<deviceName>`` endpoint
 | to signal that the analyser should prepare to record the data.
 
 | Once a recording starts, the recorder bundles data into batch size
   packets (as per the ``samplesPerBatch`` attribute from
 | the ``TargetState``) and sends them in json format to the
-  ``/measurements/<measurementName>/<deviceName>/data``
+  ``/measurements/<measurementId>/<deviceName>/data``
 | endpoint.
 
 | On successful completion, the recorder issues a PUT to the
-  ``/measurements/<measurementName>/<deviceName>/complete``
+  ``/measurements/<measurementId>/<deviceName>/complete``
 | endpoint. Alternatively if the recording fails for any reason, a PUT
   is issued to the
-| ``/measurements/<measurementName>/<deviceName>/fail`` endpoint.
+| ``/measurements/<measurementId>/<deviceName>/fail`` endpoint.
 
 Handling Data
 ^^^^^^^^^^^^^

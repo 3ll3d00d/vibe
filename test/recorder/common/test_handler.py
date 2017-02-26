@@ -11,14 +11,14 @@ class MyHandler(DataHandler):
         self.events = []
         self.endName = None
 
-    def start(self, measurementName):
-        self.startName = measurementName
+    def start(self, measurementId):
+        self.startName = measurementId
 
     def handle(self, data):
         self.events.append(data)
 
-    def stop(self, measurementName, failureReason=None):
-        self.endName = measurementName
+    def stop(self, measurementId, failureReason=None):
+        self.endName = measurementId
         self.failureReason = failureReason
 
 

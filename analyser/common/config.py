@@ -5,9 +5,18 @@ from core.BaseConfig import BaseConfig
 
 class Config(BaseConfig):
     def __init__(self):
-        super().__init__('analyser')
+        super().__init__('analyser', defaultPort=8080)
         self.targetState = loadTargetState(self.config.get('targetStateProvider'))
         self.dataDir = self.config.get('dataDir', os.path.join(self._getConfigPath(), 'data'))
+        self.useTwisted = self.config.get('useTwisted', True)
+
+    def loadDefaultConfig(self):
+        import tempfile
+        return {
+            'debug': False,
+            'debugLogging': False,
+            'measurementDir': os.path.join(tempfile.gettempdir(), 'analyser')
+        }
 
 
 def loadTargetState(targetStateConfig, existingTargetState=None):

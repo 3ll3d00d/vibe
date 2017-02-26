@@ -20,11 +20,11 @@ class Measurement(Resource):
         self._measurementController = kwargs['measurementController']
 
     @marshal_with(measurementFields)
-    def get(self, measurementName):
-        measurement = self._measurementController.getMeasurement(measurementName)
+    def get(self, measurementId):
+        measurement = self._measurementController.getMeasurement(measurementId)
         return measurement, 200 if measurement else 404
 
-    def put(self, measurementName):
+    def put(self, measurementId):
         """
         Initiates a new measurement. Accepts a json payload with the following attributes;
 
@@ -44,7 +44,7 @@ class Measurement(Resource):
             # should never happen but just in case
             return 'no start time', 400
         else:
-            scheduled, message = self._measurementController.schedule(measurementName, duration, start,
+            scheduled, message = self._measurementController.schedule(measurementId, duration, start,
                                                                       description=json.get('description'))
             return message, 200 if scheduled else 400
 
@@ -64,7 +64,7 @@ class Measurement(Resource):
             if target <= datetime.datetime.now():
                 time = self._getAbsoluteTime(datetime.datetime.now(), 2)
                 logger.warning('Date requested is in the past (' + start + '), defaulting to ' +
-                               datetime.datetime.strftime(time, DATETIME_FORMAT))
+                               time.strftime(DATETIME_FORMAT))
                 return time
             else:
                 return target
@@ -82,12 +82,13 @@ class Measurement(Resource):
         """
         return start + datetime.timedelta(days=0, seconds=delay)
 
-    def delete(self, measurementName):
+    @marshal_with(measurementFields)
+    def delete(self, measurementId):
         """
         Deletes the named measurement.
-        :return: 200 if something was deleted, 404 if the measurement doesn't exist, 500 in any other caes.
+        :return: 200 if something was deleted, 404 if the measurement doesn't exist, 500 in any other case.
         """
-        message, count, deleted = self._measurementController.delete(measurementName)
+        message, count, deleted = self._measurementController.delete(measurementId)
         if count == 0:
             return message, 404
         elif deleted is None:
@@ -100,16 +101,19 @@ class InitialiseMeasurement(Resource):
     def __init__(self, **kwargs):
         self._measurementController = kwargs['measurementController']
 
-    def put(self, measurementName, deviceName):
+    def put(self, measurementId, deviceId):
         """
         Initialises the measurement session from the given device.
-        :param measurementName:
-        :param deviceName:
+        :param measurementId:
+        :param deviceId:
         :return:
         """
-        if self._measurementController.startMeasurement(measurementName, deviceName):
+        logger.info('Starting measurement ' + measurementId + ' for ' + deviceId)
+        if self._measurementController.startMeasurement(measurementId, deviceId):
+            logger.info('Started measurement ' + measurementId + ' for ' + deviceId)
             return None, 200
         else:
+            logger.warning('Failed to start measurement ' + measurementId + ' for ' + deviceId)
             return None, 404
 
 
@@ -117,23 +121,25 @@ class RecordData(Resource):
     def __init__(self, **kwargs):
         self._measurementController = kwargs['measurementController']
 
-    def put(self, measurementName, deviceName):
+    def put(self, measurementId, deviceId):
         """
         Store a bunch of data for this measurement session.
-        :param measurementName:
-        :param deviceName:
+        :param measurementId:
+        :param deviceId:
         :return:
         """
         data = request.get_json()
         if data is not None:
             parsedData = json.loads(data)
-            logger.debug('Received payload ' + measurementName + '/' + deviceName + ': ' +
+            logger.debug('Received payload ' + measurementId + '/' + deviceId + ': ' +
                          str(len(parsedData)) + ' records')
-            if self._measurementController.recordData(measurementName, deviceName, parsedData):
+            if self._measurementController.recordData(measurementId, deviceId, parsedData):
                 return None, 200
             else:
+                logger.warning('Unable to record payload ' + measurementId + '/' + deviceId)
                 return None, 404
         else:
+            logger.error('Invalid data payload received ' + measurementId + '/' + deviceId)
             return None, 400
 
 
@@ -141,16 +147,19 @@ class CompleteMeasurement(Resource):
     def __init__(self, **kwargs):
         self._measurementController = kwargs['measurementController']
 
-    def put(self, measurementName, deviceName):
+    def put(self, measurementId, deviceId):
         """
         Completes the measurement for this device.
-        :param measurementName:
-        :param deviceName:
+        :param measurementId:
+        :param deviceId:
         :return:
         """
-        if self._measurementController.completeMeasurement(measurementName, deviceName):
+        logger.info('Completing measurement ' + measurementId + ' for ' + deviceId)
+        if self._measurementController.completeMeasurement(measurementId, deviceId):
+            logger.info('Completed measurement ' + measurementId + ' for ' + deviceId)
             return None, 200
         else:
+            logger.warning('Unable to complete measurement ' + measurementId + ' for ' + deviceId)
             return None, 404
 
 
@@ -158,15 +167,19 @@ class FailMeasurement(Resource):
     def __init__(self, **kwargs):
         self._measurementController = kwargs['measurementController']
 
-    def put(self, measurementName, deviceName):
+    def put(self, measurementId, deviceId):
         """
         Fails the measurement for this device.
-        :param measurementName: the measurement name.
-        :param deviceName: the device name.
+        :param measurementId: the measurement name.
+        :param deviceId: the device name.
         :return: 200 if
         """
-        failureReason = request.get_json().pop('failureReason')
-        if self._measurementController.failMeasurement(measurementName, deviceName, failureReason=failureReason):
+        payload = request.get_json()
+        failureReason = json.loads(payload).get('failureReason') if payload is not None else None
+        logger.warning('Failing measurement ' + measurementId + ' for ' + deviceId + ' because ' + str(failureReason))
+        if self._measurementController.failMeasurement(measurementId, deviceId, failureReason=failureReason):
+            logger.warning('Failed measurement ' + measurementId + ' for ' + deviceId)
             return None, 200
         else:
+            logger.error('Unable to fail measurement ' + measurementId + ' for ' + deviceId)
             return None, 404

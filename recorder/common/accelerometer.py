@@ -48,11 +48,13 @@ class Accelerometer(object):
         self.breakRead = False
         self.startTime = 0
         self.failureCode = None
+        self.measurementOverflowed = False
         self._sampleIdx = 0
         self.status = RecordingDeviceStatus.NEW
 
     def doInit(self):
         try:
+            logger.info("Initialising device")
             self.initialiseDevice()
             self.status = RecordingDeviceStatus.INITIALISED
             logger.info("Initialisation complete")
@@ -61,15 +63,17 @@ class Accelerometer(object):
             self.failureCode = str(sys.exc_info())
             logger.exception("Initialisation failure")
 
-    def start(self, measurementName, durationInSeconds=None):
+    def start(self, measurementId, durationInSeconds=None):
         """
         Initialises the device if required then enters a read loop taking data from the provider and passing it to the
          handler. It will continue until either breakRead is true or the duration (if provided) has passed.
         :return:
         """
-        logger.info(">> measurement " + measurementName +
+        logger.info(">> measurement " + measurementId +
                     ((" for " + str(durationInSeconds)) if durationInSeconds is not None else " until break"))
-        self.dataHandler.start(measurementName)
+        self.failureCode = None
+        self.measurementOverflowed = False
+        self.dataHandler.start(measurementId)
         self.breakRead = False
         self.startTime = time.time()
         self.doInit()
@@ -79,30 +83,36 @@ class Accelerometer(object):
         try:
             self._sampleIdx = 0
             while True:
-                logger.debug(measurementName + " provideData ")
+                logger.debug(measurementId + " provideData ")
                 self.dataHandler.handle(self.provideData())
                 elapsedTime = time.time() - self.startTime
                 if self.breakRead or durationInSeconds is not None and elapsedTime > durationInSeconds:
-                    logger.debug(measurementName + " breaking provideData")
+                    logger.debug(measurementId + " breaking provideData")
                     self.startTime = 0
                     break
         except:
             self.status = RecordingDeviceStatus.FAILED
             self.failureCode = str(sys.exc_info())
-            logger.exception(measurementName + " failed")
+            logger.exception(measurementId + " failed")
         finally:
-            self.dataHandler.stop(measurementName)
             expectedSamples = self.fs * (durationInSeconds if durationInSeconds is not None else elapsedTime)
             if self._sampleIdx < expectedSamples:
                 self.status = RecordingDeviceStatus.FAILED
                 self.failureCode = "Insufficient samples " + str(self._sampleIdx) + " for " + \
                                    str(elapsedTime) + " second long run, expected " + str(expectedSamples)
             self._sampleIdx = 0
+            if self.measurementOverflowed:
+                self.status = RecordingDeviceStatus.FAILED
+                self.failureCode = "Measurement overflow detected"
             if self.status == RecordingDeviceStatus.FAILED:
-                logger.error("<< measurement " + measurementName + " - FAILED - " + self.failureCode)
+                logger.error("<< measurement " + measurementId + " - FAILED - " + self.failureCode)
             else:
                 self.status = RecordingDeviceStatus.INITIALISED
-                logger.info("<< measurement " + measurementName + " - " + self.status.name)
+                logger.info("<< measurement " + measurementId + " - " + self.status.name)
+            self.dataHandler.stop(measurementId, self.failureCode)
+            if self.status == RecordingDeviceStatus.FAILED:
+                logger.warning("Reinitialising device after measurement failure")
+                self.doInit()
 
     def signalStop(self):
         """

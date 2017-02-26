@@ -23,17 +23,23 @@ targetStateFields = {
 }
 
 measurementFields = {
+    'id': fields.String,
     'name': fields.String,
     'startTime': fields.String(attribute=lambda x: x.startTime.strftime(DATETIME_FORMAT)),
     'duration': fields.Float,
     'description': fields.String,
     'measurementParameters': fields.Raw,
     'status': EnumField,
-    'recordingDevices': fields.Raw
+    'recordingDevices': fields.Raw,
+    'analysis': fields.Raw
 }
 
 logger = logging.getLogger('analyser.measurementcontroller')
 
+DEFAULT_ANALYSIS = {
+    'series': ['x', 'y', 'z'],
+    'analysis': ['spectrum', 'peakSpectrum', 'psd']
+}
 
 class MeasurementStatus(Enum):
     """
@@ -57,6 +63,16 @@ class RecordStatus(Enum):
     FAILED = 4
 
 
+def getMeasurementId(measurementStartTime, measurementName):
+    """
+    the unique id for this measurement.
+    :param measurementStartTime: the measurement startTime
+    :param measurementName: the measurement name
+    :return: the id.
+    """
+    return measurementStartTime.strftime('%Y%m%d_%H%M%S') + '_' + measurementName
+
+
 class ActiveMeasurement(object):
     """
     Models a measurement that is scheduled or is currently in progress.
@@ -71,6 +87,10 @@ class ActiveMeasurement(object):
         self.description = description
         self.recordingDevices = {}
         self.status = MeasurementStatus.NEW
+        self.id = getMeasurementId(self.startTime, self.name)
+        self.idAsPath = self.id.replace('_', '/')
+        # hardcoded here rather than in the UI
+        self.analysis = DEFAULT_ANALYSIS
 
     def overlapsWith(self, targetStartTime, duration):
         """
@@ -88,17 +108,41 @@ class ActiveMeasurement(object):
         Updates the current device status.
         :param deviceName: the device name.
         :param state: the state.
-        :param reason: the reason.
+        :param reason: the reason for the change.
         :return:
         """
-        self.recordingDevices[deviceName] = {'state': state.name, 'reason': reason}
+        logger.info('Updating recording device state for ' + deviceName + ' to ' + state.name +
+                    ('' if reason is None else '[reason: ' + reason + ']'))
+        currentState = self.recordingDevices.get(deviceName)
+        count = 0
+        if currentState is not None:
+            if currentState['state'] == MeasurementStatus.RECORDING.name:
+                count = currentState['count']
+        self.recordingDevices[deviceName] = {
+            'state': state.name,
+            'reason': reason,
+            'time': datetime.datetime.now().strftime(DATETIME_FORMAT),
+            'count': count
+        }
+
+    def stillRecording(self, deviceId, dataCount):
+        """
+        For a device that is recording, updates the last timestamp so we now when we last received data.
+        :param deviceId: the device id.
+        :param dataCount: the no of items of data recorded in this batch.
+        :return:
+        """
+        status = self.recordingDevices[deviceId]
+        if status is not None:
+            if status['state'] == MeasurementStatus.RECORDING.name:
+                status['last'] = datetime.datetime.now().strftime(DATETIME_FORMAT)
+                status['count'] = status['count'] + dataCount
 
     def __str__(self):
         """
         :return: a human readable format
         """
-        return "ActiveMeasurement[" + self.name + "-" + self.status.name + " " + \
-               self.startTime.strftime(DATETIME_FORMAT) + " for " + self.duration + "s]"
+        return "ActiveMeasurement[" + self.id + "-" + self.status.name + " for " + self.duration + "s]"
 
 
 class CompleteMeasurement(object):
@@ -107,31 +151,48 @@ class CompleteMeasurement(object):
     The system only keeps, and can analyse, complete measurements.
     """
 
-    def __init__(self, name, meta):
-        self.name = name
+    def __init__(self, meta, dataDir):
+        self.name = meta['name']
         self.startTime = datetime.datetime.strptime(meta['startTime'], DATETIME_FORMAT)
         self.duration = meta['duration']
         self.endTime = self.startTime + datetime.timedelta(days=0, seconds=self.duration)
         self.measurementParameters = meta['measurementParameters']
         self.description = meta['description']
         self.recordingDevices = meta['recordingDevices']
-        self.status = MeasurementStatus.COMPLETE
+        self.status = MeasurementStatus[meta['status']]
+        self.id = getMeasurementId(self.startTime, self.name)
+        self.analysis = meta.get('analysis', DEFAULT_ANALYSIS)
+        self.idAsPath = self.id.replace('_', '/')
+        self.dataDir = dataDir
+        self.data = {}
 
     def inflate(self):
         """
         loads the recording into memory and returns it as a Signal
         :return:
         """
-        # scan the dir, each subdir is a device and each dir contains a data.out file & meta.data file that describes
-        #  the data set
-        pass
+        if self.measurementParameters['accelerometerEnabled']:
+            if len(self.data) == 0:
+                logger.info('Loading measurement data for ' + self.name)
+                self.data = {name: self._loadXYZ(name) for name, value in self.recordingDevices.items()}
+            return True
+        else:
+            # TODO error handling
+            return False
+
+    def _loadXYZ(self, name):
+        dataPath = os.path.join(self.dataDir, self.idAsPath, name, 'data.out')
+        if os.path.exists(dataPath):
+            from analyser.common.signal import loadTriAxisSignalFromFile
+            return loadTriAxisSignalFromFile(dataPath)
+        else:
+            raise ValueError("Data does not exist")
 
     def __str__(self):
         """
         :return: a human readable format
         """
-        return "CompleteMeasurement[" + self.name + self.startTime.strftime(DATETIME_FORMAT) + \
-               " for " + self.duration + "s]"
+        return "CompleteMeasurement[" + self.id + " for " + self.duration + "s]"
 
 
 class MeasurementController(object):
@@ -170,27 +231,28 @@ class MeasurementController(object):
             for am in list(self.activeMeasurements):
                 now = datetime.datetime.now()
                 # devices were allocated and have completed == complete
-                if len(am.recordingDevices) > 0:
+                recordingDeviceCount = len(am.recordingDevices)
+                if recordingDeviceCount > 0:
                     if all(entry['state'] == RecordStatus.COMPLETE.name for entry in am.recordingDevices.values()):
-                        logger.info("Detected completedmeasurement " + am.name)
+                        logger.info("Detected completedmeasurement " + am.id)
                         self._moveToComplete(am)
 
                 # we have reached the end time and we have either all failed devices or no devices == kill
                 if now > (am.endTime + datetime.timedelta(days=0, seconds=1)):
-                    if (len(am.recordingDevices) > 0
-                        and all(entry['state'] == RecordStatus.FAILED.name for entry in am.recordingDevices.values())) \
-                            or len(am.recordingDevices) == 0:
-                        logger.warning("Detected failed measurement " + am.name)
+                    allFailed = all(entry['state'] == RecordStatus.FAILED.name
+                                    for entry in am.recordingDevices.values())
+                    if (recordingDeviceCount > 0 and allFailed) or recordingDeviceCount == 0:
+                        logger.warning("Detected failed measurement " + am.id + " with " + str(recordingDeviceCount)
+                                       + " devices, allFailed: " + str(allFailed))
                         self._moveToFailed(am)
 
                 # we are well past the end time and we have failed devices or an ongoing recording == kill or deathbed
                 if now > (am.endTime + datetime.timedelta(days=0, seconds=self.maxTimeTilDeathbedSeconds)):
                     if any(entry['state'] == RecordStatus.FAILED.name for entry in am.recordingDevices.values()):
-                        logger.warning("Detected failed and incomplete measurement " + am.name + ", assumed dead")
+                        logger.warning("Detected failed and incomplete measurement " + am.id + ", assumed dead")
                         self._moveToFailed(am)
                     elif all(entry['state'] == RecordStatus.RECORDING.name for entry in am.recordingDevices.values()):
                         self._handleDeathbed(am)
-            # TODO should we delete failed measurements or just provide the option via the UI?
             time.sleep(0.1)
         logger.warning("MeasurementCaretaker is now shutdown")
 
@@ -200,19 +262,19 @@ class MeasurementController(object):
         if am in self.deathBed.keys():
             # if it is, check if it's been there for too long
             if now > (self.deathBed[am] + datetime.timedelta(days=0, seconds=self.maxTimeOnDeathbedSeconds)):
-                logger.warning(am.name + " has been on the deathbed since " +
+                logger.warning(am.id + " has been on the deathbed since " +
                                self.deathBed[am].strftime(DATETIME_FORMAT) + ", max time allowed is " +
                                str(self.maxTimeOnDeathbedSeconds) + ", evicting")
                 # ensure all recording devices that have not completed are marked as failed
                 for deviceName, status in am.recordingDevices.items():
                     if status['state'] == RecordStatus.RECORDING.name or status['state'] == RecordStatus.SCHEDULED.name:
                         logger.warning("Marking " + deviceName + " as failed due to deathbed eviction")
-                        if not self.failMeasurement(am.name, deviceName, failureReason='Evicting from deathbed'):
+                        if not self.failMeasurement(am.id, deviceName, failureReason='Evicting from deathbed'):
                             logger.warning("Failed to mark " + deviceName + " as failed")
                 self._moveToFailed(am)
                 del self.deathBed[am]
         else:
-            logger.warning(am.name + " was expected to finish at " +
+            logger.warning(am.id + " was expected to finish at " +
                            am.endTime.strftime(DATETIME_FORMAT) + ", adding to deathbed")
             am.status = MeasurementStatus.DYING
             self.deathBed.update({am: now})
@@ -220,8 +282,7 @@ class MeasurementController(object):
     def _moveToComplete(self, am):
         am.status = MeasurementStatus.COMPLETE
         self.activeMeasurements.remove(am)
-        self.completeMeasurements.append(am)
-        self.store(am)
+        self.completeMeasurements.append(CompleteMeasurement(self.store(am), self.dataDir))
 
     def _moveToFailed(self, am):
         am.status = MeasurementStatus.FAILED
@@ -242,16 +303,24 @@ class MeasurementController(object):
         """
         if self._clashes(startTime, duration):
             return False, MEASUREMENT_TIMES_CLASH
-        elif any([m for m in self.getMeasurements() if m.name == name]):
-            return False, "Duplicate measurement name [" + name + "]"
         else:
             am = ActiveMeasurement(name, startTime, duration, self.targetStateProvider.state, description=description)
+            logger.info("Scheduling measurement " + am.id + " for " + str(duration) + "s")
             self.activeMeasurements.append(am)
-            devices = self.deviceController.scheduleMeasurement(name, duration, startTime)
+            devices = self.deviceController.scheduleMeasurement(am.id, am.duration, am.startTime)
+            anyFail = False
             for device, status in devices.items():
-                am.updateDeviceStatus(device.deviceId, RecordStatus.SCHEDULED if status == 200 else RecordStatus.FAILED)
-            # TODO if any fail then abort the measurement and throw it in the bin
-            am.status = MeasurementStatus.SCHEDULED
+                if status == 200:
+                    deviceStatus = RecordStatus.SCHEDULED
+                else:
+                    deviceStatus = RecordStatus.FAILED
+                    anyFail = True
+                am.updateDeviceStatus(device.deviceId, deviceStatus)
+            if anyFail:
+                am.status = MeasurementStatus.FAILED
+            else:
+                if am.status is MeasurementStatus.NEW:
+                    am.status = MeasurementStatus.SCHEDULED
             return True, None
 
     def _clashes(self, startTime, duration):
@@ -263,129 +332,140 @@ class MeasurementController(object):
         """
         return [m for m in self.activeMeasurements if m.overlapsWith(startTime, duration)]
 
-    def startMeasurement(self, measurementName, deviceName):
+    def startMeasurement(self, measurementId, deviceId):
         """
         Starts the measurement for the device.
-        :param deviceName: the device that is starting.
-        :param measurementName: the measurement that is started.
+        :param deviceId: the device that is starting.
+        :param measurementId: the measurement that is started.
         :return: true if it started (i.e. device and measurement exists).
         """
-        am, handler = self.getDataHandler(measurementName, deviceName)
+        am, handler = self.getDataHandler(measurementId, deviceId)
         if am is not None:
             am.status = MeasurementStatus.RECORDING
-            am.updateDeviceStatus(deviceName, RecordStatus.RECORDING)
-            handler.start(measurementName)
+            am.updateDeviceStatus(deviceId, RecordStatus.RECORDING)
+            handler.start(am.idAsPath)
             return True
         else:
             return False
 
-    def getDataHandler(self, measurementName, deviceName):
+    def getDataHandler(self, measurementId, deviceId):
         """
         finds the handler.
-        :param deviceName: the device.
-        :param measurementName: the measurement
+        :param measurementId: the measurement
+        :param deviceId: the device.
         :return: active measurement and handler
         """
-        am = next((m for m in self.activeMeasurements if m.name == measurementName), None)
+        am = next((m for m in self.activeMeasurements if m.id == measurementId), None)
         if am is None:
             return None, None
         else:
-            device = self.deviceController.getDevice(deviceName)
+            device = self.deviceController.getDevice(deviceId)
             if device is None:
                 return None, None
             else:
                 return am, device.dataHandler
 
-    def recordData(self, measurementName, deviceName, data):
+    def recordData(self, measurementId, deviceId, data):
         """
         Passes the data to the handler.
-        :param deviceName: the device the data comes from.
-        :param measurementName: the name of the measurement.
+        :param deviceId: the device the data comes from.
+        :param measurementId: the measurement id.
         :param data: the data.
         :return: true if the data was handled.
         """
-        am, handler = self.getDataHandler(measurementName, deviceName)
+        am, handler = self.getDataHandler(measurementId, deviceId)
         if handler is not None:
+            am.stillRecording(deviceId, len(data))
             handler.handle(data)
             return True
         else:
-            logger.error('Received data for unknown handler ' + deviceName + '/' + measurementName)
+            logger.error('Received data for unknown handler ' + deviceId + '/' + measurementId)
             return False
 
-    def completeMeasurement(self, measurementName, deviceName):
+    def completeMeasurement(self, measurementId, deviceId):
         """
         Completes the measurement session.
-        :param deviceName: the device name.
-        :param measurementName: the measurement name.
+        :param deviceId: the device id.
+        :param measurementId: the measurement id.
         :return: true if it was completed.
         """
-        am, handler = self.getDataHandler(measurementName, deviceName)
+        am, handler = self.getDataHandler(measurementId, deviceId)
         if handler is not None:
-            handler.stop(measurementName)
-            am.updateDeviceStatus(deviceName, RecordStatus.COMPLETE)
+            handler.stop(measurementId)
+            am.updateDeviceStatus(deviceId, RecordStatus.COMPLETE)
             return True
         else:
             return False
 
-    def failMeasurement(self, measurementName, deviceName, failureReason=None):
+    def failMeasurement(self, measurementId, deviceName, failureReason=None):
         """
         Fails the measurement session.
         :param deviceName: the device name.
-        :param measurementName: the measurement name.
+        :param measurementId: the measurement name.
         :param failureReason: why it failed.
         :return: true if it was completed.
         """
-        am, handler = self.getDataHandler(measurementName, deviceName)
+        am, handler = self.getDataHandler(measurementId, deviceName)
         if handler is not None:
-            am.updateDeviceStatus(deviceName, RecordStatus.FAILED, failureReason)
-            handler.stop(measurementName)
+            am.updateDeviceStatus(deviceName, RecordStatus.FAILED, reason=failureReason)
+            handler.stop(measurementId)
             return True
         else:
             return False
 
-    def delete(self, measurementName):
+    def delete(self, measurementId):
         """
         Deletes the named measurement if it exists. If this is an active measurement then the measurement is cancelled.
-        :param measurementName: the measurement name.
+        :param measurementId: the measurement name.
         :return:
         """
         # TODO cancel active measurement
-        return self._deleteCompletedMeasurement(measurementName)
+        return self._deleteCompletedMeasurement(measurementId)
 
-    def _deleteCompletedMeasurement(self, measurementName):
+    def _deleteCompletedMeasurement(self, measurementId):
         """
         Deletes the named measurement from the completed measurement store if it exists.
-        :param measurementName:
+        :param measurementId:
         :return:
             String: error messages
             Integer: count of measurements deleted
         """
-        if measurementName in self.completeMeasurements:
+        message, count, deleted = self.deleteFrom(measurementId, self.completeMeasurements)
+        if count is 0:
+            message, count, deleted = self.deleteFrom(measurementId, self.failedMeasurements)
+        return message, count, deleted
+
+    def deleteFrom(self, measurementId, data):
+        toDeleteIdx = [(ind, x) for ind, x in enumerate(data) if x.id == measurementId]
+        if toDeleteIdx:
             errors = []
 
             def logError(func, path, exc_info):
                 logger.exception(
-                    "Error detected during deletion of measurement " + measurementName + " by " + str(func),
+                    "Error detected during deletion of measurement " + measurementId + " by " + str(func),
                     exc_info=exc_info)
                 errors.append(path)
 
-            logger.info("Deleting measurement: " + measurementName)
-            shutil.rmtree(self._getPathToMeasurementMetaDir(measurementName), ignore_errors=False, onerror=logError)
+            logger.info("Deleting measurement: " + measurementId)
+            shutil.rmtree(self._getPathToMeasurementMetaDir(toDeleteIdx[0][1].idAsPath), ignore_errors=False,
+                          onerror=logError)
             if len(errors) is 0:
-                return None, 1 if self.completeMeasurements.pop(measurementName) else 0
+                popped = data.pop(toDeleteIdx[0][0])
+                return None, 1 if popped else 0, popped
             else:
-                return errors, 0
+                return errors, 0, None
         else:
-            return measurementName + " does not exist", 0
+            return measurementId + " does not exist", 0, None
 
     def reloadCompletedMeasurements(self):
         """
         Reloads the completed measurements from the backing store.
         """
-        reloaded = [self.load(name) for name in os.listdir(self.dataDir) if
-                    os.path.isdir(os.path.join(self.dataDir, name))]
+        from pathlib import Path
+        reloaded = [self.load(x.resolve()) for x in Path(self.dataDir).glob('*/*/*') if x.is_dir()]
         logger.info('Reloaded ' + str(len(reloaded)) + ' completed measurements')
-        self.completeMeasurements = reloaded
+        self.completeMeasurements = [x for x in reloaded if x is not None and x.status == MeasurementStatus.COMPLETE]
+        self.failedMeasurements = [x for x in reloaded if x is not None and x.status == MeasurementStatus.FAILED]
 
     def getMeasurements(self, measurementStatus=None):
         """
@@ -394,8 +474,7 @@ class MeasurementController(object):
         :return:
         """
         if measurementStatus is None:
-            return self.activeMeasurements + self.completeMeasurements \
-                   + self.failedMeasurements + list(self.deathBed.keys())
+            return self.activeMeasurements + self.completeMeasurements + self.failedMeasurements
         elif measurementStatus == MeasurementStatus.COMPLETE:
             return self.completeMeasurements
         elif measurementStatus == MeasurementStatus.FAILED:
@@ -405,38 +484,52 @@ class MeasurementController(object):
         else:
             return [x for x in self.activeMeasurements if x.status == measurementStatus]
 
+    def getMeasurement(self, measurementId, measurementStatus=None):
+        """
+        Gets the measurement with the given id.
+        :param measurementId: the id.
+        :param measurementStatus: the status of the requested measurement.
+        :return: the matching measurement or none if it doesn't exist.
+        """
+        return next((x for x in self.getMeasurements(measurementStatus) if x.id == measurementId), None)
+
     def store(self, measurement):
         """
-        Writes the active measurement to disk on completion & then reloads that content from disk to verify (and to save
-        writing the same code twice.
+        Writes the measurement metadata to disk on completion.
         :param activeMeasurement: the measurement that has completed.
+        :returns the persisted metadata.
         """
-        if not os.path.exists(self._getPathToMeasurementMetaDir(measurement.name)):
-            os.makedirs(self._getPathToMeasurementMetaDir(measurement.name), exist_ok=True)
-        with open(self._getPathToMeasurementMetaFile(measurement.name), 'w') as outfile:
-            json.dump(marshal(measurement, measurementFields), outfile)
+        os.makedirs(self._getPathToMeasurementMetaDir(measurement.idAsPath), exist_ok=True)
+        output = marshal(measurement, measurementFields)
+        with open(self._getPathToMeasurementMetaFile(measurement.idAsPath), 'w') as outfile:
+            json.dump(output, outfile)
+        return output
 
-    def load(self, name):
+    def load(self, path):
         """
-        Loads the named CompletedMeasurement
-        :param name:
+        Loads a CompletedMeasurement from the path.á
+        :param path: the path at which the data is found.
         :return: the measurement
         """
-        meta = self._loadMetaFromJson(name)
-        return CompleteMeasurement(name, meta) if meta is not None else None
+        meta = self._loadMetaFromJson(path)
+        return CompleteMeasurement(meta, self.dataDir) if meta is not None else None
 
-    def _loadMetaFromJson(self, name):
+    def _loadMetaFromJson(self, path):
         """
         Reads the json meta into memory.
         :return: the meta.
         """
-        with open(self._getPathToMeasurementMetaFile(name), 'r') as infile:
-            return json.load(infile)
+        try:
+            with (path / 'metadata.json').open() as infile:
+                return json.load(infile)
+        except FileNotFoundError:
+            logger.error('Metadata does not exist at ' + str(path))
+            return None
 
-    def _getPathToMeasurementMetaDir(self, name):
-        return os.path.join(self.dataDir, name)
+    def _getPathToMeasurementMetaDir(self, measurementId):
+        return os.path.join(self.dataDir, measurementId)
 
-    def _getPathToMeasurementMetaFile(self, name):
-        return os.path.join(self.dataDir, name, 'metadata.json')
+    def _getPathToMeasurementMetaFile(self, measurementId):
+        return os.path.join(self.dataDir, measurementId, 'metadata.json')
 
         # TODO allow remote reset of the recorder

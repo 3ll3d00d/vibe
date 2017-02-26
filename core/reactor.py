@@ -24,15 +24,26 @@ class Reactor(object):
         Work loop runs forever (or until running is False)
         :return:
         """
-        while True:
-            req = self._workQueue.get()
-            if req is not None:
+        logger.warning("Reactor " + self._name + " is starting")
+        while self.running:
+            try:
+                self._completeTask()
+            except:
+                logger.exception("Unexpected exception during request processing")
+        logger.warning("Reactor " + self._name + " is terminating")
+
+    def _completeTask(self):
+        req = self._workQueue.get()
+        if req is not None:
+            try:
                 logger.debug("Processing " + req[0])
                 func = self._funcsByRequest.get(req[0])
                 if func is not None:
                     func(*req[1])
                 else:
                     logger.error("Ignoring unknown request on reactor " + self._name + " " + req[0])
+            finally:
+                self._workQueue.task_done()
 
     def register(self, requestType, function):
         """
