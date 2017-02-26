@@ -230,7 +230,7 @@ def test_scheduledMeasurementThatReceivesData_CompletesNormally(measurementContr
     assert len(am) == 1
     assert am[0].name == measurementName
     assert am[0].id == measurementId
-    assert am[0].startTime == startTime
+    assert am[0].startTime == getFormattedStartTime(startTime)
     assert am[0].duration == 0.2
     assert am[0].description == 'desc'
     assert am[0].status == MeasurementStatus.COMPLETE
@@ -252,15 +252,22 @@ def test_scheduledMeasurementThatReceivesData_CompletesNormally(measurementContr
     with open(metapath) as jsonfile:
         metadata = json.load(jsonfile)
         assert metadata is not None
-        cm = CompleteMeasurement(metadata)
+        cm = CompleteMeasurement(metadata, tmpdirPath)
         assert cm is not None
         assert cm.id == measurementId
         assert cm.name == measurementName
-        assert cm.startTime == datetime.datetime.strptime(startTime.strftime(DATETIME_FORMAT), DATETIME_FORMAT)
+        assert cm.startTime == getFormattedStartTime(startTime)
         assert cm.duration == 0.2
         assert cm.description == 'desc'
         assert cm.measurementParameters == targetStateAsDict(False)
-        assert cm.recordingDevices == {'d1': {'state': MeasurementStatus.COMPLETE.name, 'reason': None}}
+        assert len(cm.recordingDevices) == 1
+        assert cm.recordingDevices.get('d1') != None
+        assert cm.recordingDevices.get('d1').get('state') == MeasurementStatus.COMPLETE.name
+        assert cm.recordingDevices.get('d1').get('reason') == None
+
+
+def getFormattedStartTime(time=datetime.datetime.now()):
+    return datetime.datetime.strptime(time.strftime(DATETIME_FORMAT), DATETIME_FORMAT)
 
 
 def targetStateAsDict(includeSamplesPerBatch=True):
@@ -379,9 +386,10 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
         assert metadata['duration'] == 0.2
         assert metadata['description'] == 'desc'
         assert metadata['measurementParameters'] == targetStateAsDict(False)
-        assert metadata['recordingDevices'] == {
-            'd1': {'state': MeasurementStatus.FAILED.name, 'reason': 'Evicting from deathbed'}
-        }
+        assert len(metadata['recordingDevices']) == 1
+        assert metadata['recordingDevices'].get('d1') != None
+        assert metadata['recordingDevices']['d1'].get('state') == MeasurementStatus.FAILED.name
+        assert metadata['recordingDevices']['d1'].get('reason') == 'Evicting from deathbed'
 
 
 def test_scheduledMeasurement_FailsDuringMeasurement_IsStoredAsFailed(measurementController, deviceController,
@@ -492,4 +500,7 @@ def test_scheduledMeasurement_FailsDuringMeasurement_IsStoredAsFailed(measuremen
         assert metadata['duration'] == 0.2
         assert metadata['description'] == 'desc'
         assert metadata['measurementParameters'] == targetStateAsDict(False)
-        assert metadata['recordingDevices'] == {'d1': {'state': MeasurementStatus.FAILED.name, 'reason': 'oh noes'}}
+        assert len(metadata['recordingDevices']) == 1
+        assert metadata['recordingDevices'].get('d1') != None
+        assert metadata['recordingDevices']['d1'].get('state') == MeasurementStatus.FAILED.name
+        assert metadata['recordingDevices']['d1'].get('reason') == 'oh noes'
