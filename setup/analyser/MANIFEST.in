@@ -1,4 +1,4 @@
 include README.rst
 recursive-include vibe-ui/build *
 include versioneer.py
-include core/_version.py
+include build/_version.py
