@@ -1,4 +1,7 @@
-from setuptools import setup, find_packages
+from setuptools import setup
+
+import versioneer
+
 
 def readme():
     with open('README.rst') as f:
@@ -6,7 +9,8 @@ def readme():
 
 
 setup(name='rpi-vibe-analyser',
-      version='0.0.1',
+      version=versioneer.get_version(),
+      cmdclass=versioneer.get_cmdclass(),
       description='A vibration analysis and data acquisition suite for the rpi',
       long_description=readme(),
       classifiers=[
@@ -21,7 +25,17 @@ setup(name='rpi-vibe-analyser',
       author='Matt Khan',
       author_email='mattkhan+vibe@gmail.com',
       license='MIT',
-      packages=['analyser', 'core'],
+      packages=[
+          'analyser',
+          'analyser.common',
+          'analyser.resources',
+          'core'
+      ],
+      entry_points={
+          'console_scripts': [
+              'analyser = analyser.app:main',
+          ],
+      },
       install_requires=[
           'flask',
           'flask-restful',
