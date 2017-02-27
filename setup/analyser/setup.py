@@ -1,7 +1,6 @@
 from setuptools import setup
 
-import versioneer
-
+from versioneer import get_cmdclass, get_version
 
 def readme():
     with open('README.rst') as f:
@@ -9,8 +8,8 @@ def readme():
 
 
 setup(name='rpi-vibe-analyser',
-      version=versioneer.get_version(),
-      cmdclass=versioneer.get_cmdclass(),
+      version=get_version(),
+      cmdclass=get_cmdclass(),
       description='A vibration analysis and data acquisition suite for the rpi',
       long_description=readme(),
       classifiers=[
