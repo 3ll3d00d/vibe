@@ -97,3 +97,4 @@ recorder/fcntl.py
 *.csv
 *.xlsx
 setup.py
+MANIFEST.in
