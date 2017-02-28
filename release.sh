@@ -32,7 +32,7 @@ function init_release() {
     python3 -m venv ${1}
     echo "Activating venv ${1}"
     . ${1}/bin/activate
-    local INVENV=$(python3 -c 'import sys; print ("1" if hasattr(sys, "real_prefix") else "0")')
+    local INVENV=$(python -c 'import sys; print ("1" if sys.prefix == sys.base_prefix else "0")')
     [[ ${INVENV} == 1 ]] || fail_hard "Did not activate venv ${1}"
     echo "Upgrading setuptools "
     pip install setuptools --upgrade
