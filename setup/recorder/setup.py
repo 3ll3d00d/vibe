@@ -44,9 +44,7 @@ setup(name='rpi-vibe-recorder',
       ],
       setup_requires=[
           'pytest-runner',
-          'versioneer',
-          'sphinx',
-          'sphinx-autobuild'
+          'versioneer'
       ],
       tests_require=[
           'pytest'

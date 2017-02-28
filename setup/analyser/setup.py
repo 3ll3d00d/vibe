@@ -45,7 +45,8 @@ setup(name='rpi-vibe-analyser',
           'twisted'
       ],
       setup_requires=[
-          'pytest-runner'
+          'pytest-runner',
+          'versioneer'
       ],
       tests_require=[
           'pytest'

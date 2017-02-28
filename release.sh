@@ -16,8 +16,8 @@ function link_setup() {
     [[ -e MANIFEST.in ]] && rm MANIFEST.in
     if [ -d setup/${1} ]
     then
-        ln -s setup/${1}/setup.py setup.py
-        ln -s setup/${1}/MANIFEST.in MANIFEST.in
+        cp setup/${1}/setup.py setup.py
+        cp setup/${1}/MANIFEST.in MANIFEST.in
     else
         fail_hard "Unable to link setup for ${1}"
     fi
