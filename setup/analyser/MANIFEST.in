@@ -1,4 +1,4 @@
 include README.rst
-recursive-include vibe-ui/build *
+graft analyser/static
 include versioneer.py
 include _version.py
