@@ -68,6 +68,7 @@ function clean_release() {
 function prepare_ui() {
     echo "Building UI"
     pushd vibe-ui
+    yarn install
     yarn build
     popd
     [[ -d analyser/static ]] && rm -Rf analyser/static
