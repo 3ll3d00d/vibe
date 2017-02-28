@@ -32,9 +32,12 @@ function init_release() {
     python3 -m venv ${1}
     echo "Activating venv ${1}"
     . ${1}/bin/activate
-    echo "Upgrading setuptools and wheel"
+    local INVENV=$(python3 -c 'import sys; print ("1" if hasattr(sys, "real_prefix") else "0")')
+    [[ ${INVENV} == 1 ]] || fail_hard "Did not activate venv ${1}"
+    echo "Upgrading setuptools "
     pip install setuptools --upgrade
-    pip install --upgrade wheel
+    echo "Upgrading wheel "
+    pip install wheel --upgrade
     echo "Cloning vibe"
     git clone git@github.com:3ll3d00d/vibe.git ${BUILD_ROOT}/vibe
     [[ $? -eq 0 ]] || fail_hard "Unable to checkout vibe"
@@ -71,10 +74,13 @@ function prepare_ui() {
     echo "Building UI"
     pushd vibe-ui
     yarn install
+    [[ $? -ne 0 ]] && fail_hard "yarn install failed"
     yarn build
+    [[ $? -ne 0 ]] && fail_hard "yarn build failed"
     popd
     [[ -d analyser/static ]] && rm -Rf analyser/static
     mv vibe-ui/build analyser/static
+    [[ $? -ne 0 ]] && fail_hard "failed to move prod ui build"
 }
 
 TAG="${1}"
