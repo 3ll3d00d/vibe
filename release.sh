@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 BUILD_ROOT=/tmp
 PYTHON_VENV_ROOT=${BUILD_ROOT}/venv
 [[ ! -d ${PYTHON_VENV_ROOT} ]] && mkdir ${PYTHON_VENV_ROOT}
@@ -32,6 +32,8 @@ function init_release() {
     python3 -m venv ${1}
     echo "Activating venv ${1}"
     . ${1}/bin/activate
+    echo "Upgrading setuptools"
+    pip install setuptools --upgrade
     echo "Cloning vibe"
     git clone git@github.com:3ll3d00d/vibe.git ${BUILD_ROOT}/vibe
     [[ $? -eq 0 ]] || fail_hard "Unable to checkout vibe"
