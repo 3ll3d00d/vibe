@@ -43,6 +43,7 @@ function init_release() {
 }
 
 function do_release() {
+    echo "Performing ${1} release for ${2}"
     cd ${BUILD_ROOT}/vibe
     if [[ ${1} == "local" ]]
     then
@@ -73,16 +74,15 @@ function prepare_ui() {
 
 TAG="${1}"
 RELEASE_TYPE="${2}"
-[[ -n ${RELEASE_TYPE} ]] && RELEASE_TYPE="local"
+[[ -z ${RELEASE_TYPE} ]] && RELEASE_TYPE="local"
 
 echo "Releasing v${TAG}"
 
 init_release "recorder"
-do_release "${RELEASE_TYPE}"
+do_release "${RELEASE_TYPE}" "recorder"
 clean_release "recorder"
 
 init_release "analyser"
 prepare_ui
-do_release "${RELEASE_TYPE}"
+do_release "${RELEASE_TYPE}" "analyser"
 clean_release "analyser"
-

@@ -43,7 +43,10 @@ setup(name='rpi-vibe-recorder',
           'requests'
       ],
       setup_requires=[
-          'pytest-runner'
+          'pytest-runner',
+          'versioneer',
+          'sphinx',
+          'sphinx-autobuild'
       ],
       tests_require=[
           'pytest'
