@@ -74,7 +74,7 @@ function prepare_ui() {
     yarn build
     popd
     [[ -d analyser/static ]] && rm -Rf analyser/static
-    mv vibe-ui/static analyser/
+    mv vibe-ui/build analyser/static
 }
 
 TAG="${1}"
