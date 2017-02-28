@@ -95,10 +95,9 @@ def main(args=None):
             def __init__(self):
                 super().__init__()
                 self.wsgi = WSGIResource(reactor, reactor.getThreadPool(), app)
-                indexPath = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'vibe-ui', 'build', 'index.html')
-                self.indexHtml = static.File(indexPath)
+                self.indexHtml = static.File(os.path.join(os.path.dirname(__file__), 'static', 'index.html'))
                 # makes the react static content available at /static
-                self.static = static.File(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'vibe-ui', 'build', 'static'))
+                self.static = static.File(os.path.join(os.path.dirname(__file__), 'static', 'static'))
 
             def getChild(self, path, request):
                 if path == b'':
