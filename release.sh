@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 BUILD_ROOT=/tmp
 PYTHON_VENV_ROOT=${BUILD_ROOT}/venv
 [[ ! -d ${PYTHON_VENV_ROOT} ]] && mkdir ${PYTHON_VENV_ROOT}
@@ -65,7 +65,7 @@ function clean_release() {
 
 function prepare_ui() {
     echo "Building UI"
-    pushd vibe_ui
+    pushd vibe-ui
     yarn build
     popd
     [[ -d analyser/static ]] && rm -Rf analyser/static
