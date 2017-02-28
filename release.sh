@@ -1,6 +1,9 @@
 #!/bin/bash
 BUILD_ROOT=/tmp
-PYTHON_VENV_ROOT=${HOME}/venv
+PYTHON_VENV_ROOT=${BUILD_ROOT}/venv
+[[ ! -d ${PYTHON_VENV_ROOT} ]] && mkdir ${PYTHON_VENV_ROOT}
+RELEASE_STORE=${BUILD_ROOT}/output
+[[ ! -d ${RELEASE_STORE} ]] && mkdir ${RELEASE_STORE}
 
 function fail_hard() {
     echo "**** ${1} ****"
@@ -47,6 +50,7 @@ function do_release() {
     elif [[ ${1} == "full" ]]
     then
         python3 setup.py clean --all sdist bdist_wheel
+        cp dist/* ${RELEASE_STORE}/
     else
         fail_hard "Unknown release operation ${1}"
     fi
