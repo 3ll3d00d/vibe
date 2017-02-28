@@ -54,10 +54,11 @@ function do_release() {
     elif [[ ${1} == "full" ]]
     then
         python3 setup.py clean --all sdist bdist_wheel
-        cp dist/* ${RELEASE_STORE}/
     else
         fail_hard "Unknown release operation ${1}"
     fi
+    echo "Copying to ${RELEASE_STORE} - " dist/*
+    cp dist/* ${RELEASE_STORE}/
 }
 
 function clean_release() {
