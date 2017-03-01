@@ -1,16 +1,18 @@
-.. vibe documentation master file, created by
-   sphinx-quickstart on Wed Mar  1 20:48:46 2017.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Welcome to vibe
+===============
 
-Welcome to vibe's documentation!
-================================
+Vibe is a measurement and analysis suite for random vibration.
+
+It is aimed at, but not limited to, a particular niche within the home theatre community that wants to investigate the
+"tactile response" of their system.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
 
+   description
+   install
 
 Indices and tables
 ==================

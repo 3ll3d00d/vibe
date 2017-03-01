@@ -8,3 +8,4 @@ flask-restful
 pyyaml
 requests
 twisted
+sphinx_rtd_theme

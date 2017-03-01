@@ -13,6 +13,11 @@ Vibe
    :target: https://landscape.io/github/3ll3d00d/vibe/master
    :alt: Code Health
 
+.. image:: http://vibe.readthedocs.io/en/latest/?badge=latest
+   :target: http://vibe.readthedocs.io/
+   :alt: readthedocs
+
+
 An vibration analysis measurement suite with a web ui.
 
 The system is split into 2 main components.
@@ -253,46 +258,7 @@ The recommended configuration is:
 
 Static IPs are recommended.
 
-Build/Installation
-==================
 
-Bill of Materials
------------------
-
-Recorder
-~~~~~~~~
-
--  Raspberry Pi 3 (recommended model due to wireless connectivity)
--  rpi case that provides access to the GPIO pins (e.g. `the pibow`_)
--  Micro SD Card with some recent raspbian
--  MPU-6050 IMU (e.g. http://playground.arduino.cc/Main/MPU-6050#boards)
-   with header
--  i2c cables (e.g. `dupont cables`_)
--  a lightweight but secure mounting mechanism for attaching the board
-   to the seat (e.g. `foam tape`_)
-
-Analyser
-~~~~~~~~
-
--  any old PC will do (including the rpi)
-
-System Setup
-------------
-
-rpi
-~~~
-
-.. _the pibow: https://shop.pimoroni.com/collections/raspberry-pi/products/pibow-coupe-for-raspberry-pi-3
-.. _dupont cables: https://www.amazon.co.uk/Dupont-wire-cable-color-1p-1p-connector/dp/B0116IZ0UO
-.. _foam tape: https://www.amazon.co.uk/gp/product/B016YS4JKS/ref=oh_aui_search_detailpage?ie=UTF8&psc=1
-
-TODO add details
-
--  install raspbian as per
--  activate wireless lan
--  activate ssh
--  activate i2c bus
--  install package
 
 Manual Installation
 ^^^^^^^^^^^^^^^^^^^
