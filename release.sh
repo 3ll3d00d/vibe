@@ -31,9 +31,9 @@ function init_release() {
     cd ${PYTHON_VENV_ROOT}
     python3 -m venv ${1}
     echo "Activating venv ${1}"
-    . ${1}/bin/activate
-    local INVENV=$(python -c 'import sys; print ("1" if sys.prefix == sys.base_prefix else "0")')
-    [[ ${INVENV} == 1 ]] || fail_hard "Did not activate venv ${1}"
+    source ${1}/bin/activate
+    local INVENV=$(python -c 'import sys; print ("1" if sys.prefix != sys.base_prefix else "0")')
+    [[ ${INVENV} =  = 1 ]] || fail_hard "Did not activate venv ${1}"
     echo "Upgrading setuptools "
     pip install setuptools --upgrade
     echo "Upgrading wheel "
