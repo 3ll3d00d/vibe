@@ -115,6 +115,7 @@ be used as your main reference. This doc will just highlight the specific points
 
 7) `Update raspbian`_ to bring everything up to date
 8) (Optional) Allocate a `static IP to your rpi`_ and add it to your hosts file on your main PC
+9) (Optional) Set a new `hostname for your rpi`_
 
 Wiring up the MPU6050
 ^^^^^^^^^^^^^^^^^^^^^
@@ -189,23 +190,25 @@ Configuring vibe-recorder
 
 3) it should contain::
 
-    debug: False
-    debugLogging: False
-    useAsyncHandler: True
     accelerometers:
-    - name: mpu6050
-      type: mpu6050
-      fs: 500
+    - fs: 500
       handler: local log
       io:
-        type: smbus
         busId: 1
+        type: smbus
+      name: mpu6050
+      type: mpu6050
+    debug: false
+    debugLogging: false
     handlers:
     - name: remote
+      target: http://127.0.0.1:10001
       type: post
-      target: http://127.0.0.1:8080
+    host: raspberrypi
+    port: 10002
+    useAsyncHandler: true
 
-4) edit the last line and provide the IP address of the computer you intend to run the analyser on
+4) edit the `target:` line and provide the IP address of the computer you intend to run the analyser on
 5) (optional) edit the name field under accelerometers
 6) repeat the recorder startup test from the last section to verify the application still starts as expected
 
@@ -224,9 +227,6 @@ Installing the Analyser
 
 Coming soon!
 
-
-
-If so then it's time to setup the analyser!
 
 .. _pi3: https://shop.pimoroni.com/collections/raspberry-pi/products/raspberry-pi-3
 .. _pi zero w: https://shop.pimoroni.com/products/raspberry-pi-zero-w
@@ -252,3 +252,4 @@ If so then it's time to setup the analyser!
 .. _raspi-config: https://www.raspberrypi.org/documentation/configuration/raspi-config.md
 .. _Update raspbian: https://www.raspberrypi.org/documentation/raspbian/updating.md
 .. _static IP to your rpi: https://www.modmypi.com/blog/how-to-give-your-raspberry-pi-a-static-ip-address-update
+.. _hostname for your rpi: https://thepihut.com/blogs/raspberry-pi-tutorials/19668676-renaming-your-raspberry-pi-the-hostname

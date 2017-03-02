@@ -13,10 +13,13 @@ class BaseConfig(object):
         self._name = name
         self.logger = logging.getLogger(name + '.config')
         self.config = self._loadConfig()
-        import socket
-        self._hostname = self.config.get('host', socket.getfqdn())
+        self._hostname = self.config.get('host', self.getDefaultHostname())
         self._port = self.config.get('port', defaultPort)
         self._serviceURL = 'http://' + self.getHostname() + ':' + str(self.getPort())
+
+    def getDefaultHostname(self):
+        import socket
+        return socket.getfqdn()
 
     def runInDebug(self):
         """
@@ -58,7 +61,20 @@ class BaseConfig(object):
             self.logger.warning("Loading config from " + configPath)
             with open(configPath, 'r') as yml:
                 return yaml.load(yml)
-        return self.loadDefaultConfig()
+        defaultConfig = self.loadDefaultConfig()
+        self._storeConfig(defaultConfig, configPath)
+        return defaultConfig
+
+    def _storeConfig(self, config, configPath):
+        """ 
+        Writes the config to the configPath.
+        :param config a dict of config.
+        :param configPath the path to the file to write to, intermediate dirs will be created as necessary.
+        """
+        self.logger.info("Writing to " + str(configPath))
+        os.makedirs(os.path.dirname(configPath), exist_ok=True)
+        with (open(configPath, 'w')) as yml:
+            yaml.dump(config, yml, default_flow_style=False)
 
     @abc.abstractmethod
     def loadDefaultConfig(self):
@@ -74,11 +90,7 @@ class BaseConfig(object):
         :return: the path, raises ValueError if it doesn't exist.
         """
         confHome = environ.get('VIBE_CONFIG_HOME')
-        if confHome is None:
-            confHome = path.join(path.expanduser("~"), '.vibe')
-        if not path.exists(confHome):
-            raise ValueError(confHome + " does not exist, exiting")
-        return confHome
+        return confHome if confHome is not None else path.join(path.expanduser("~"), '.vibe')
 
     def configureLogger(self):
         """

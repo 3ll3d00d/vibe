@@ -13,6 +13,9 @@ It is aimed at, but not limited to, a particular niche within the home theatre c
 
    description
    install
+   configuration
+   uiguide
+
 
 Indices and tables
 ==================
