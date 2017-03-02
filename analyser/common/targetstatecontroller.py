@@ -3,8 +3,7 @@ import logging
 from flask_restful import marshal
 
 from analyser.common.config import loadTargetState
-from core.interface import targetStateFields
-from recorder.common.accelerometer import RecordingDeviceStatus
+from core.interface import targetStateFields, RecordingDeviceStatus
 
 logger = logging.getLogger('analyser.targetstate')
 

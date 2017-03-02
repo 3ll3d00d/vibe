@@ -28,7 +28,7 @@ install:
   - conda create -q -n test python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib pytest pytest-cov coverage
   - source activate test
   - pip install -q -U codecov smbus2 unittest-data-provider flask flask-restful pyyaml requests
-  - python setup.py install
+  - python setup_travis.py install
 script: PYTHONPATH=. pytest --cov=./
 after_success:
   - bash <(curl -s https://codecov.io/bash)

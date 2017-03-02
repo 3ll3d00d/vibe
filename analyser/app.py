@@ -20,6 +20,7 @@ from core.reactor import Reactor
 faulthandler.enable()
 if hasattr(faulthandler, 'register'):
     import signal
+
     faulthandler.register(signal.SIGUSR2, all_threads=True)
 
 app = Flask(__name__)
@@ -73,7 +74,9 @@ api.add_resource(FailMeasurement, '/measurements/<measurementId>/<deviceId>/fail
 # PUT: analyse the measurement
 api.add_resource(Analyse, '/measurements/<measurementId>/analyse', resource_class_kwargs=resourceArgs)
 
-if __name__ == '__main__':
+
+def main(args=None):
+    """ The main routine. """
     cfg.configureLogger()
     if cfg.useTwisted:
         from twisted.internet import reactor
@@ -82,7 +85,6 @@ if __name__ == '__main__':
         from twisted.web.wsgi import WSGIResource
         from twisted.application import service
         from twisted.internet import endpoints
-
 
         class FlaskAppWrapper(Resource):
             """
@@ -110,7 +112,6 @@ if __name__ == '__main__':
             def render(self, request):
                 return self.wsgi.render(request)
 
-
         application = service.Application('analyser')
         site = server.Site(FlaskAppWrapper())
         endpoint = endpoints.TCP4ServerEndpoint(reactor, cfg.getPort(), interface='0.0.0.0')
@@ -119,3 +120,7 @@ if __name__ == '__main__':
     else:
         # get config from a flask standard place not our config yml
         app.run(debug=cfg.runInDebug(), host='0.0.0.0', port=cfg.getPort())
+
+
+if __name__ == '__main__':
+    main()

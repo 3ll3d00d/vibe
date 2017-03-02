@@ -6,16 +6,29 @@ from core.BaseConfig import BaseConfig
 class Config(BaseConfig):
     def __init__(self):
         super().__init__('analyser', defaultPort=8080)
-        self.targetState = loadTargetState(self.config.get('targetStateProvider'))
-        self.dataDir = self.config.get('dataDir', os.path.join(self._getConfigPath(), 'data'))
+        self.targetState = loadTargetState(self.config.get('targetState'))
+        self.dataDir = self.config.get('dataDir', self.getDefaultDataDir())
         self.useTwisted = self.config.get('useTwisted', True)
 
+    def getDefaultDataDir(self):
+        return os.path.join(self._getConfigPath(), 'data')
+
     def loadDefaultConfig(self):
-        import tempfile
         return {
             'debug': False,
             'debugLogging': False,
-            'measurementDir': os.path.join(tempfile.gettempdir(), 'analyser')
+            'port': 8080,
+            'host': self.getDefaultHostname(),
+            'useTwisted': True,
+            'dataDir': self.getDefaultDataDir(),
+            'targetState': {
+                'fs': 500,
+                'samplesPerBatch': 125,
+                'gyroEnabled': True,
+                'gyroSens': 500,
+                'accelerometerEnabled': True,
+                'accelerometerSens': 4
+            }
         }
 
 

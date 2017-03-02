@@ -1,0 +1,4 @@
+include README.rst
+graft analyser/static
+include versioneer.py
+include _version.py

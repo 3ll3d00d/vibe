@@ -30,6 +30,7 @@ api = Api(app)
 faulthandler.enable()
 if hasattr(faulthandler, 'register'):
     import signal
+
     faulthandler.register(signal.SIGUSR2, all_threads=True)
 
 # GET: the recordingDevices on this host
@@ -81,8 +82,13 @@ def wireHandlers(cfg):
             device.dataHandler = copied if not cfg.useAsyncHandlers else AsyncHandler('recorder', copied)
 
 
-if __name__ == '__main__':
+def main(args=None):
+    """ The main routine. """
     cfg.configureLogger()
     wireHandlers(cfg)
     # get config from a flask standard place not our config yml
     app.run(debug=cfg.runInDebug(), host='0.0.0.0', port=cfg.getPort())
+
+
+if __name__ == '__main__':
+    main()

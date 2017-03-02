@@ -16,6 +16,8 @@ class Config(BaseConfig):
 
     def loadDefaultConfig(self):
         return {
+            'host': self.getDefaultHostname(),
+            'port': 10002,
             'debug': False,
             'debugLogging': False,
             'useAsyncHandler': True,
@@ -35,7 +37,7 @@ class Config(BaseConfig):
                 {
                     'name': 'remote',
                     'type': 'post',
-                    'target': 'http://localhost:10001'
+                    'target': 'http://127.0.0.1:10001'
                 }
             ]
         }

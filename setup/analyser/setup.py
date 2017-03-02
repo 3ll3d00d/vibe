@@ -1,13 +1,15 @@
 from setuptools import setup
 
+from versioneer import get_cmdclass, get_version
 
 def readme():
     with open('README.rst') as f:
         return f.read()
 
 
-setup(name='rpi-vibe',
-      version='0.0.1',
+setup(name='vibe-analyser',
+      version=get_version(),
+      cmdclass=get_cmdclass(),
       description='A vibration analysis and data acquisition suite for the rpi',
       long_description=readme(),
       classifiers=[
@@ -22,9 +24,29 @@ setup(name='rpi-vibe',
       author='Matt Khan',
       author_email='mattkhan+vibe@gmail.com',
       license='MIT',
-      packages=['analyser', 'core', 'recorder'],
+      packages=[
+          'analyser',
+          'analyser.common',
+          'analyser.resources',
+          'core'
+      ],
+      entry_points={
+          'console_scripts': [
+              'analyser = analyser.app:main',
+          ],
+      },
+      install_requires=[
+          'flask',
+          'flask-restful',
+          'numpy',
+          'pyyaml',
+          'requests',
+          'scipy',
+          'twisted'
+      ],
       setup_requires=[
-          'pytest-runner'
+          'pytest-runner',
+          'versioneer'
       ],
       tests_require=[
           'pytest'
