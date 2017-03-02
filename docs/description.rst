@@ -4,16 +4,19 @@ What is vibe?
 Vibe is a software suite that allows you to;
 
 * connect multiple devices to a single data capture and analysis service
-* choose which sensors to collect data from (accelerometer and/or gyro) along with various important parameters such as
-sample rate and sensor sensitivity
+* choose which sensors to collect data from (accelerometer and/or gyro)
+* specify various important parameters such as sample rate and sensor sensitivity
 * organise captured data into named measurements
 * analyse that data to obtain a view on typical metrics like PSD and linear spectrum
 * do all the above via an easy to use web ui
 
+How can you use it?
+-------------------
+
 vibe is made up of 2 separate components
 
 Analyser
---------
+^^^^^^^^
 
 The analyser provides a user interface for all functionality and controls the assorted measurement devices.
 
@@ -29,7 +32,7 @@ Its functions include:
 -  providing a UI
 
 Recorder
---------
+^^^^^^^^
 
 A recorder is directed to collect data from a connected sensor by the analyser.
 
