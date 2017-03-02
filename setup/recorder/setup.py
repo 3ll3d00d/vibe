@@ -7,7 +7,7 @@ def readme():
         return f.read()
 
 
-setup(name='rpi-vibe-recorder',
+setup(name='vibe-recorder',
       version=get_version(),
       cmdclass=get_cmdclass(),
       description='A vibration analysis and data acquisition suite for the rpi',

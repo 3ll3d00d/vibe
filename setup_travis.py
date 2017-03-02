@@ -6,7 +6,7 @@ def readme():
         return f.read()
 
 
-setup(name='rpi-vibe',
+setup(name='vibe',
       version='0.0.1',
       description='A vibration analysis and data acquisition suite for the rpi',
       long_description=readme(),
