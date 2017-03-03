@@ -94,6 +94,8 @@ function prepare_ui() {
     [[ -d analyser/static ]] && rm -Rf analyser/static
     mv vibe-ui/build analyser/static
     [[ $? -ne 0 ]] && fail_hard "failed to move prod ui build"
+    # can't end on the previous test as it provides the return value of the function (i.e. 1 and hence exit with -e)
+    return 0
 }
 
 TAG="${1}"

@@ -209,7 +209,34 @@ TODO add details on how to do this.
 Installing the Analyser
 -----------------------
 
+Running on Linux
+^^^^^^^^^^^^^^^^
+
+Login to your linux box and::
+
+    $ ssh pi@myrpi
+    $ sudo apt install python3 python3-venv python3-pip
+    $ mkdir python
+    $ cd python
+    $ python3 -m venv analyser
+    $ cd analyser
+    $ . bin/activate
+    $ pip install vibe-analyser
+
+If you are installing this on the rpi then expect this to take a pretty long time (i.e. leave it going overnight).
+
+Now start it up::
+
+    $ cd python/analyser
+    $ ./bin/analyser
+
+and open your browser and visit http://youranalyserhost:8080, you should see
+
+Running on Windows
+^^^^^^^^^^^^^^^^^^
+
 Coming soon!
+
 
 
 .. _pi3: https://shop.pimoroni.com/collections/raspberry-pi/products/raspberry-pi-3
