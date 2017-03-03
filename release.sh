@@ -62,9 +62,13 @@ function do_release() {
         python3 setup.py clean --all sdist bdist_wheel
     elif [[ ${1} == "full" ]]
     then
+        log_it "Building ${2}-${TAG}"
         python3 setup.py clean --all sdist bdist_wheel
-        twine register "dist/vibe_${2}-${TAG}.tar.gz"
+        log_it "Registering vibe-${2}-${TAG}.tar.gz via twine"
+        twine register "dist/vibe-${2}-${TAG}.tar.gz"
+        log_it "Registering vibe_${2}-${TAG}-py3-none-any.whl via twine"
         twine register "dist/vibe_${2}-${TAG}-py3-none-any.whl"
+        log_it "Uploading to pypi"
         twine upload dist/*
     else
         fail_hard "Unknown release operation ${1}"

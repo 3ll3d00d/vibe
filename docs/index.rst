@@ -16,7 +16,7 @@ It is aimed at, but not limited to, a particular niche within the home theatre c
    configuration
    uiguide
    design
-   faq
+   troubleshooting
 
 
 Indices and tables
