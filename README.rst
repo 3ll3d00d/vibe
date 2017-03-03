@@ -20,7 +20,16 @@ Vibe
 
 An vibration analysis measurement suite with a web ui.
 
-The system is split into 2 main components.
+Install from pypi as::
+
+    $ pip install vibe-recorder
+    $ pip install vibe-analyser
+
+The recorder goes on your rpi, the analyser on any computer you like. Visit http://vibe.readthedocs.io/en/latest/ for
+full details.
+
+What is it?
+===========
 
 Analyser
 --------
@@ -46,30 +55,3 @@ The recorder is responsible for:
 -  managing the connected IMU
 -  maintaining its state with the analyser
 -  recording data and sending it to the analyser
-
-TODO
-====
-
-Managing target state
-
--  mark recorder as at target state or not
--  only send measurement requests to valid recorders
--  persist target state across analyser restarts
-
-Managing recorders
-
--  timeout disconnected recorders
-
-Managing measurements
-
--  ensure scheduled measurements don’t overlap
-
-Ensuring measurement consistency
-
--  verify that measurement data is received from all recorders within
-   the expected time period
--  verify that measurement data is consistent
-
-Storing measurement metadata
-
--  add description, duration, start time to metadata

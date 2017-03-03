@@ -117,6 +117,8 @@ be used as your main reference. This doc will just highlight the specific points
 8) (Optional) Allocate a `static IP to your rpi`_ and add it to your hosts file on your main PC
 9) (Optional) Set a new `hostname for your rpi`_
 
+.. _install-mpu6050-wiring:
+
 Wiring up the MPU6050
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -188,29 +190,11 @@ Configuring vibe-recorder
     $ cd ~/.vibe
     $ nano recorder.yml
 
-3) it should contain::
-
-    accelerometers:
-    - fs: 500
-      handler: local log
-      io:
-        busId: 1
-        type: smbus
-      name: mpu6050
-      type: mpu6050
-    debug: false
-    debugLogging: false
-    handlers:
-    - name: remote
-      target: http://127.0.0.1:10001
-      type: post
-    host: raspberrypi
-    port: 10002
-    useAsyncHandler: true
-
+3) refer to the :ref:`configuration guide <config-recorder>` for full details of the contents
 4) edit the `target:` line and provide the IP address of the computer you intend to run the analyser on
-5) (optional) edit the name field under accelerometers
-6) repeat the recorder startup test from the last section to verify the application still starts as expected
+5) edit the `host:` field and provide an IP address or hostname which resolves to this device
+6) (optional) edit the name field under accelerometers
+7) repeat the recorder startup test from the last section to verify the application still starts as expected
 
 (Optional) Starting vibe-recorder on bootup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -225,7 +209,34 @@ TODO add details on how to do this.
 Installing the Analyser
 -----------------------
 
+Running on Linux
+^^^^^^^^^^^^^^^^
+
+Login to your linux box and::
+
+    $ ssh pi@myrpi
+    $ sudo apt install python3 python3-venv python3-pip
+    $ mkdir python
+    $ cd python
+    $ python3 -m venv analyser
+    $ cd analyser
+    $ . bin/activate
+    $ pip install vibe-analyser
+
+If you are installing this on the rpi then expect this to take a pretty long time (i.e. leave it going overnight).
+
+Now start it up::
+
+    $ cd python/analyser
+    $ ./bin/analyser
+
+and open your browser and visit http://youranalyserhost:8080, you should see
+
+Running on Windows
+^^^^^^^^^^^^^^^^^^
+
 Coming soon!
+
 
 
 .. _pi3: https://shop.pimoroni.com/collections/raspberry-pi/products/raspberry-pi-3
