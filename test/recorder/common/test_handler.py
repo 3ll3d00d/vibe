@@ -46,11 +46,11 @@ def test_httpSendsAllEvents():
     http.deviceName = 'mpu6050'
     with mock.patch.object(http, '_doPut') as monkey:
         doMeasurementLoop(http)
-        calls = [mock.call("http://localhost:8080/measurements/starttest/mpu6050", )]
+        calls = [mock.call("http://localhost:8080/api/1/measurements/starttest/mpu6050", )]
         for i in range(0, 100):
             calls.append(
-                mock.call("http://localhost:8080/measurements/starttest/mpu6050/data", data=makeEvent(i)))
-        calls.append(mock.call("http://localhost:8080/measurements/starttest/mpu6050/complete", ))
+                mock.call("http://localhost:8080/api/1/measurements/starttest/mpu6050/data", data=makeEvent(i)))
+        calls.append(mock.call("http://localhost:8080/api/1/measurements/starttest/mpu6050/complete", ))
         monkey.assert_has_calls(calls)
 
 
@@ -61,11 +61,11 @@ def test_httpSendsAllEventsWhenAsync():
     asyncHandler = AsyncHandler('test', http)
     with mock.patch.object(http, '_doPut') as monkey:
         doMeasurementLoop(asyncHandler)
-        calls = [mock.call("http://localhost:8080/measurements/starttest/mpu6050", )]
+        calls = [mock.call("http://localhost:8080/api/1/measurements/starttest/mpu6050", )]
         for i in range(0, 100):
             calls.append(
-                mock.call("http://localhost:8080/measurements/starttest/mpu6050/data", data=makeEvent(i)))
-        calls.append(mock.call("http://localhost:8080/measurements/starttest/mpu6050/complete", ))
+                mock.call("http://localhost:8080/api/1/measurements/starttest/mpu6050/data", data=makeEvent(i)))
+        calls.append(mock.call("http://localhost:8080/api/1/measurements/starttest/mpu6050/complete", ))
         monkey.assert_has_calls(calls)
 
 
