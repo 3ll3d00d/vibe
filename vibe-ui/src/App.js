@@ -1,7 +1,7 @@
 import React, {Component, PropTypes} from "react";
 import {Grid, Navbar, Nav, NavItem, Image, Row, Col} from "react-bootstrap";
 import {LinkContainer} from 'react-router-bootstrap';
-import logo from "../public/vibe.png";
+import logo from "../public/vibe-24x24.png";
 
 class App extends Component {
     static childContextTypes = {
@@ -23,7 +23,7 @@ class App extends Component {
                             <Navbar>
                                 <Navbar.Header>
                                     <Navbar.Brand>
-                                        <Image src={logo} rounded alt="Vibe"/>
+                                        <a href="http://vibe.readthedocs.io/en/latest/" target="docs"><Image src={logo} rounded alt="Vibe"/></a>
                                     </Navbar.Brand>
                                     <Navbar.Toggle/>
                                 </Navbar.Header>
