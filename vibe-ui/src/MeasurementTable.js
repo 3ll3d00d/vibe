@@ -22,42 +22,8 @@ class MeasurementTable extends Component {
     };
 
     dataRow(measurement) {
-        let deleteButton = null;
-        let deletePromise = this.props[`deleteMeasurementResponse_${measurement.id}`];
-        if (deletePromise) {
-            if (deletePromise.pending) {
-                deleteButton =
-                    <Button bsStyle="danger" disabled bsSize="xsmall"><FontAwesome name="spinner" spin/></Button>;
-            } else if (deletePromise.rejected) {
-                const code = deletePromise.meta.response.status;
-                const text = deletePromise.meta.response.statusText;
-                const tooltip = <Tooltip id={measurement.name}>{code} - {text}</Tooltip>;
-                deleteButton =
-                    <OverlayTrigger placement="top" overlay={tooltip}>
-                        <div>
-                            <Button bsStyle="warning" bsSize="xsmall">
-                                <FontAwesome name="exclamation"/>&nbsp;FAILED
-                            </Button>
-                        </div>
-                    </OverlayTrigger>;
-            } else if (deletePromise.fulfilled) {
-                deleteButton =
-                    <Button bsStyle="success" disabled bsSize="xsmall">
-                        <FontAwesome name="check"/>&nbsp;Deleted
-                    </Button>;
-            }
-        } else {
-            deleteButton =
-                <Button bsStyle="danger" onClick={() => this.props.deleteMeasurement(measurement.id)} bsSize="xsmall">
-                    <FontAwesome name="trash"/>
-                </Button>;
-        }
-        const analyseButton =
-            <Button bsStyle="primary" href={`/analyse/${measurement.id}`} bsSize="xsmall">
-                <FontAwesome name="line-chart"/>
-            </Button>;
-
-        // TODO add failure reasons if a device fails
+        const deleteButton = this.getDeleteButton(measurement);
+        const analyseButton = this.getAnalyseButton(measurement);
         return (
             <Tr key={measurement.name + "_" + measurement.startTime}>
                 <Td column="status"><StatusCell status={measurement.status}/></Td>
@@ -73,6 +39,55 @@ class MeasurementTable extends Component {
                 <Td column="a"><ButtonToolbar>{analyseButton}{deleteButton}</ButtonToolbar></Td>
             </Tr>
         );
+    }
+
+    getAnalyseButton(measurement) {
+        return measurement.status === 'COMPLETE'
+            ?
+            (
+                <Button bsStyle="primary" href={`/analyse/${measurement.id}`} bsSize="xsmall">
+                    <FontAwesome name="line-chart"/>
+                </Button>
+            )
+            : null;
+    }
+
+    getDeleteButton(measurement) {
+        let deletePromise = this.props[`deleteMeasurementResponse_${measurement.id}`];
+        if (deletePromise) {
+            if (deletePromise.pending) {
+                return <Button bsStyle="danger" disabled bsSize="xsmall"><FontAwesome name="spinner" spin/></Button>;
+            } else if (deletePromise.rejected) {
+                const code = deletePromise.meta.response.status;
+                const text = deletePromise.meta.response.statusText;
+                const tooltip = <Tooltip id={measurement.name}>{code} - {text}</Tooltip>;
+                return (
+                    <OverlayTrigger placement="top" overlay={tooltip}>
+                        <div>
+                            <Button bsStyle="warning" bsSize="xsmall">
+                                <FontAwesome name="exclamation"/>&nbsp;FAILED
+                            </Button>
+                        </div>
+                    </OverlayTrigger>
+                );
+            } else if (deletePromise.fulfilled) {
+                return (
+                    <Button bsStyle="success" disabled bsSize="xsmall">
+                        <FontAwesome name="check"/>&nbsp;Deleted
+                    </Button>
+                );
+            }
+        } else {
+            if (measurement.status === 'COMPLETE' || measurement.status === 'FAILED') {
+                return (
+                    <Button bsStyle="danger" onClick={() => this.props.deleteMeasurement(measurement.id)}
+                            bsSize="xsmall">
+                        <FontAwesome name="trash"/>
+                    </Button>
+                );
+            }
+        }
+        return null;
     }
 
     render() {
