@@ -335,14 +335,16 @@ export default connect((props, context) => ({
     measurementMeta: {
         url: `${context.apiPrefix}/measurements`,
         then: (measurements) => ({
-            value: measurements.map(m => {
-                return {
-                    analysis: m.analysis.analysis,
-                    series: m.analysis.series,
-                    id: m.id,
-                    devices: Object.keys(m.recordingDevices)
-                };
-            })
+            value: measurements
+                .filter(m => m.status === 'COMPLETE')
+                .map(m => {
+                    return {
+                        analysis: m.analysis.analysis,
+                        series: m.analysis.series,
+                        id: m.id,
+                        devices: Object.keys(m.recordingDevices)
+                    };
+                })
         })
     },
     fetchData: (measurementId) => ({

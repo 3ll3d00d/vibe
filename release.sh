@@ -99,10 +99,11 @@ function prepare_ui() {
 }
 
 TAG="${1}"
+[[ -z ${TAG} ]] && TAG="master"
 RELEASE_TYPE="${2}"
 [[ -z ${RELEASE_TYPE} ]] && RELEASE_TYPE="local"
 
-log_it "Releasing v${TAG}"
+log_it "Releasing ${TAG}"
 
 init_release "recorder"
 do_release "${RELEASE_TYPE}" "recorder"
