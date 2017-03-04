@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from "react";
-import Message from "./Message";
+import Message from "../../components/Message";
 import {Grid, Row, Col} from "react-bootstrap";
 import {connect, PromiseState} from "react-refetch";
 import DeviceStatusTable from "./DeviceStatusTable";
