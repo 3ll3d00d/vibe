@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from "react";
-import {Row, Col, Button, Well, Form, FormGroup, FormControl, ControlLabel} from "react-bootstrap";
+import {Button, Col, ControlLabel, Form, FormControl, FormGroup, Row, Well} from "react-bootstrap";
 import {connect} from "react-refetch";
 import FontAwesome from "react-fontawesome";
 
@@ -64,23 +64,6 @@ class ScheduleMeasurement extends Component {
     }
 
     render() {
-        let submitButton =
-            <Button type="submit" onClick={this.handleSubmit}>
-                <FontAwesome name="play"/>&nbsp;Go!
-            </Button>;
-        if (this.props.createMeasurementResponse) {
-            if (this.props.createMeasurementResponse.pending) {
-                submitButton =
-                    <Button type="submit" disabled>
-                        <FontAwesome name="spinner" size="2x" spin/>&nbsp;Go!
-                    </Button>;
-            } else if (this.props.createMeasurementResponse.rejected) {
-                submitButton =
-                    <Button type="submit" bsStyle="danger" disabled>
-                        <FontAwesome name="exclamation" size="2x"/>&nbsp;Error!
-                    </Button>;
-            }
-        }
         return (
             <Well>
                 <Form onSubmit={false}>
@@ -120,12 +103,44 @@ class ScheduleMeasurement extends Component {
                     </Row>
                     <Row>
                         <Col md={2}>
-                            {submitButton}
+                            {this.getSubmitButton()}
                         </Col>
                     </Row>
                 </Form>
             </Well>
         );
+    }
+
+    getSubmitButton() {
+        if (this.props.devicesAvailable) {
+            if (this.props.createMeasurementResponse) {
+                if (this.props.createMeasurementResponse.pending) {
+                    return (
+                        <Button type="submit" disabled>
+                            <FontAwesome name="spinner" size="2x" spin/>&nbsp;Go!
+                        </Button>
+                    );
+                } else if (this.props.createMeasurementResponse.rejected) {
+                    return (
+                        <Button type="submit" bsStyle="danger" disabled>
+                            <FontAwesome name="exclamation"/>&nbsp;Error!
+                        </Button>
+                    );
+                }
+            } else {
+                return (
+                    <Button type="submit" onClick={this.handleSubmit}>
+                        <FontAwesome name="play"/>&nbsp;Go!
+                    </Button>
+                );
+            }
+        } else {
+            return (
+                <Button type="submit" bsStyle="danger" disabled>
+                    <FontAwesome name="exclamation"/>&nbsp;No Devices Available!
+                </Button>
+            );
+        }
     }
 }
 
