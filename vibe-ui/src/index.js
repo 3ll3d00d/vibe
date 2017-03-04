@@ -6,10 +6,10 @@ import "bootstrap/dist/css/bootstrap-theme.css";
 import "font-awesome/css/font-awesome.css";
 import "./index.css";
 import App from "./App";
-import About from "./About";
 import Configure from "./Configure";
 import Measure from "./Measure";
 import Analyse from "./Analyse";
+import NotFound from "./NotFound";
 import "babel-polyfill";
 
 ReactDOM.render(
@@ -27,7 +27,8 @@ ReactDOM.render(
                         </Route>
                     </Route>
                 </Route>
-                <Route path="/rta" component={About}/>
+                {/*<Route path="/rta" component={About}/>*/}
+                <Route path="*" component={NotFound} />
             </Route>
         </Router>
     ),
