@@ -7,6 +7,7 @@ from flask_restful import Api
 
 from core.handler import AsyncHandler
 from core.httpclient import RequestsBasedHttpClient
+from core.interface import API_PREFIX
 from core.reactor import Reactor
 from recorder.common.config import Config
 from recorder.common.heartbeater import Heartbeater
@@ -34,20 +35,20 @@ if hasattr(faulthandler, 'register'):
     faulthandler.register(signal.SIGUSR2, all_threads=True)
 
 # GET: the recordingDevices on this host
-api.add_resource(RecordingDevices, '/devices', resource_class_kwargs=inject)
+api.add_resource(RecordingDevices, API_PREFIX + '/devices', resource_class_kwargs=inject)
 # GET: the current state of this particular device
 # PATCH: mutate specific aspects of configuration
-api.add_resource(RecordingDevice, '/devices/<deviceId>', resource_class_kwargs=inject)
+api.add_resource(RecordingDevice, API_PREFIX + '/devices/<deviceId>', resource_class_kwargs=inject)
 # GET: triggers a self test and returns the results
-api.add_resource(SelfTest, '/devices/<deviceId>/selftest', resource_class_kwargs=inject)
+api.add_resource(SelfTest, API_PREFIX + '/devices/<deviceId>/selftest', resource_class_kwargs=inject)
 # GET: the measurements made by this device in this session
-api.add_resource(Measurements, '/devices/<deviceId>/measurements', resource_class_kwargs=inject)
+api.add_resource(Measurements, API_PREFIX + '/devices/<deviceId>/measurements', resource_class_kwargs=inject)
 # GET: the state of this measurement
 # PUT: create a new measurement (duration, start time)
 # DELETE: remove the named measurement
-api.add_resource(Measurement, '/devices/<deviceId>/measurements/<measurementId>', resource_class_kwargs=inject)
+api.add_resource(Measurement, API_PREFIX + '/devices/<deviceId>/measurements/<measurementId>', resource_class_kwargs=inject)
 # GET: triggers a stop of the named measurement
-api.add_resource(AbortMeasurement, '/devices/<deviceId>/measurements/<measurementId>/abort',
+api.add_resource(AbortMeasurement, API_PREFIX + '/devices/<deviceId>/measurements/<measurementId>/abort',
                  resource_class_kwargs=inject)
 
 

@@ -1,4 +1,4 @@
-import React, {Component} from "react";
+import React, {Component, PropTypes} from "react";
 import Message from "./Message";
 import {Panel, Grid, Row, Col} from "react-bootstrap";
 import {connect} from "react-refetch";
@@ -6,6 +6,10 @@ import MeasurementTable from "./MeasurementTable";
 import ScheduleMeasurement from "./ScheduleMeasurement";
 
 class Measure extends Component {
+    static contextTypes = {
+        apiPrefix: PropTypes.string.isRequired
+    };
+
     render() {
         const {measurements} = this.props;
         if (measurements.pending) {
@@ -38,6 +42,6 @@ class Measure extends Component {
         }
     }
 }
-export default connect(props => ( {
-    measurements: {url: `/measurements`, refreshInterval: 1000}
+export default connect((props, context) => ( {
+    measurements: {url: `${context.apiPrefix}/measurements`, refreshInterval: 1000}
 } ))(Measure)

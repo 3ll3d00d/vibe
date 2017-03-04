@@ -57,3 +57,4 @@ recordingDeviceFields = {
 }
 
 DATETIME_FORMAT = '%Y%m%d_%H%M%S'
+API_PREFIX = '/api/1'

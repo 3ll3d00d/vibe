@@ -9,7 +9,7 @@ from queue import Queue, Empty
 from flask import json
 
 from core.httpclient import RequestsBasedHttpClient
-from core.interface import DATETIME_FORMAT
+from core.interface import DATETIME_FORMAT, API_PREFIX
 
 
 class DataHandler:
@@ -178,7 +178,7 @@ class HttpPoster(DataHandler):
         self.httpclient = httpclient
         self.target = target[:-1] if target.endswith('/') else target
         self.deviceName = None
-        self.rootURL = self.target + '/measurements/'
+        self.rootURL = self.target + API_PREFIX + '/measurements/'
         self.sendURL = None
         self.startResponseCode = None
         self.dataResponseCode = []
