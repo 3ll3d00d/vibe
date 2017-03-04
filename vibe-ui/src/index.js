@@ -6,10 +6,10 @@ import "bootstrap/dist/css/bootstrap-theme.css";
 import "font-awesome/css/font-awesome.css";
 import "./index.css";
 import App from "./App";
-import Configure from "./Configure";
-import Measure from "./Measure";
-import Analyse from "./Analyse";
-import NotFound from "./NotFound";
+import Configure from "./scenes/configure/Configure";
+import Measure from "./scenes/measure/Measure";
+import Analyse from "./scenes/analyse/Analyse";
+import NotFound from "./scenes/404/NotFound";
 import "babel-polyfill";
 
 ReactDOM.render(
