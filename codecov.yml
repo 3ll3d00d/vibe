@@ -1,0 +1,4 @@
+ignore:
+  - "_version.py"
+  - "setup_travis.py"
+  - "versioneer.py"
