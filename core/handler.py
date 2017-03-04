@@ -175,6 +175,7 @@ class HttpPoster(DataHandler):
 
     def __init__(self, name, target, httpclient=RequestsBasedHttpClient()):
         self.name = name
+        self.logger = logging.getLogger(name + '.httpposter')
         self.httpclient = httpclient
         self.target = target[:-1] if target.endswith('/') else target
         self.deviceName = None
@@ -194,7 +195,11 @@ class HttpPoster(DataHandler):
 
     def _doPut(self, url, data=None):
         formattedPayload = None if data is None else json.dumps(data, sort_keys=True)
-        return self.httpclient.put(url, json=formattedPayload).status_code
+        try:
+            return self.httpclient.put(url, json=formattedPayload).status_code
+        except Exception as e:
+            self.logger.exception(e)
+            return 500
 
     def handle(self, data):
         """

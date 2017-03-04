@@ -120,7 +120,10 @@ def _applyTargetState(targetState, md, httpclient):
         payload = marshal(targetState, targetStateFields)
         logger.info("Applying target state change " + md['name'] + " - " + str(payload))
         if RecordingDeviceStatus.INITIALISED.name == md.get('status'):
-            httpclient.patch(md['serviceURL'], json=payload)
+            try:
+                httpclient.patch(md['serviceURL'], json=payload)
+            except Exception as e:
+                logger.exception(e)
         else:
             logger.warning("Ignoring target state change until " + md['name'] + " is idle, currently " + md['status'])
     else:

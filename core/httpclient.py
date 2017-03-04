@@ -2,6 +2,11 @@ import abc
 
 import requests
 
+class RequestException(Exception):
+    """
+    exists to decouple the caller from the requests specific exception
+    """
+    pass
 
 class HttpClient(object):
     """
@@ -66,19 +71,34 @@ class RequestsBasedHttpClient(HttpClient):
     """
 
     def get(self, url, **kwargs):
-        return requests.get(url, **kwargs)
+        try:
+            return requests.get(url, timeout=0.5, **kwargs)
+        except requests.exceptions.RequestException as e:
+            raise RequestException("Unable to GET from " + url) from e
 
     def post(self, url, **kwargs):
-        return requests.post(url, **kwargs)
+        try:
+            return requests.post(url, timeout=0.5, **kwargs)
+        except requests.exceptions.RequestException as e:
+            raise RequestException("Unable to POST to " + url) from e
 
     def put(self, url, **kwargs):
-        return requests.put(url, **kwargs)
+        try:
+            return requests.put(url, timeout=0.5, **kwargs)
+        except requests.exceptions.RequestException as e:
+            raise RequestException("Unable to PUT " + url) from e
 
     def patch(self, url, **kwargs):
-        return requests.patch(url, **kwargs)
+        try:
+            return requests.patch(url, timeout=0.5, **kwargs)
+        except requests.exceptions.RequestException as e:
+            raise RequestException("Unable to PATCH " + url) from e
 
     def delete(self, url, **kwargs):
-        return requests.delete(url, **kwargs)
+        try:
+            return requests.delete(url, timeout=0.5, **kwargs)
+        except requests.exceptions.RequestException as e:
+            raise RequestException("Unable to DELETE " + url) from e
 
 
 class RecordingHttpClient(HttpClient):
