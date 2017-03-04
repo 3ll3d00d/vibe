@@ -1,9 +1,19 @@
-import React, {Component} from "react";
+import React, {Component, PropTypes} from "react";
 import {Grid, Navbar, Nav, NavItem, Image, Row, Col} from "react-bootstrap";
 import {LinkContainer} from 'react-router-bootstrap';
 import logo from "../public/vibe.png";
 
 class App extends Component {
+    static childContextTypes = {
+        apiPrefix: PropTypes.string.isRequired,
+    };
+
+    getChildContext() {
+        return {
+            apiPrefix: '/api/1'
+        }
+    }
+
     render() {
         return (
             <div>

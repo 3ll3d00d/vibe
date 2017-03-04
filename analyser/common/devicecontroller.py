@@ -6,7 +6,7 @@ import time
 from flask_restful import fields
 
 from core.handler import CSVLogger, AsyncHandler
-from core.interface import RecordingDeviceStatus, DATETIME_FORMAT
+from core.interface import RecordingDeviceStatus, DATETIME_FORMAT, API_PREFIX
 
 logger = logging.getLogger('analyser.devicecontroller')
 

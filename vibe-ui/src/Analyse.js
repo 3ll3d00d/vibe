@@ -6,7 +6,8 @@ import Message from "./Message";
 
 class Analyse extends Component {
     static contextTypes = {
-        router: PropTypes.object.isRequired
+        router: PropTypes.object.isRequired,
+        apiPrefix: PropTypes.string.isRequired
     };
 
     constructor(props, context) {
@@ -330,9 +331,9 @@ class Analyse extends Component {
     }
 }
 
-export default connect(props => ({
+export default connect((props, context) => ({
     measurementMeta: {
-        url: `/measurements`,
+        url: `${context.apiPrefix}/measurements`,
         then: (measurements) => ({
             value: measurements.map(m => {
                 return {
@@ -345,6 +346,6 @@ export default connect(props => ({
         })
     },
     fetchData: (measurementId) => ({
-        [`fetchedData_${measurementId}`]: `/measurements/${measurementId}/analyse`
+        [`fetchedData_${measurementId}`]: `${context.apiPrefix}/measurements/${measurementId}/analyse`
     })
 }))(Analyse)

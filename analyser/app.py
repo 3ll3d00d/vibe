@@ -15,6 +15,7 @@ from analyser.resources.measurementdevices import MeasurementDevices, Measuremen
 from analyser.resources.measurements import Measurements, ReloadMeasurement
 from analyser.resources.state import State
 from core.httpclient import RequestsBasedHttpClient
+from core.interface import API_PREFIX
 from core.reactor import Reactor
 
 faulthandler.enable()
@@ -41,38 +42,38 @@ resourceArgs = {
 
 # GET: gets the current target state
 # PATCH: mutate specific aspects of device configuration, delegates to the underlying measurementDevices
-api.add_resource(State, '/state', resource_class_kwargs=resourceArgs)
+api.add_resource(State, API_PREFIX + '/state', resource_class_kwargs=resourceArgs)
 
 # GET: the state of currently available measurementDevices
-api.add_resource(MeasurementDevices, '/devices', resource_class_kwargs=resourceArgs)
+api.add_resource(MeasurementDevices, API_PREFIX + '/devices', resource_class_kwargs=resourceArgs)
 
 # PUT: puts the current state of a measurement device into the analyser, called by the recorder
-api.add_resource(MeasurementDevice, '/devices/<deviceId>', resource_class_kwargs=resourceArgs)
+api.add_resource(MeasurementDevice, API_PREFIX + '/devices/<deviceId>', resource_class_kwargs=resourceArgs)
 
 # GET: the available measurements
-api.add_resource(Measurements, '/measurements', resource_class_kwargs=resourceArgs)
+api.add_resource(Measurements, API_PREFIX + '/measurements', resource_class_kwargs=resourceArgs)
 # GET: reloads the available measurements
-api.add_resource(ReloadMeasurement, '/measurements/reload', resource_class_kwargs=resourceArgs)
+api.add_resource(ReloadMeasurement, API_PREFIX + '/measurements/reload', resource_class_kwargs=resourceArgs)
 
 # PUT: create a new measurement (duration, start time)
 # DELETE: remove the named measurement
 # GET: details of this measurement
-api.add_resource(Measurement, '/measurements/<measurementId>', resource_class_kwargs=resourceArgs)
+api.add_resource(Measurement, API_PREFIX + '/measurements/<measurementId>', resource_class_kwargs=resourceArgs)
 
 # PUT: starts a recording session
-api.add_resource(InitialiseMeasurement, '/measurements/<measurementId>/<deviceId>',
+api.add_resource(InitialiseMeasurement, API_PREFIX + '/measurements/<measurementId>/<deviceId>',
                  resource_class_kwargs=resourceArgs)
 # PUT: receive some data payload for the measurement
-api.add_resource(RecordData, '/measurements/<measurementId>/<deviceId>/data', resource_class_kwargs=resourceArgs)
+api.add_resource(RecordData, API_PREFIX + '/measurements/<measurementId>/<deviceId>/data', resource_class_kwargs=resourceArgs)
 # PUT: mark the measurement as complete
-api.add_resource(CompleteMeasurement, '/measurements/<measurementId>/<deviceId>/complete',
+api.add_resource(CompleteMeasurement, API_PREFIX + '/measurements/<measurementId>/<deviceId>/complete',
                  resource_class_kwargs=resourceArgs)
 # PUT: mark the measurement as failed
-api.add_resource(FailMeasurement, '/measurements/<measurementId>/<deviceId>/failed',
+api.add_resource(FailMeasurement, API_PREFIX + '/measurements/<measurementId>/<deviceId>/failed',
                  resource_class_kwargs=resourceArgs)
 
 # PUT: analyse the measurement
-api.add_resource(Analyse, '/measurements/<measurementId>/analyse', resource_class_kwargs=resourceArgs)
+api.add_resource(Analyse, API_PREFIX + '/measurements/<measurementId>/analyse', resource_class_kwargs=resourceArgs)
 
 
 def main(args=None):
@@ -86,28 +87,36 @@ def main(args=None):
         from twisted.application import service
         from twisted.internet import endpoints
 
+        class ReactIndex(static.File):
+            """
+            overrides getChild so it always just serves index.html (NB: this is a bit of a hack, there is probably a 
+            more correct way to do this but...)
+            """
+            def getChild(self, path, request):
+                return self
+
         class FlaskAppWrapper(Resource):
             """
             wraps the flask app as a WSGI resource while allow the react index.html (and its associated static content)
-            to be served as the default page
+            to be served as the default page.
             """
 
             def __init__(self):
                 super().__init__()
                 self.wsgi = WSGIResource(reactor, reactor.getThreadPool(), app)
-                self.indexHtml = static.File(os.path.join(os.path.dirname(__file__), 'static', 'index.html'))
+                self.indexHtml = ReactIndex(os.path.join(os.path.dirname(__file__), 'static', 'index.html'))
                 # makes the react static content available at /static
                 self.static = static.File(os.path.join(os.path.dirname(__file__), 'static', 'static'))
 
             def getChild(self, path, request):
-                if path == b'':
-                    return self.indexHtml
-                elif path == b'static':
-                    return self.static
-                else:
+                if path == b'api':
                     request.prepath.pop()
                     request.postpath.insert(0, path)
                     return self.wsgi
+                elif path == b'static':
+                    return self.static
+                else:
+                    return self.indexHtml
 
             def render(self, request):
                 return self.wsgi.render(request)
