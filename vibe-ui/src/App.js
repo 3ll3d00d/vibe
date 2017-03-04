@@ -35,12 +35,14 @@ class App extends Component {
                                         <LinkContainer to="/measure">
                                             <NavItem eventKey={2}>Measure</NavItem>
                                         </LinkContainer>
-                                        <LinkContainer to="/rta">
-                                            <NavItem eventKey={3}>RTA</NavItem>
-                                        </LinkContainer>
                                         <LinkContainer to="/analyse">
-                                            <NavItem eventKey={4}>Analyse</NavItem>
+                                            <NavItem eventKey={3}>Analyse</NavItem>
                                         </LinkContainer>
+{/*
+                                        <LinkContainer to="/rta">
+                                            <NavItem eventKey={4}>RTA</NavItem>
+                                        </LinkContainer>
+*/}
                                     </Nav>
                                 </Navbar.Collapse>
                             </Navbar>
