@@ -1,4 +1,4 @@
-import React, {Component} from "react";
+import React, {Component, PropTypes} from "react";
 import {Table as RBTable, Label, Button, ButtonToolbar, OverlayTrigger, Tooltip} from "react-bootstrap";
 import {Table, Thead, Th, Tr, Td} from "reactable";
 import FontAwesome from "react-fontawesome";
@@ -7,8 +7,12 @@ import {Line} from 'rc-progress';
 import './MeasurementTable.css';
 
 class MeasurementTable extends Component {
-    constructor(props) {
-        super(props);
+    static contextTypes = {
+        apiPrefix: PropTypes.string.isRequired
+    };
+
+    constructor(props, context) {
+        super(props, context);
         this.state = {filterText: ''};
         this.handleFilter = this.handleFilter.bind(this);
     }
@@ -255,10 +259,10 @@ class SensorCell extends Component {
     }
 }
 
-export default connect(props => ({
+export default connect((props, context) => ({
     deleteMeasurement: measurementId => ({
         [`deleteMeasurementResponse_${measurementId}`]: {
-            url: `/measurements/${measurementId}`,
+            url: `${context.apiPrefix}/measurements/${measurementId}`,
             method: 'DELETE'
         }
     })

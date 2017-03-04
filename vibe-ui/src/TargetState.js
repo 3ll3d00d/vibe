@@ -1,10 +1,14 @@
-import React, {Component} from "react";
+import React, {Component, PropTypes} from "react";
 import {Row, Col, Panel, Button, ControlLabel, FormGroup, FormControl} from "react-bootstrap";
 import {connect} from "react-refetch";
 
 class TargetState extends Component {
-    constructor(props) {
-        super(props);
+    static contextTypes = {
+        apiPrefix: PropTypes.string.isRequired
+    };
+
+    constructor(props, context) {
+        super(props, context);
         this.state = {
             fs: null,
             samplesPerBatch: null,
@@ -246,10 +250,10 @@ class SensorControl extends Component {
     }
 }
 
-export default connect(props => ({
+export default connect((props, context) => ({
     postTargetState: targetState => ({
         postTargetStateResponse: {
-            url: `/state`,
+            url: `${context.apiPrefix}/state`,
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'

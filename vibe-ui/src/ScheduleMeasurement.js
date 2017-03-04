@@ -1,12 +1,15 @@
-import React, {Component} from "react";
+import React, {Component, PropTypes} from "react";
 import {Row, Col, Button, Well, Form, FormGroup, FormControl, ControlLabel} from "react-bootstrap";
 import {connect} from "react-refetch";
 import FontAwesome from "react-fontawesome";
 
 class ScheduleMeasurement extends Component {
+    static contextTypes = {
+        apiPrefix: PropTypes.string.isRequired
+    };
 
-    constructor(props) {
-        super(props);
+    constructor(props, context) {
+        super(props, context);
         this.state = {
             name: null,
             description: null,
@@ -126,10 +129,10 @@ class ScheduleMeasurement extends Component {
     }
 }
 
-export default connect(props => ({
+export default connect((props, context) => ({
     createMeasurement: measurement => ({
         createMeasurementResponse: {
-            url: `/measurements/${measurement.name}`,
+            url: `${context.apiPrefix}/measurements/${measurement.name}`,
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'

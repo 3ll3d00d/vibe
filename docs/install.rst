@@ -235,6 +235,7 @@ and open your browser and visit http://youranalyserhost:8080, you should see
 Running on Windows
 ^^^^^^^^^^^^^^^^^^
 
+1) Install anaconda
 Coming soon!
 
 

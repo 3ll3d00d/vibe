@@ -2,7 +2,7 @@ import logging
 
 from flask_restful import marshal
 
-from core.interface import recordingDeviceFields
+from core.interface import recordingDeviceFields, API_PREFIX
 
 logger = logging.getLogger('recorder.heartbeater')
 
@@ -33,8 +33,8 @@ class Heartbeater(object):
         for name, md in self.cfg.recordingDevices.items():
             try:
                 data = marshal(md, recordingDeviceFields)
-                data['serviceURL'] = self.cfg.getServiceURL() + "/devices/" + name
-                targetURL = self.serverURL + "/devices/" + name
+                data['serviceURL'] = self.cfg.getServiceURL() + API_PREFIX + '/devices/' + name
+                targetURL = self.serverURL + API_PREFIX + '/devices/' + name
                 logger.info("Pinging " + targetURL)
                 resp = self.httpclient.put(targetURL, json=data)
                 if resp.status_code != 200:
