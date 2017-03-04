@@ -2,7 +2,7 @@ import React, {Component, PropTypes} from "react";
 import {connect} from "react-refetch";
 import Analysis from "./Analysis";
 import AnalysisNavigator from "./AnalysisNavigator";
-import Message from "./Message";
+import Message from "../../components/Message";
 
 class Analyse extends Component {
     static contextTypes = {
