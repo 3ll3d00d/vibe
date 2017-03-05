@@ -112,7 +112,7 @@ class ScheduleMeasurement extends Component {
     }
 
     getSubmitButton() {
-        if (this.props.devicesAvailable) {
+        if (this.props.deviceStatuses.some((status) => status === 'INITIALISED' || status === 'RECORDING')) {
             if (this.props.createMeasurementResponse) {
                 if (this.props.createMeasurementResponse.pending) {
                     return (
@@ -127,13 +127,12 @@ class ScheduleMeasurement extends Component {
                         </Button>
                     );
                 }
-            } else {
-                return (
-                    <Button type="submit" onClick={this.handleSubmit}>
-                        <FontAwesome name="play"/>&nbsp;Go!
-                    </Button>
-                );
             }
+            return (
+                <Button type="submit" onClick={this.handleSubmit}>
+                    <FontAwesome name="play"/>&nbsp;Go!
+                </Button>
+            );
         } else {
             return (
                 <Button type="submit" bsStyle="danger" disabled>

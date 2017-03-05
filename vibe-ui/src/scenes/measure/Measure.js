@@ -11,9 +11,9 @@ class Measure extends Component {
     };
 
     render() {
-        const {devicesAvailable, measurements} = this.props;
+        const {deviceStatuses, measurements} = this.props;
         // compose multiple PromiseStates together to wait on them as a whole
-        const allFetches = PromiseState.all([devicesAvailable, measurements]);
+        const allFetches = PromiseState.all([deviceStatuses, measurements]);
         if (allFetches.pending) {
             return (
                 <div>
@@ -33,7 +33,7 @@ class Measure extends Component {
                         <Row>
                             <Col>
                                 <Panel header="Measurements" bsStyle="info">
-                                    <ScheduleMeasurement devicesAvailable={this.props.devicesAvailable.value} />
+                                    <ScheduleMeasurement deviceStatuses={this.props.deviceStatuses.value}/>
                                     <MeasurementTable measurements={ this.props.measurements.value }/>
                                 </Panel>
                             </Col>
@@ -45,12 +45,10 @@ class Measure extends Component {
     }
 }
 export default connect((props, context) => ( {
-    devicesAvailable: {
+    deviceStatuses: {
         url: `${context.apiPrefix}/devices`,
         refreshInterval: 1000,
-        then: (states) => ({
-            value: states.map(ds => ds.state.status).includes('INITIALISED')
-        })
+        then: (states) => ({value: states.map(ds => ds.state.status)})
     },
     measurements: {url: `${context.apiPrefix}/measurements`, refreshInterval: 1000}
 } ))(Measure)

@@ -58,11 +58,11 @@ export default class Chart extends PureComponent {
 
     constructor(props) {
         super(props);
-        this.state = {height: window.innerHeight - (210+(this.props.pathCount*33))};
+        this.state = {height: window.innerHeight - (235+(this.props.pathCount*33))};
     }
 
     updateHeight() {
-        this.setState({height: window.innerHeight - (210+(this.props.pathCount*33))});
+        this.setState({height: window.innerHeight - (235+(this.props.pathCount*33))});
     }
 
     componentDidMount() {
@@ -92,7 +92,7 @@ export default class Chart extends PureComponent {
                 }
             }
             if (!colour) colour = this.generateRandomColour();
-            return <Scatter key={s} legendType='line' name={s.id} data={s.xyz} fill={colour}
+            return <Scatter key={s} legendType='line' name={s.id + '/' + s.series} data={s.xyz} fill={colour}
                             line={{stroke: colour, strokeWidth: 1}}/>
         });
         const zRange = this.props.config.showDots ? [20, 20] : [1, 1];
