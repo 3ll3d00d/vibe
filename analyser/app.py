@@ -89,13 +89,18 @@ def main(args=None):
         from twisted.application import service
         from twisted.internet import endpoints
 
-        class ReactIndex(static.File):
-            """
-            overrides getChild so it always just serves index.html (NB: this is a bit of a hack, there is probably a 
-            more correct way to do this but...)
-            """
-            def getChild(self, path, request):
-                return self
+        class ReactIndex:
+            def __init__(self, path):
+                self.publicFiles = {f: static.File(os.path.join(path, f)) for f in os.listdir(path) if
+                                    os.path.exists(os.path.join(path, f))}
+                self.indexHtml = static.File(os.path.join(path, 'index.html'))
+
+            def getFile(self, path):
+                """
+                overrides getChild so it always just serves index.html unless the file does actually exist (i.e. is an
+                icon or something like that)
+                """
+                return self.publicFiles.get(path.decode('utf-8'), self.indexHtml)
 
         class FlaskAppWrapper(Resource):
             """
@@ -108,19 +113,25 @@ def main(args=None):
                 self.wsgi = WSGIResource(reactor, reactor.getThreadPool(), app)
                 import sys
                 if getattr(sys, 'frozen', False):
-                    # pyinstaller lets you copy files to arbitrary locations under the MEIPASS root dir
-                    indexHtmlPath = os.path.join(sys._MEIPASS, 'ui', 'index.html')
-                    staticContentPath = os.path.join(sys._MEIPASS, 'ui', 'static')
+                    # pyinstaller lets you copy files to arbitrary locations under the _MEIPASS root dir
+                    uiRoot = sys._MEIPASS
                 else:
                     # release script moves the ui under the analyser package because setuptools doesn't seem to include
                     # files from outside the package
-                    indexHtmlPath = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
-                    staticContentPath = os.path.join(os.path.dirname(__file__), 'static', 'static')
-                logger.error('Serving ui from ' + str(indexHtmlPath) + ' and ' + str(staticContentPath))
-                self.indexHtml = ReactIndex(indexHtmlPath)
-                self.static = static.File(staticContentPath)
+                    uiRoot = os.path.dirname(__file__)
+                logger.error('Serving ui from ' + str(uiRoot))
+                self.react = ReactIndex(os.path.join(uiRoot, 'ui'))
+                self.static = static.File(os.path.join(uiRoot, 'ui', 'static'))
 
             def getChild(self, path, request):
+                """
+                Overrides getChild to allow the request to be routed to the wsgi app (i.e. flask for the rest api calls),
+                the static dir (i.e. for the packaged css/js etc), the various concrete files (i.e. the public 
+                dir from react-app) or to index.html (i.e. the react app) for everything else.
+                :param path: 
+                :param request: 
+                :return: 
+                """
                 if path == b'api':
                     request.prepath.pop()
                     request.postpath.insert(0, path)
@@ -128,7 +139,7 @@ def main(args=None):
                 elif path == b'static':
                     return self.static
                 else:
-                    return self.indexHtml
+                    return self.react.getFile(path)
 
             def render(self, request):
                 return self.wsgi.render(request)
