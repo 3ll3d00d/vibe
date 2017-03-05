@@ -88,9 +88,6 @@ Prerequisites
 
     conda install -c acellera pyinstaller=3.2.3
 
-5) install the prerequisites::
-
-    TBD
 
 Build
 ^^^^^

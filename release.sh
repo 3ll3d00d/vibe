@@ -91,8 +91,8 @@ function prepare_ui() {
     yarn build
     [[ $? -ne 0 ]] && fail_hard "yarn build failed"
     popd
-    [[ -d analyser/static ]] && rm -Rf analyser/static
-    mv vibe-ui/build analyser/static
+    [[ -d analyser/ui ]] && rm -Rf analyser/ui
+    mv vibe-ui/build analyser/ui
     [[ $? -ne 0 ]] && fail_hard "failed to move prod ui build"
     # can't end on the previous test as it provides the return value of the function (i.e. 1 and hence exit with -e)
     return 0
