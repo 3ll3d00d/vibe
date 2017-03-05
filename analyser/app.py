@@ -79,6 +79,8 @@ def main(args=None):
     """ The main routine. """
     cfg.configureLogger()
     if cfg.useTwisted:
+        import logging
+        logger = logging.getLogger('analyser.twisted')
         from twisted.internet import reactor
         from twisted.web.resource import Resource
         from twisted.web import static, server
@@ -95,9 +97,19 @@ def main(args=None):
             def __init__(self):
                 super().__init__()
                 self.wsgi = WSGIResource(reactor, reactor.getThreadPool(), app)
-                self.indexHtml = static.File(os.path.join(os.path.dirname(__file__), 'static', 'index.html'))
-                # makes the react static content available at /static
-                self.static = static.File(os.path.join(os.path.dirname(__file__), 'static', 'static'))
+                import sys
+                if getattr(sys, 'frozen', False):
+                    # pyinstaller lets you copy files to arbitrary locations under the MEIPASS root dir
+                    indexHtmlPath = os.path.join(sys._MEIPASS, 'ui', 'index.html')
+                    staticContentPath = os.path.join(sys._MEIPASS, 'ui', 'static')
+                else:
+                    # release script moves the ui under the analyser package because setuptools doesn't seem to include
+                    # files from outside the package
+                    indexHtmlPath = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
+                    staticContentPath = os.path.join(os.path.dirname(__file__), 'static', 'static')
+                logger.error('Serving ui from ' + str(indexHtmlPath) + ' and ' + str(staticContentPath))
+                self.indexHtml = static.File(indexHtmlPath)
+                self.static = static.File(staticContentPath)
 
             def getChild(self, path, request):
                 if path == b'':
