@@ -34,12 +34,14 @@ WARNING: Untested instructions!
     pip install /tmp/vibe-recorder-*tar.gz
     if [[ $? -eq 0 ]]
     then
+        PID=$(pgrep "recorder")
+        [[ -n ${PID} ]] && kill -9 ${PID}
         ./bin/recorder > /tmp/recorder.log 2>&1 &
         if pgrep "recorder" > /dev/null
         then
             echo "Recorder is running"
         else
-            echo "Recorder startup FAIL!!
+            echo "Recorder startup FAIL!!"
         fi
     fi
     EOF

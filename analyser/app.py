@@ -64,7 +64,8 @@ api.add_resource(Measurement, API_PREFIX + '/measurements/<measurementId>', reso
 api.add_resource(InitialiseMeasurement, API_PREFIX + '/measurements/<measurementId>/<deviceId>',
                  resource_class_kwargs=resourceArgs)
 # PUT: receive some data payload for the measurement
-api.add_resource(RecordData, API_PREFIX + '/measurements/<measurementId>/<deviceId>/data', resource_class_kwargs=resourceArgs)
+api.add_resource(RecordData, API_PREFIX + '/measurements/<measurementId>/<deviceId>/data',
+                 resource_class_kwargs=resourceArgs)
 # PUT: mark the measurement as complete
 api.add_resource(CompleteMeasurement, API_PREFIX + '/measurements/<measurementId>/<deviceId>/complete',
                  resource_class_kwargs=resourceArgs)
@@ -89,11 +90,14 @@ def main(args=None):
         from twisted.application import service
         from twisted.internet import endpoints
 
-        class ReactIndex:
+        class ReactApp:
+            """
+            Handles the react app (excluding the static dir).
+            """
             def __init__(self, path):
                 self.publicFiles = {f: static.File(os.path.join(path, f)) for f in os.listdir(path) if
                                     os.path.exists(os.path.join(path, f))}
-                self.indexHtml = static.File(os.path.join(path, 'index.html'))
+                self.indexHtml = ReactIndex(os.path.join(path, 'index.html'))
 
             def getFile(self, path):
                 """
@@ -101,6 +105,15 @@ def main(args=None):
                 icon or something like that)
                 """
                 return self.publicFiles.get(path.decode('utf-8'), self.indexHtml)
+
+        class ReactIndex(static.File):
+            """
+            a twisted File which overrides getChild so it always just serves index.html (NB: this is a bit of a hack, 
+            there is probably a more correct way to do this but...)
+            """
+
+            def getChild(self, path, request):
+                return self
 
         class FlaskAppWrapper(Resource):
             """
@@ -120,12 +133,13 @@ def main(args=None):
                     # files from outside the package
                     uiRoot = os.path.dirname(__file__)
                 logger.error('Serving ui from ' + str(uiRoot))
-                self.react = ReactIndex(os.path.join(uiRoot, 'ui'))
+                self.react = ReactApp(os.path.join(uiRoot, 'ui'))
                 self.static = static.File(os.path.join(uiRoot, 'ui', 'static'))
 
             def getChild(self, path, request):
                 """
-                Overrides getChild to allow the request to be routed to the wsgi app (i.e. flask for the rest api calls),
+                Overrides getChild to allow the request to be routed to the wsgi app (i.e. flask for the rest api 
+                calls),
                 the static dir (i.e. for the packaged css/js etc), the various concrete files (i.e. the public 
                 dir from react-app) or to index.html (i.e. the react app) for everything else.
                 :param path: 
