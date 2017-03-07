@@ -77,3 +77,29 @@ def test_whenTxtIsInDifferentFormat_IsReadCorrectly():
     assert measurement is not None
     assert measurement.fs == 48000
     assert np.max(measurement.samples) == pytest.approx(1.0)
+
+
+def test_whenTriAxisTxtIsInDefaultFormat_IsReadCorrectly():
+    measurementPath = os.path.join(str(Path(__file__).resolve().parents[2]), 'tri_axis_sine_default.txt')
+    measurement = ms.loadTriAxisSignalFromFile(measurementPath)
+    assert measurement is not None
+    assert measurement.cache['x']['data'].fs == 48000
+    assert measurement.cache['y']['data'].fs == 48000
+    assert measurement.cache['z']['data'].fs == 48000
+    assert np.max(measurement.cache['x']['data'].samples) == pytest.approx(1.0)
+    assert np.max(measurement.cache['y']['data'].samples) == pytest.approx(1.0)
+    assert np.max(measurement.cache['z']['data'].samples) == pytest.approx(1.0)
+    assert measurement.spectrum('x') is not None
+    assert measurement.spectrum('y') is not None
+    assert measurement.spectrum('z') is not None
+    assert measurement.spectrum('sum') is not None
+    assert measurement.spectrum('woot') is None
+    assert measurement.peakSpectrum('x') is not None
+    assert measurement.peakSpectrum('y') is not None
+    assert measurement.peakSpectrum('z') is not None
+    assert measurement.peakSpectrum('sum') is not None
+    assert measurement.peakSpectrum('woot') is None
+    assert measurement.psd('x') is not None
+    assert measurement.psd('y') is not None
+    assert measurement.psd('z') is not None
+    assert measurement.psd('sum') is None
