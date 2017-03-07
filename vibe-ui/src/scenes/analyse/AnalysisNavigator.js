@@ -89,12 +89,16 @@ export default class AnalysisNavigator extends Component {
             if (measurementId && deviceId) {
                 const measurement = this.props.measurementMeta.find(m => m.id === measurementId);
                 if (measurement) {
-                    analyserOptions = measurement.analysis.map((a) => {
+                    analyserOptions = Object.keys(measurement.analysis).map((a) => {
+                        let seriesLink = measurement.analysis[a].sort().join("-");
+                        if (series) {
+                            seriesLink = series.split('-').filter(s => measurement.analysis[a].includes(s)).join('-');
+                        }
                         const navigateFunc = () => this.navigate({
                             measurementId: measurementId,
                             deviceId: deviceId,
                             analyserId: a,
-                            series: series ? series : measurement.series.sort().join("-")
+                            series: seriesLink
                         });
                         return <MenuItem key={a} eventKey={a} onClick={navigateFunc}>{a}</MenuItem>;
                     });
@@ -130,7 +134,7 @@ export default class AnalysisNavigator extends Component {
         if (measurementId && deviceId && analyserId) {
             const measurement = this.props.measurementMeta.find(m => m.id === measurementId);
             if (measurement) {
-                available = measurement.series;
+                available = measurement.analysis[analyserId];
             }
         }
         const navigateFunc = (selected) => this.navigate({
@@ -139,7 +143,10 @@ export default class AnalysisNavigator extends Component {
             analyserId: analyserId,
             series: selected
         });
-        return <NavigatorMultiSelect navigate={navigateFunc} selected={series} available={available}/>;
+        return <NavigatorMultiSelect analyserId={analyserId}
+                                     navigate={navigateFunc}
+                                     selected={series}
+                                     available={available}/>;
     }
 
     /**
