@@ -3,6 +3,7 @@ import {connect} from "react-refetch";
 import Analysis from "./Analysis";
 import AnalysisNavigator from "./AnalysisNavigator";
 import Message from "../../components/Message";
+import {NO_OPTION_SELECTED} from "../../constants";
 
 class Analyse extends Component {
     static contextTypes = {
@@ -224,7 +225,7 @@ class Analyse extends Component {
      * @returns {T|*|null} true if this path has all params set.
      */
     pathIsComplete(p) {
-        return p.measurementId && p.deviceId && p.analyserId && p.series && p.data && p.data.fulfilled;
+        return p.measurementId && p.deviceId && p.analyserId && p.series && p.series !== NO_OPTION_SELECTED && p.data && p.data.fulfilled;
     }
 
     renderLoaded() {
@@ -339,8 +340,7 @@ export default connect((props, context) => ({
                 .filter(m => m.status === 'COMPLETE')
                 .map(m => {
                     return {
-                        analysis: m.analysis.analysis,
-                        series: m.analysis.series,
+                        analysis: m.analysis,
                         id: m.id,
                         devices: Object.keys(m.recordingDevices)
                     };

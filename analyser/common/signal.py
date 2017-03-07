@@ -185,9 +185,55 @@ class TriAxisSignal(object):
     """
 
     def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
+        self.cache = {
+            'x': {'data': x},
+            'y': {'data': y},
+            'z': {'data': z},
+            'sum': {}
+        }
+
+    def spectrum(self, axis):
+        """
+        :param axis: the axis 
+        :return: the spectrum for the given axis. 
+        """
+        return self._getAnalysis(axis, 'spectrum')
+
+    def peakSpectrum(self, axis):
+        """
+        :param axis: the axis 
+        :return: the peak spectrum for the given axis. 
+        """
+        return self._getAnalysis(axis, 'peakSpectrum')
+
+    def psd(self, axis):
+        """
+        :param axis: the axis 
+        :return: the psd for the given axis. 
+        """
+        return self._getAnalysis(axis, 'spectrum')
+
+    def _getAnalysis(self, axis, analysis):
+        """
+        gets the named analysis on the given axis and caches the result (or reads from the cache if data is available 
+        already)
+        :param axis: the named axis.
+        :param analysis: the analysis name.
+        :return: the analysis tuple.
+        """
+        cachedAxis = self.cache.get(axis)
+        data = cachedAxis.get('data')
+        if cachedAxis.get(analysis) is None:
+            if axis == 'sum':
+                fx, Pxx = self._getAnalysis('x', analysis)
+                fy, Pxy = self._getAnalysis('y', analysis)
+                fz, Pxz = self._getAnalysis('z', analysis)
+                # calculate the sum of the squares with an additional weighting for x and y
+                Psum = (((Pxx * 2.2) ** 2) + ((Pxy * 2.4) ** 2) + (Pxz ** 2)) ** 0.5
+                cachedAxis[analysis] = (fx, Psum)
+            else:
+                cachedAxis[analysis] = getattr(data, analysis)()
+        return cachedAxis[analysis]
 
 
 def loadTriAxisSignalFromFile(filename, timeColumnIdx=0, xIdx=1, yIdx=2, zIdx=3, delimiter=',',

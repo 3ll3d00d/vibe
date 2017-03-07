@@ -1,5 +1,4 @@
 import logging
-
 from flask_restful import Resource
 
 from analyser.common.measurementcontroller import MeasurementStatus
@@ -24,19 +23,21 @@ class Analyse(Resource):
                 data = {
                     name: {
                         'spectrum': {
-                            'x': self._jsonify(data.x.spectrum()),
-                            'y': self._jsonify(data.y.spectrum()),
-                            'z': self._jsonify(data.z.spectrum())
+                            'x': self._jsonify(data.spectrum('x')),
+                            'y': self._jsonify(data.spectrum('y')),
+                            'z': self._jsonify(data.spectrum('z')),
+                            'sum': self._jsonify(data.spectrum('sum'))
                         },
                         'psd': {
-                            'x': self._jsonify(data.x.psd()),
-                            'y': self._jsonify(data.y.psd()),
-                            'z': self._jsonify(data.z.psd())
+                            'x': self._jsonify(data.psd('x')),
+                            'y': self._jsonify(data.psd('y')),
+                            'z': self._jsonify(data.psd('z'))
                         },
                         'peakSpectrum': {
-                            'x': self._jsonify(data.x.peakSpectrum()),
-                            'y': self._jsonify(data.y.peakSpectrum()),
-                            'z': self._jsonify(data.z.peakSpectrum())
+                            'x': self._jsonify(data.peakSpectrum('x')),
+                            'y': self._jsonify(data.peakSpectrum('y')),
+                            'z': self._jsonify(data.peakSpectrum('z')),
+                            'sum': self._jsonify(data.peakSpectrum('sum'))
                         }
                     }
                     for name, data in measurement.data.items()

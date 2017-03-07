@@ -36,9 +36,10 @@ measurementFields = {
 
 logger = logging.getLogger('analyser.measurementcontroller')
 
-DEFAULT_ANALYSIS = {
-    'series': ['x', 'y', 'z'],
-    'analysis': ['spectrum', 'peakSpectrum', 'psd']
+DEFAULT_ANALYSIS_SERIES = {
+    'spectrum': ['x', 'y', 'z', 'sum'],
+    'peakSpectrum': ['x', 'y', 'z', 'sum'],
+    'psd': ['x', 'y', 'z']
 }
 
 class MeasurementStatus(Enum):
@@ -90,7 +91,7 @@ class ActiveMeasurement(object):
         self.id = getMeasurementId(self.startTime, self.name)
         self.idAsPath = self.id.replace('_', '/')
         # hardcoded here rather than in the UI
-        self.analysis = DEFAULT_ANALYSIS
+        self.analysis = DEFAULT_ANALYSIS_SERIES
 
     def overlapsWith(self, targetStartTime, duration):
         """
@@ -161,7 +162,8 @@ class CompleteMeasurement(object):
         self.recordingDevices = meta['recordingDevices']
         self.status = MeasurementStatus[meta['status']]
         self.id = getMeasurementId(self.startTime, self.name)
-        self.analysis = meta.get('analysis', DEFAULT_ANALYSIS)
+        # self.analysis = meta.get('analysis', DEFAULT_ANALYSIS_SERIES)
+        self.analysis = DEFAULT_ANALYSIS_SERIES
         self.idAsPath = self.id.replace('_', '/')
         self.dataDir = dataDir
         self.data = {}
