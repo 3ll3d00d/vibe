@@ -16,7 +16,7 @@ class Signal(object):
         self.fs = fs
 
     def getSegmentLength(self):
-        return 1 << (self.fs - 1).bit_length()
+        return min(1 << (self.fs - 1).bit_length(), self.samples.shape[-1])
 
     def psd(self):
         """
@@ -192,6 +192,9 @@ class TriAxisSignal(object):
             'sum': {}
         }
 
+    def _canSum(self, analysis):
+        return analysis != 'psd'
+
     def spectrum(self, axis):
         """
         :param axis: the axis 
@@ -211,7 +214,7 @@ class TriAxisSignal(object):
         :param axis: the axis 
         :return: the psd for the given axis. 
         """
-        return self._getAnalysis(axis, 'spectrum')
+        return self._getAnalysis(axis, 'psd')
 
     def _getAnalysis(self, axis, analysis):
         """
@@ -221,19 +224,25 @@ class TriAxisSignal(object):
         :param analysis: the analysis name.
         :return: the analysis tuple.
         """
-        cachedAxis = self.cache.get(axis)
-        data = cachedAxis.get('data')
-        if cachedAxis.get(analysis) is None:
-            if axis == 'sum':
-                fx, Pxx = self._getAnalysis('x', analysis)
-                fy, Pxy = self._getAnalysis('y', analysis)
-                fz, Pxz = self._getAnalysis('z', analysis)
-                # calculate the sum of the squares with an additional weighting for x and y
-                Psum = (((Pxx * 2.2) ** 2) + ((Pxy * 2.4) ** 2) + (Pxz ** 2)) ** 0.5
-                cachedAxis[analysis] = (fx, Psum)
-            else:
-                cachedAxis[analysis] = getattr(data, analysis)()
-        return cachedAxis[analysis]
+        if axis in self.cache:
+            cachedAxis = self.cache.get(axis)
+            data = cachedAxis.get('data')
+            if cachedAxis.get(analysis) is None:
+                if axis == 'sum':
+                    if self._canSum(analysis):
+                        fx, Pxx = self._getAnalysis('x', analysis)
+                        fy, Pxy = self._getAnalysis('y', analysis)
+                        fz, Pxz = self._getAnalysis('z', analysis)
+                        # calculate the sum of the squares with an additional weighting for x and y
+                        Psum = (((Pxx * 2.2) ** 2) + ((Pxy * 2.4) ** 2) + (Pxz ** 2)) ** 0.5
+                        cachedAxis[analysis] = (fx, Psum)
+                    else:
+                        return None
+                else:
+                    cachedAxis[analysis] = getattr(data, analysis)()
+            return cachedAxis[analysis]
+        else:
+            return None
 
 
 def loadTriAxisSignalFromFile(filename, timeColumnIdx=0, xIdx=1, yIdx=2, zIdx=3, delimiter=',',
