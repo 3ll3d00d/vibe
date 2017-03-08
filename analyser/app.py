@@ -79,7 +79,16 @@ api.add_resource(Analyse, API_PREFIX + '/measurements/<measurementId>/analyse', 
 
 def main(args=None):
     """ The main routine. """
-    cfg.configureLogger()
+    logger = cfg.configureLogger()
+    for root, dirs, files in os.walk(cfg.dataDir):
+        for dir in dirs:
+            newDir = os.path.join(root, dir)
+            try:
+                os.removedirs(newDir)
+                logger.info("Deleted empty dir " + str(newDir))
+            except:
+                pass
+
     if cfg.useTwisted:
         import logging
         logger = logging.getLogger('analyser.twisted')
@@ -94,6 +103,7 @@ def main(args=None):
             """
             Handles the react app (excluding the static dir).
             """
+
             def __init__(self, path):
                 self.publicFiles = {f: static.File(os.path.join(path, f)) for f in os.listdir(path) if
                                     os.path.exists(os.path.join(path, f))}
