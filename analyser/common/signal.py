@@ -28,11 +28,8 @@ class Signal(object):
             Power spectral density.
 
         """
-        # TODO allow the various fft values to be set
-        f, Pxx_den = signal.welch(self.samples,
-                                  self.fs,
-                                  nperseg=self.getSegmentLength(),
-                                  detrend=False)
+        lowPass = self.highPass()
+        f, Pxx_den = signal.welch(lowPass.samples, lowPass.fs, nperseg=self.getSegmentLength(), detrend=False)
         return f, Pxx_den
 
     def spectrum(self):
@@ -45,8 +42,9 @@ class Signal(object):
             linear spectrum.
 
         """
-        f, Pxx_spec = signal.welch(self.samples,
-                                   self.fs,
+        lowPass = self.highPass()
+        f, Pxx_spec = signal.welch(lowPass.samples,
+                                   lowPass.fs,
                                    nperseg=self.getSegmentLength(),
                                    scaling='spectrum',
                                    detrend=False)
@@ -61,8 +59,9 @@ class Signal(object):
             Pxx : ndarray
             linear spectrum max values.
         """
-        freqs, _, Pxy = signal.spectrogram(self.samples,
-                                           self.fs,
+        lowPass = self.highPass()
+        freqs, _, Pxy = signal.spectrogram(lowPass.samples,
+                                           lowPass.fs,
                                            window='hann',
                                            nperseg=self.getSegmentLength(),
                                            noverlap=self.getSegmentLength() // 2,
@@ -88,6 +87,34 @@ class Signal(object):
                                        detrend=False,
                                        scaling='spectrum')
         return t, f, np.sqrt(Sxx)
+
+    def lowPass(self, *args):
+        """
+        Creates a copy of the signal with the low pass applied, args specifed are passed through to _butter. 
+        :return: 
+        """
+        return Signal(self._butter(self.samples, 'low', *args), fs=self.fs)
+
+    def highPass(self, *args):
+        """
+        Creates a copy of the signal with the high pass applied, args specifed are passed through to _butter. 
+        :return: 
+        """
+        return Signal(self._butter(self.samples, 'high', *args), fs=self.fs)
+
+    def _butter(self, data, btype, f3=2, order=2):
+        """
+        Applies a digital butterworth filter via filtfilt at the specified f3 and order. Default values are set to 
+        correspond to apparently sensible filters that distinguish between vibration and tilt from an accelerometer.
+        :param data: the data to filter.
+        :param btype: high or low.
+        :param f3: the f3 of the filter.
+        :param order: the filter order.
+        :return: the filtered signal.
+        """
+        b, a = signal.butter(order, f3 / (0.5 * self.fs), btype=btype)
+        y = signal.filtfilt(b, a, data)
+        return y
 
 
 def loadSignalFromDelimitedFile(filename, timeColumnIdx=0, dataColumnIdx=1, delimiter=',', skipHeader=0) -> Signal:
