@@ -95,7 +95,7 @@ class BaseConfig(object):
     def configureLogger(self):
         """
         Configures the python logging system to log to a debug file and to stdout for warn and above.
-        :return:
+        :return: the base logger.
         """
         baseLogLevel = logging.DEBUG if self.isDebugLogging() else logging.INFO
         # create recorder app root logger
@@ -115,3 +115,4 @@ class BaseConfig(object):
         # add the handlers to the logger
         logger.addHandler(fh)
         logger.addHandler(ch)
+        return logger
