@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {Button, ButtonGroup, ButtonToolbar, MenuItem, OverlayTrigger, SplitButton, Tooltip} from "react-bootstrap";
+import {Button, ButtonGroup, ButtonToolbar, DropdownButton, MenuItem, OverlayTrigger, Tooltip} from "react-bootstrap";
 import NavigatorMultiSelect from "./NavigatorMultiSelect";
 import FontAwesome from "react-fontawesome";
 import "react-bootstrap-multiselect/css/bootstrap-multiselect.css";
@@ -33,9 +33,9 @@ export default class AnalysisNavigator extends Component {
             title = "Select a measurement";
         }
         return (
-            <SplitButton key="measurementSelector" bsStyle={style} title={title} id="measurementSelector">
+            <DropdownButton key="measurementSelector" bsStyle={style} title={title} id="measurementSelector">
                 {measurementOptions}
-            </SplitButton>
+            </DropdownButton>
         );
     }
 
@@ -66,15 +66,15 @@ export default class AnalysisNavigator extends Component {
         }
         if (disabled) {
             return (
-                <SplitButton disabled bsStyle={style} title={title} id="deviceSelector">
+                <DropdownButton disabled bsStyle={style} title={title} id="deviceSelector">
                     {deviceOptions}
-                </SplitButton>
+                </DropdownButton>
             );
         } else {
             return (
-                <SplitButton bsStyle={style} title={title} id="deviceSelector">
+                <DropdownButton bsStyle={style} title={title} id="deviceSelector">
                     {deviceOptions}
-                </SplitButton>
+                </DropdownButton>
             );
         }
     }
@@ -115,15 +115,15 @@ export default class AnalysisNavigator extends Component {
         }
         if (disabled) {
             return (
-                <SplitButton disabled bsStyle={style} title={title} id="analysisSelector">
+                <DropdownButton disabled bsStyle={style} title={title} id="analysisSelector">
                     {analyserOptions}
-                </SplitButton>
+                </DropdownButton>
             );
         } else {
             return (
-                <SplitButton bsStyle={style} title={title} id="analysisSelector">
+                <DropdownButton bsStyle={style} title={title} id="analysisSelector">
                     {analyserOptions}
-                </SplitButton>
+                </DropdownButton>
             );
         }
     }
