@@ -4,6 +4,8 @@ import numpy as np
 from scipy import signal
 from scipy.io import wavfile
 
+# 1 micro m/s2 in G
+ISO_REFERENCE_ACCELERATION_IN_G = (10**-6)/9.80665
 
 class Signal(object):
     """ a source models some input to the analysis system, it provides the following attributes:
@@ -30,7 +32,7 @@ class Signal(object):
         """
         lowPass = self.highPass()
         f, Pxx_den = signal.welch(lowPass.samples, lowPass.fs, nperseg=self.getSegmentLength(), detrend=False)
-        return f, Pxx_den
+        return f, 20 * np.log10(Pxx_den)
 
     def spectrum(self):
         """
@@ -48,7 +50,7 @@ class Signal(object):
                                    nperseg=self.getSegmentLength(),
                                    scaling='spectrum',
                                    detrend=False)
-        return f, np.sqrt(Pxx_spec)
+        return f, 20 * np.log10(np.sqrt(Pxx_spec)/ISO_REFERENCE_ACCELERATION_IN_G)
 
     def peakSpectrum(self):
         """
@@ -67,7 +69,7 @@ class Signal(object):
                                            noverlap=self.getSegmentLength() // 2,
                                            detrend=False,
                                            scaling='spectrum')
-        return freqs, np.sqrt(Pxy.max(axis=-1).real)
+        return freqs, 20 * np.log10(np.sqrt(Pxy.max(axis=-1).real/ISO_REFERENCE_ACCELERATION_IN_G))
 
     def spectrogram(self):
         """
@@ -86,7 +88,7 @@ class Signal(object):
                                        nperseg=self.getSegmentLength(),
                                        detrend=False,
                                        scaling='spectrum')
-        return t, f, np.sqrt(Sxx)
+        return t, f, 20 * np.log10(np.sqrt(Sxx)/ISO_REFERENCE_ACCELERATION_IN_G)
 
     def lowPass(self, *args):
         """
