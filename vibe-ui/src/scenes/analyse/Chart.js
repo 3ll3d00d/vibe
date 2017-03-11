@@ -92,30 +92,36 @@ export default class Chart extends PureComponent {
                 }
             }
             if (!colour) colour = this.generateRandomColour();
-            return <Scatter key={s} legendType='line' name={s.id + '/' + s.series} data={s.xyz} fill={colour}
+            return <Scatter key={s}
+                            legendType='line'
+                            name={s.id + '/' + s.series}
+                            data={s.xyz}
+                            fill={colour}
                             line={{stroke: colour, strokeWidth: 1}}/>
         });
         const zRange = this.props.config.showDots ? [20, 20] : [1, 1];
-        let yFormat = null;
-        if (this.props.config.y[0] < 0.001) {
-            yFormat = format("0.0e");
-        } else {
-            yFormat = format("0.0g");
-        }
+        let yFormat = format("0.0f");
         const xLinLog = this.props.config.xLog ? "log" : "linear";
-        const yLinLog = this.props.config.yLog ? "log" : "linear";
+        const yLinLog = "linear";
+        const minY = 5 * Math.floor(this.props.config.y[0]/5);
+        const maxY = 5 * Math.ceil(this.props.config.y[1]/5);
+        const yTicks = [...new Array((maxY - minY)/5).keys()].map(i => (i * 5) + minY);
         return (
             <ResponsiveContainer width="100%" minHeight={200} height={this.state.height}>
                 <ScatterChart margin={{top: 20, right: 50, bottom: 5, left: 0}}>
                     {series}
                     <CartesianGrid />
-                    <XAxis dataKey={'x'} scale={xLinLog} label='Freq'
+                    <XAxis dataKey={'x'}
+                           scale={xLinLog}
+                           label='Freq'
                            allowDataOverflow={true}
                            domain={this.props.config.x}
                     />
-                    <YAxis dataKey={'y'} scale={yLinLog}
+                    <YAxis dataKey={'y'}
+                           scale={yLinLog}
                            allowDataOverflow={true}
-                           domain={this.props.config.y}
+                           domain={[minY, maxY]}
+                           ticks={yTicks}
                            tickFormatter={yFormat}
                     />
                     <ZAxis dataKey={'z'} range={zRange} fillOpacity={0.10}/>

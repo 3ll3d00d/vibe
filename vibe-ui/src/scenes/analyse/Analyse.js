@@ -1,9 +1,10 @@
 import React, {Component, PropTypes} from "react";
 import {connect} from "react-refetch";
-import Analysis from "./Analysis";
+import {Panel} from "react-bootstrap";
 import AnalysisNavigator from "./AnalysisNavigator";
 import Message from "../../components/Message";
-import {NO_OPTION_SELECTED} from "../../constants";
+import ChartController from "./ChartController";
+import Path from "./Path";
 
 class Analyse extends Component {
     static contextTypes = {
@@ -17,7 +18,27 @@ class Analyse extends Component {
         this.addPath.bind(this);
         this.removePath.bind(this);
         this.triggerAnalysis.bind(this);
-        this.state = {paths: this.decodeParams(props.params)};
+        this.state = {paths: this.loadPathsFromParams(props.params)};
+    }
+
+    /**
+     * Decodes the URL (router) parameters into a set of paths.
+     * @param params the params.
+     * @returns {[*]} the paths.
+     */
+    loadPathsFromParams(params) {
+        const paths = [new Path().decodeParams(params)];
+        if (params.splat) {
+            const splitSplat = params.splat.split("/");
+            while (splitSplat.length > 0) {
+                const nextParams = splitSplat.splice(0, 4);
+                while (nextParams.length < 4) {
+                    nextParams.push(null);
+                }
+                paths.push(new Path().decodeSplat(nextParams));
+            }
+        }
+        return paths;
     }
 
     /**
@@ -26,7 +47,7 @@ class Analyse extends Component {
     addPath = () => {
         this.setState((previousState, props) => {
             const paths = previousState.paths.slice();
-            paths.push({id: window.performance.now(), measurementId: null});
+            paths.push(new Path());
             return {paths: paths};
         });
     };
@@ -40,10 +61,14 @@ class Analyse extends Component {
             const newPaths = previousState.paths.slice();
             const idx = newPaths.findIndex(p => p.id === id);
             newPaths.splice(idx, 1);
-            this.context.router.push(this.encodeParams(newPaths));
+            this.context.router.push(this.encodePathsToURL(newPaths));
             return {paths: newPaths};
         });
     };
+
+    encodePathsToURL(newPaths) {
+        return '/analyse' + newPaths.map(p => p.encode()).join("");
+    }
 
     /**
      * Marks this path as unloaded so it doesn't show on the chart.
@@ -53,9 +78,7 @@ class Analyse extends Component {
         this.setState((previousState, props) => {
             const paths = previousState.paths.slice();
             const pathIdx = paths.findIndex(p => p.id === id);
-            const newPath = Object.assign(paths[pathIdx], {unloaded: true});
-            if (newPath.data) newPath.data = null;
-            paths.splice(pathIdx, 1, newPath);
+            paths.splice(pathIdx, 1, paths[pathIdx].unload());
             return {paths: paths};
         });
     };
@@ -67,17 +90,14 @@ class Analyse extends Component {
         this.setState((previousState, props) => {
             const paths = previousState.paths.slice();
             const pathIdx = paths.findIndex(p => p.id === id);
-            let newPath = Object.assign(paths[pathIdx], {unloaded: false});
-            const promise = this.extractDataPromises(props).find(p => p.name === newPath.measurementId);
-            if (promise) {
-                newPath = Object.assign(newPath, promise);
-            }
-            paths.splice(pathIdx, 1, newPath);
+            const path = paths[pathIdx];
+            const promise = this.extractDataPromises(props).find(promise => promise.name === path.measurementId);
+            paths.splice(pathIdx, 1, path.load(promise));
+            const toLoad = [...new Set(paths.filter(path => !(path.data && path.data.fulfilled)).map(path => path.measurementId))];
+            toLoad.forEach(m => {
+                this.props.fetchData(m)
+            });
             return {paths: paths};
-        });
-        const toLoad = [...new Set(this.state.paths.filter(p => !(p.data && p.data.fulfilled)).map(p => p.measurementId))];
-        toLoad.forEach(m => {
-            this.props.fetchData(m)
         });
     };
 
@@ -89,81 +109,11 @@ class Analyse extends Component {
         this.setState((previousState, props) => {
             const paths = previousState.paths.slice();
             const pathIdx = paths.findIndex(p => p.id === id);
-            paths.splice(pathIdx, 1, Object.assign({id: paths[pathIdx].id}, params));
-            this.context.router.push(this.encodeParams(paths));
+            paths.splice(pathIdx, 1, paths[pathIdx].updateParams(params));
+            this.context.router.push(this.encodePathsToURL(paths));
             return {paths: paths};
         });
     };
-
-    /**
-     * Decodes the URL (router) parameters into a set of paths.
-     * @param params the params.
-     * @returns {[*]} the paths.
-     */
-    decodeParams(params) {
-        const paths = [this.decodePath(params)];
-        if (params.splat) {
-            const splitSplat = params.splat.split("/");
-            while (splitSplat.length > 0) {
-                const nextParams = splitSplat.splice(0, 4);
-                while (nextParams.length < 4) {
-                    nextParams.push(null);
-                }
-                paths.push(this.decodePath({
-                    measurementId: nextParams[0],
-                    deviceId: nextParams[1],
-                    analyserId: nextParams[2],
-                    series: nextParams[3]
-                }));
-            }
-        }
-        return paths;
-    }
-
-    /**
-     * Converts a set of params into a single path.
-     * @param params
-     * @returns a path object.
-     */
-    decodePath(params) {
-        let first = {id: window.performance.now()};
-        if (params.measurementId) first = Object.assign(first, {measurementId: params.measurementId});
-        if (params.deviceId) first = Object.assign(first, {deviceId: params.deviceId});
-        if (params.analyserId) first = Object.assign(first, {analyserId: params.analyserId});
-        if (params.series) first = Object.assign(first, {series: params.series});
-        return first;
-    }
-
-    /**
-     * Encodes the paths into the URL.
-     * @param paths the paths to encode.
-     * @returns {string} the URL path.
-     */
-    encodeParams(paths) {
-        return '/analyse' + paths.map(p => this.encodePath(p)).join("");
-    }
-
-    /**
-     * Encodes a single path into a fragment of URL.
-     * @param path the path.
-     * @returns {string} the url fragment.
-     */
-    encodePath(path) {
-        let encoded = "";
-        if (path.measurementId) {
-            encoded += '/' + path.measurementId;
-            if (path.deviceId) {
-                encoded += '/' + path.deviceId;
-                if (path.analyserId) {
-                    encoded += '/' + path.analyserId;
-                    if (path.series) {
-                        encoded += '/' + path.series;
-                    }
-                }
-            }
-        }
-        return encoded;
-    }
 
     /**
      * Extracts promises for fetched data and converts them into a set of named objects.
@@ -186,23 +136,20 @@ class Analyse extends Component {
      * @param nextProps the new props.
      */
     componentWillReceiveProps(nextProps) {
-        this.appendFetchedDataToPaths(nextProps);
-    }
-
-    appendFetchedDataToPaths(nextProps) {
         const namedPromises = this.extractDataPromises(nextProps);
-        namedPromises.forEach(promise => {
+        if (this.state.paths.find(p => !p.isComplete())) {
             this.setState((previousState, props) => {
-                const decoratedPaths = previousState.paths.slice().map((p) => {
-                    if (p.measurementId === promise.name && !p.unloaded) {
-                        return Object.assign(p, promise);
+                const decoratedPaths = previousState.paths.map((path) => {
+                    const promise = namedPromises.find(promise => promise.name === path.measurementId);
+                    if (promise && !path.unloaded) {
+                        return path.load(promise);
                     } else {
-                        return p;
+                        return path;
                     }
                 });
                 return {paths: decoratedPaths};
             });
-        });
+        }
     }
 
     /**
@@ -217,21 +164,20 @@ class Analyse extends Component {
      * @returns {Array.<T>}
      */
     getCompletePaths() {
-        return this.state.paths.filter(p => this.pathIsComplete(p));
-    }
-
-    /**
-     * @param p the path.
-     * @returns {T|*|null} true if this path has all params set.
-     */
-    pathIsComplete(p) {
-        return p.measurementId && p.deviceId && p.analyserId && p.series && p.series !== NO_OPTION_SELECTED && p.data && p.data.fulfilled;
+        return this.state.paths.filter(p => p.isComplete());
     }
 
     renderLoaded() {
         let analysis = null;
         if (this.anyPathsIsComplete()) {
-            analysis = <Analysis series={this.pathsToChartData()} pathCount={this.state.paths.length}/>;
+            const chartData = this.pathsToChartData();
+            analysis = (
+                <Panel bsStyle="info">
+                    <ChartController range={calculateRange(chartData)}
+                                     series={chartData}
+                                     pathCount={this.state.paths.length}/>
+                </Panel>
+            );
         }
         return (
             <div>
@@ -249,40 +195,7 @@ class Analyse extends Component {
     pathsToChartData() {
         // convert each path to a set of data (1 per series)
         let seriesIdx = -1;
-        const dataByPath = this.state.paths.map(p => {
-            seriesIdx++;
-            if (this.pathIsComplete(p)) {
-                return p.series.split("-").map(s => {
-                    const data = p.data.value[p.deviceId][p.analyserId][s];
-                    const xyz = [];
-                    let minX = Number.MAX_VALUE;
-                    let minY = Number.MAX_VALUE;
-                    let maxX = Number.MIN_VALUE;
-                    let maxY = Number.MIN_VALUE;
-                    for (let [idx, value] of data.freq.entries()) {
-                        if (value > 0) {
-                            xyz.push({x: value, y: data.val[idx], z: 1});
-                            if (value < minX) minX = value;
-                            if (value > maxX) maxX = value;
-                            if (data.val[idx] < minY) minY = data.val[idx];
-                            if (data.val[idx] > maxY) maxY = data.val[idx];
-                        }
-                    }
-                    return {
-                        id: `${p.measurementId}/${p.deviceId}/${p.analyserId}`,
-                        series: s,
-                        seriesIdx: seriesIdx,
-                        xyz: xyz,
-                        minX: minX,
-                        maxX: maxX,
-                        minY: minY,
-                        maxY: maxY
-                    };
-                });
-            } else {
-                return null;
-            }
-        });
+        const dataByPath = this.state.paths.map(p => p.convertToChartData(++seriesIdx));
         // now flatten to one list
         return [].concat(...dataByPath).filter(p => p !== null);
     }
@@ -351,3 +264,18 @@ export default connect((props, context) => ({
         [`fetchedData_${measurementId}`]: `${context.apiPrefix}/measurements/${measurementId}/analyse`
     })
 }))(Analyse)
+
+
+/**
+ * Extracts the x-y axis ranges from the generated data.
+ * @param chartData
+ * @returns {{minX: number, minY: number, maxX: number, maxY: number}}
+ */
+export function calculateRange(chartData) {
+    return {
+        minX: Math.min(...chartData.map(k => k.minX)),
+        minY: Math.min(...chartData.map(k => k.minY)),
+        maxX: Math.max(...chartData.map(k => k.maxX)),
+        maxY: Math.max(...chartData.map(k => k.maxY))
+    };
+}
