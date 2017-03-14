@@ -3,8 +3,10 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import mlab
+from scipy import signal
 
 from analyser.common import signal as ms
+from analyser.common.signal import Signal
 
 
 class HandlerTestCase(object):
@@ -46,12 +48,32 @@ class HandlerTestCase(object):
         plt.ylim(0, 100)
         plt.show()
 
+    def deconvolve(self):
+        measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'white15.out')
+        fc = 2
+        plt.figure(1)
+        x = ms.loadSignalFromDelimitedFile(measurementPath, timeColumnIdx=0, dataColumnIdx=1, skipHeader=1)
+        y = ms.loadSignalFromDelimitedFile(measurementPath, timeColumnIdx=0, dataColumnIdx=2, skipHeader=1)
+        vibeX = Signal(self.butter_filter(x.samples, fc, x.fs, True), x.fs)
+        vibeY = Signal(self.butter_filter(y.samples, fc, y.fs, True), y.fs)
+        f, Px_spec = vibeX.spectrum()
+        plt.semilogy(f, Px_spec, label='x')
+        f, Py_spec = vibeY.spectrum()
+        plt.semilogy(f, Py_spec, label='y')
+        # show where x is > y
+        spec = Px_spec - Py_spec
+        plt.semilogy(f, spec, label='x / y')
+        plt.legend(loc='lower right')
+        plt.tight_layout()
+        plt.grid(True)
+        plt.show()
+
     def woot(self):
-        measurementPath = os.path.join(os.path.dirname(__file__), 'white15.out')
-        self.doGraphs(measurementPath, 'mpu', 1000)
+        measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'white15.out')
+        self.doGraphs(measurementPath, 'mpu', 0)
 
     def doGraphs(self, measurementPath, prefix, start=None):
-        fc = 1
+        fc = 2
         plt.figure(1)
 
         x = ms.loadSignalFromDelimitedFile(measurementPath, timeColumnIdx=0, dataColumnIdx=1, skipHeader=1)
@@ -154,10 +176,10 @@ class HandlerTestCase(object):
     def butter_filter(self, data, f3, fs, isHigh, order=2):
         b, a = self.butter(f3, fs, isHigh, order=order)
         from scipy import signal
-        y = signal.lfilter(b, a, data, 0)
+        y = signal.filtfilt(b, a, data)
         return y
 
 
 t = HandlerTestCase()
-t.showSpectrum()
+t.deconvolve()
 

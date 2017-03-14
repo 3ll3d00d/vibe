@@ -1,3 +1,25 @@
+Developer Notes
+===============
+
+Machine Setup
+-------------
+
+Windows
+^^^^^^^
+
+* anaconda
+* conda install
+* pycharm
+
+* node.js
+* yarn
+* webstorm
+
+
+Linux
+^^^^^
+
+
 Internal Design
 ---------------
 
