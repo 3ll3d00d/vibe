@@ -85,7 +85,8 @@ export default class AnalysisNavigator extends Component {
         let title = "Analysis...";
         let disabled = true;
         if (this.props.path) {
-            const {measurementId, deviceId, analyserId, series} = this.props.path;
+            const {measurementId, deviceId, analyserId} = this.props.path;
+            const series = this.props.path.encodeSelectedSeries();
             if (measurementId && deviceId) {
                 const measurement = this.props.measurementMeta.find(m => m.id === measurementId);
                 if (measurement) {
@@ -129,7 +130,8 @@ export default class AnalysisNavigator extends Component {
     }
 
     createSeriesLinks() {
-        const {measurementId, deviceId, analyserId, series} = this.props.path;
+        const {measurementId, deviceId, analyserId} = this.props.path;
+        const series = this.props.path.encodeSelectedSeries();
         let available = [];
         if (measurementId && deviceId && analyserId) {
             const measurement = this.props.measurementMeta.find(m => m.id === measurementId);
@@ -202,17 +204,33 @@ export default class AnalysisNavigator extends Component {
         }
         if (this.pathIsComplete()) {
             if (loadedOK) {
-                actionButtons.push(
-                    <Button key="unload" onClick={() => this.props.unloadHandler(this.props.path.id)}>
-                        <FontAwesome name="eject"/>
-                    </Button>
-                );
+                if (this.props.path.hasSelectedSeries()) {
+                    actionButtons.push(
+                        <Button key="unload" onClick={() => this.props.unloadHandler(this.props.path.id)}>
+                            <FontAwesome name="eject"/>
+                        </Button>
+                    );
+                } else {
+                    actionButtons.push(
+                        <Button disabled key="analyse" onClick={() => this.props.analysisHandler(this.props.path.id)}>
+                            <FontAwesome name="play"/>
+                        </Button>
+                    );
+                }
             } else {
-                actionButtons.push(
-                    <Button key="analyse" onClick={() => this.props.analysisHandler(this.props.path.id)}>
-                        <FontAwesome name="play"/>
-                    </Button>
-                );
+                if (this.props.path.hasSelectedSeries()) {
+                    actionButtons.push(
+                        <Button key="analyse" onClick={() => this.props.analysisHandler(this.props.path.id)}>
+                            <FontAwesome name="play"/>
+                        </Button>
+                    );
+                } else {
+                    actionButtons.push(
+                        <Button disabled key="analyse" onClick={() => this.props.analysisHandler(this.props.path.id)}>
+                            <FontAwesome name="play"/>
+                        </Button>
+                    );
+                }
             }
         }
         return actionButtons;

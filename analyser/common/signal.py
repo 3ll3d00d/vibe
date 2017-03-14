@@ -5,7 +5,17 @@ from scipy import signal
 from scipy.io import wavfile
 
 # 1 micro m/s2 in G
-ISO_REFERENCE_ACCELERATION_IN_G = (10**-6)/9.80665
+LA_REFERENCE_ACCELERATION_IN_G = (10 ** -6) / 9.80665
+
+
+def relativeToLa(val):
+    """
+    Expresses the given value relative to reference acceleration (La) 
+    :param val: 
+    :return: 
+    """
+    return 20 * np.log10(val / LA_REFERENCE_ACCELERATION_IN_G)
+
 
 class Signal(object):
     """ a source models some input to the analysis system, it provides the following attributes:
@@ -20,7 +30,7 @@ class Signal(object):
     def getSegmentLength(self):
         return min(1 << (self.fs - 1).bit_length(), self.samples.shape[-1])
 
-    def psd(self):
+    def psd(self, toReference='ref'):
         """
         analyses the source and returns a PSD, segment is set to get sub 1Hz frequency resolution
         :return:
@@ -32,9 +42,11 @@ class Signal(object):
         """
         lowPass = self.highPass()
         f, Pxx_den = signal.welch(lowPass.samples, lowPass.fs, nperseg=self.getSegmentLength(), detrend=False)
-        return f, 20 * np.log10(Pxx_den)
+        if toReference == 'ref':
+            Pxx_den = 20 * np.log10(Pxx_den)
+        return f, Pxx_den
 
-    def spectrum(self):
+    def spectrum(self, toReference='ref'):
         """
         analyses the source to generate the linear spectrum.
         :return:
@@ -50,9 +62,12 @@ class Signal(object):
                                    nperseg=self.getSegmentLength(),
                                    scaling='spectrum',
                                    detrend=False)
-        return f, 20 * np.log10(np.sqrt(Pxx_spec)/ISO_REFERENCE_ACCELERATION_IN_G)
+        Pxx_spec = np.sqrt(Pxx_spec)
+        if toReference == 'ref':
+            Pxx_spec = relativeToLa(Pxx_spec)
+        return f, Pxx_spec
 
-    def peakSpectrum(self):
+    def peakSpectrum(self, toReference='ref'):
         """
         analyses the source to generate the max values per bin per segment
         :return:
@@ -61,17 +76,20 @@ class Signal(object):
             Pxx : ndarray
             linear spectrum max values.
         """
-        lowPass = self.highPass()
-        freqs, _, Pxy = signal.spectrogram(lowPass.samples,
-                                           lowPass.fs,
+        highPass = self.highPass()
+        freqs, _, Pxy = signal.spectrogram(highPass.samples,
+                                           highPass.fs,
                                            window='hann',
                                            nperseg=self.getSegmentLength(),
                                            noverlap=self.getSegmentLength() // 2,
                                            detrend=False,
                                            scaling='spectrum')
-        return freqs, 20 * np.log10(np.sqrt(Pxy.max(axis=-1).real/ISO_REFERENCE_ACCELERATION_IN_G))
+        Pxy_max = np.sqrt(Pxy.max(axis=-1).real)
+        if toReference == 'ref':
+            Pxy_max = relativeToLa(Pxy_max)
+        return freqs, Pxy_max
 
-    def spectrogram(self):
+    def spectrogram(self, toReference='ref'):
         """
         analyses the source to generate a spectrogram
         :return:
@@ -88,7 +106,10 @@ class Signal(object):
                                        nperseg=self.getSegmentLength(),
                                        detrend=False,
                                        scaling='spectrum')
-        return t, f, 20 * np.log10(np.sqrt(Sxx)/ISO_REFERENCE_ACCELERATION_IN_G)
+        Sxx = np.sqrt(Sxx)
+        if toReference == 'ref':
+            Sxx = relativeToLa(Sxx)
+        return t, f, Sxx
 
     def lowPass(self, *args):
         """
@@ -214,11 +235,16 @@ class TriAxisSignal(object):
     """
 
     def __init__(self, x, y, z):
-        self.cache = {
+        self.refCache = {
             'x': {'data': x},
             'y': {'data': y},
             'z': {'data': z},
             'sum': {}
+        }
+        self.rawCache = {
+            'x': {'data': x},
+            'y': {'data': y},
+            'z': {'data': z},
         }
 
     def _canSum(self, analysis):
@@ -245,7 +271,7 @@ class TriAxisSignal(object):
         """
         return self._getAnalysis(axis, 'psd')
 
-    def _getAnalysis(self, axis, analysis):
+    def _getAnalysis(self, axis, analysis, toReference='ref'):
         """
         gets the named analysis on the given axis and caches the result (or reads from the cache if data is available 
         already)
@@ -253,22 +279,23 @@ class TriAxisSignal(object):
         :param analysis: the analysis name.
         :return: the analysis tuple.
         """
-        if axis in self.cache:
-            cachedAxis = self.cache.get(axis)
+        cache = self.refCache if toReference == 'ref' else self.rawCache
+        if axis in cache:
+            cachedAxis = cache.get(axis)
             data = cachedAxis.get('data')
             if cachedAxis.get(analysis) is None:
                 if axis == 'sum':
                     if self._canSum(analysis):
-                        fx, Pxx = self._getAnalysis('x', analysis)
-                        fy, Pxy = self._getAnalysis('y', analysis)
-                        fz, Pxz = self._getAnalysis('z', analysis)
+                        fx, Pxx = self._getAnalysis('x', analysis, toReference=None)
+                        fy, Pxy = self._getAnalysis('y', analysis, toReference=None)
+                        fz, Pxz = self._getAnalysis('z', analysis, toReference=None)
                         # calculate the sum of the squares with an additional weighting for x and y
                         Psum = (((Pxx * 2.2) ** 2) + ((Pxy * 2.4) ** 2) + (Pxz ** 2)) ** 0.5
-                        cachedAxis[analysis] = (fx, Psum)
+                        cachedAxis[analysis] = (fx, relativeToLa(Psum))
                     else:
                         return None
                 else:
-                    cachedAxis[analysis] = getattr(data, analysis)()
+                    cachedAxis[analysis] = getattr(data, analysis)(toReference=toReference)
             return cachedAxis[analysis]
         else:
             return None

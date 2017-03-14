@@ -4,7 +4,7 @@ import {Panel} from "react-bootstrap";
 import AnalysisNavigator from "./AnalysisNavigator";
 import Message from "../../components/Message";
 import ChartController from "./ChartController";
-import Path from "./Path";
+import {pathStore} from "./PathStore";
 
 class Analyse extends Component {
     static contextTypes = {
@@ -18,37 +18,14 @@ class Analyse extends Component {
         this.addPath.bind(this);
         this.removePath.bind(this);
         this.triggerAnalysis.bind(this);
-        this.state = {paths: this.loadPathsFromParams(props.params)};
+        this.handleReferenceSeries.bind(this);
+        this.state = {pathStore: pathStore.fromRouterPath(props.params)};
     }
 
-    /**
-     * Decodes the URL (router) parameters into a set of paths.
-     * @param params the params.
-     * @returns {[*]} the paths.
-     */
-    loadPathsFromParams(params) {
-        const paths = [new Path().decodeParams(params)];
-        if (params.splat) {
-            const splitSplat = params.splat.split("/");
-            while (splitSplat.length > 0) {
-                const nextParams = splitSplat.splice(0, 4);
-                while (nextParams.length < 4) {
-                    nextParams.push(null);
-                }
-                paths.push(new Path().decodeSplat(nextParams));
-            }
-        }
-        return paths;
-    }
-
-    /**
-     * append a new measurement path.
-     */
+    /** append a new measurement path. */
     addPath = () => {
         this.setState((previousState, props) => {
-            const paths = previousState.paths.slice();
-            paths.push(new Path());
-            return {paths: paths};
+            return {pathStore: previousState.pathStore.addPath()};
         });
     };
 
@@ -58,17 +35,11 @@ class Analyse extends Component {
      */
     removePath = (id) => {
         this.setState((previousState, props) => {
-            const newPaths = previousState.paths.slice();
-            const idx = newPaths.findIndex(p => p.id === id);
-            newPaths.splice(idx, 1);
-            this.context.router.push(this.encodePathsToURL(newPaths));
-            return {paths: newPaths};
+            const pathStore = previousState.pathStore.removePath(id);
+            this.context.router.push(pathStore.toRouterPath());
+            return {pathStore: pathStore};
         });
     };
-
-    encodePathsToURL(newPaths) {
-        return '/analyse' + newPaths.map(p => p.encode()).join("");
-    }
 
     /**
      * Marks this path as unloaded so it doesn't show on the chart.
@@ -76,28 +47,19 @@ class Analyse extends Component {
      */
     unloadPath = (id) => {
         this.setState((previousState, props) => {
-            const paths = previousState.paths.slice();
-            const pathIdx = paths.findIndex(p => p.id === id);
-            paths.splice(pathIdx, 1, paths[pathIdx].unload());
-            return {paths: paths};
+            return {pathStore: previousState.pathStore.unloadPath(id)};
         });
     };
 
     /**
      * Triggers an analysis from the available paths.
      */
-    triggerAnalysis = (id) => {
+    triggerAnalysis = (pathId) => {
         this.setState((previousState, props) => {
-            const paths = previousState.paths.slice();
-            const pathIdx = paths.findIndex(p => p.id === id);
-            const path = paths[pathIdx];
-            const promise = this.extractDataPromises(props).find(promise => promise.name === path.measurementId);
-            paths.splice(pathIdx, 1, path.load(promise));
-            const toLoad = [...new Set(paths.filter(path => !(path.data && path.data.fulfilled)).map(path => path.measurementId))];
-            toLoad.forEach(m => {
+            previousState.pathStore.load(pathId, this.extractDataPromises(props)).forEach(m => {
                 this.props.fetchData(m)
             });
-            return {paths: paths};
+            return {pathStore: previousState.pathStore};
         });
     };
 
@@ -107,12 +69,20 @@ class Analyse extends Component {
      */
     navigate = (id) => (params) => {
         this.setState((previousState, props) => {
-            const paths = previousState.paths.slice();
-            const pathIdx = paths.findIndex(p => p.id === id);
-            paths.splice(pathIdx, 1, paths[pathIdx].updateParams(params));
-            this.context.router.push(this.encodePathsToURL(paths));
-            return {paths: paths};
+            const pathStore = previousState.pathStore.navigate(id, params);
+            this.context.router.push(pathStore.toRouterPath());
+            return {pathStore: pathStore};
         });
+    };
+
+    /**
+     * Sets the reference series id.
+     * @param referenceSeriesId the id.
+     */
+    handleReferenceSeries = (referenceSeriesId) => {
+        this.setState((previousState, props) => {
+            return {pathStore: previousState.pathStore.setReferenceSeriesId(referenceSeriesId)};
+        })
     };
 
     /**
@@ -136,46 +106,36 @@ class Analyse extends Component {
      * @param nextProps the new props.
      */
     componentWillReceiveProps(nextProps) {
-        const namedPromises = this.extractDataPromises(nextProps);
-        if (this.state.paths.find(p => !p.isComplete())) {
+        if (nextProps.measurementMeta && nextProps.measurementMeta.fulfilled) {
             this.setState((previousState, props) => {
-                const decoratedPaths = previousState.paths.map((path) => {
-                    const promise = namedPromises.find(promise => promise.name === path.measurementId);
-                    if (promise && !path.unloaded) {
-                        return path.load(promise);
-                    } else {
-                        return path;
-                    }
-                });
-                return {paths: decoratedPaths};
+                const oldPath = pathStore.toRouterPath();
+                const newStore = previousState.pathStore.storeMeta(nextProps.measurementMeta.value);
+                const newPath = pathStore.toRouterPath();
+                if (oldPath !== newPath) {
+                    this.context.router.push(newPath);
+                }
+                return {pathStore: newStore};
+            });
+        }
+        if (!this.state.pathStore.anyPathIsComplete()) {
+            const namedPromises = this.extractDataPromises(nextProps);
+            this.setState((previousState, props) => {
+                return {pathStore: previousState.pathStore.updateData(namedPromises)};
             });
         }
     }
 
-    /**
-     * @returns {boolean} if we have any path that is complete.
-     */
-    anyPathsIsComplete() {
-        return this.getCompletePaths().length > 0;
-    }
-
-    /**
-     * a filtered view on the available paths containing just those with data and all params set.
-     * @returns {Array.<T>}
-     */
-    getCompletePaths() {
-        return this.state.paths.filter(p => p.isComplete());
-    }
-
     renderLoaded() {
         let analysis = null;
-        if (this.anyPathsIsComplete()) {
-            const chartData = this.pathsToChartData();
+        const {chartData, range} = this.state.pathStore.asChartData();
+        if (chartData !== null && chartData.length > 0) {
             analysis = (
                 <Panel bsStyle="info">
-                    <ChartController range={calculateRange(chartData)}
+                    <ChartController range={range}
                                      series={chartData}
-                                     pathCount={this.state.paths.length}/>
+                                     pathCount={this.state.pathStore.getPathCount()}
+                                     referenceSeriesId={this.state.pathStore.getReferenceSeriesId()}
+                                     referenceSeriesHandler={this.handleReferenceSeries}/>
                 </Panel>
             );
         }
@@ -187,33 +147,23 @@ class Analyse extends Component {
         );
     }
 
-    /**
-     * Converts each path to a dataset ready to be consumed by the chart. This results in an array of objects where each
-     * object specifies an id, the series name and the dataset. There is 1 object per unique combination of path values.
-     * @returns {Array}
-     */
-    pathsToChartData() {
-        // convert each path to a set of data (1 per series)
-        let seriesIdx = -1;
-        const dataByPath = this.state.paths.map(p => p.convertToChartData(++seriesIdx));
-        // now flatten to one list
-        return [].concat(...dataByPath).filter(p => p !== null);
-    }
-
     renderNavigators() {
-        return Array.from({length: this.state.paths.length}, (v, i) => {
-            const isLast = i === (this.state.paths.length - 1);
-            const isNotFirstAndOnly = i !== 0 || (this.state.paths.length > 1 && i === 0);
-            return <AnalysisNavigator key={this.state.paths[i].id}
+        // TODO should really decouple the navigator from the underlying path
+        const pathCount = this.state.pathStore.getPathCount();
+        return Array.from({length: pathCount}, (v, i) => {
+            const isLast = i === (pathCount - 1);
+            const isNotFirstAndOnly = i !== 0 || (pathCount > 1 && i === 0);
+            const pathAtIdx = this.state.pathStore.getPathAtIdx(i);
+            return <AnalysisNavigator key={pathAtIdx.id}
                                       measurementMeta={this.props.measurementMeta.value}
-                                      path={this.state.paths[i]}
+                                      path={pathAtIdx}
                                       addHandler={this.addPath}
                                       removeHandler={this.removePath}
                                       unloadHandler={this.unloadPath}
                                       analysisHandler={this.triggerAnalysis}
                                       isLastPath={isLast}
                                       isNotFirstAndOnlyPath={isNotFirstAndOnly}
-                                      navigator={this.navigate(this.state.paths[i].id)}/>;
+                                      navigator={this.navigate(pathAtIdx.id)}/>;
         });
     }
 
@@ -264,18 +214,3 @@ export default connect((props, context) => ({
         [`fetchedData_${measurementId}`]: `${context.apiPrefix}/measurements/${measurementId}/analyse`
     })
 }))(Analyse)
-
-
-/**
- * Extracts the x-y axis ranges from the generated data.
- * @param chartData
- * @returns {{minX: number, minY: number, maxX: number, maxY: number}}
- */
-export function calculateRange(chartData) {
-    return {
-        minX: Math.min(...chartData.map(k => k.minX)),
-        minY: Math.min(...chartData.map(k => k.minY)),
-        maxX: Math.max(...chartData.map(k => k.maxX)),
-        maxY: Math.max(...chartData.map(k => k.maxY))
-    };
-}
