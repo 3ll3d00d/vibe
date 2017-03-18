@@ -6,7 +6,7 @@ cache:
     - vibe_ui/node_modules
 sudo: required
 before_install:
-  # Repo for Yarn
+  # manually install yarn for now - https://github.com/travis-ci/travis-ci/issues/6720
   - sudo apt-key adv --fetch-keys http://dl.yarnpkg.com/debian/pubkey.gpg
   - echo "deb http://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
   - sudo apt-get update -qq
@@ -21,7 +21,6 @@ addons:
     - libblas-dev
     - liblapack-dev
     - gfortran
-    - yarn
 # switch to conda due to travis issue with scipy - http://www.camillescott.org/2016/07/15/travis-pytest-scipyconf/
 # install: pip install -r requirements.txt
 install:
