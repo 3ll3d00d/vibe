@@ -829,9 +829,9 @@ describe('paths can be normalised against a reference series', () => {
             ['a','b','c'].forEach(s => expect(seriesInData.includes(s)).toBeTruthy());
             expect(range).not.toBeNull();
             expect(range.minX).toBe(1);
-            expect(range.minY).toBe(1);
+            expect(range.minY).toBe(0);
             expect(range.maxX).toBe(6);
-            expect(range.maxY).toBe(26);
+            expect(range.maxY).toBe(20);
         }
     });
 });
