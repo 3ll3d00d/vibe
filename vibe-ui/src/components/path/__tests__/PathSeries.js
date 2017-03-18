@@ -151,3 +151,60 @@ test('data can be normalised', () => {
     expect(withReference.normalise('ref', refSeriesWithData.rendered)).toBe(withReference);
     expect(withReference.normalise('ref', refSeriesWithData.rendered)).toBe(withReference);
 });
+
+test('data can be normalised to itself', () => {
+    const series = new PathSeries('test');
+    expect(series.seriesName).toBe('test');
+    expect(series.visible).toBeTruthy();
+    expect(series.rendered).toBeNull();
+    expect(series.normalisedData).not.toBeNull();
+    expect(series.normalisedData.count()).toBe(0);
+
+    const data = {
+        val: [-1,2,-3,4,5],
+        freq: [11,12,13,14,15]
+    };
+    const seriesWithData = series.acceptData(data);
+    expect(seriesWithData).not.toBe(series);
+    expect(seriesWithData.rendered).not.toBeNull();
+    expect(seriesWithData.rendered.minX).toBe(11);
+    expect(seriesWithData.rendered.maxX).toBe(15);
+    expect(seriesWithData.rendered.minY).toBe(-3);
+    expect(seriesWithData.rendered.maxY).toBe(5);
+    expect(seriesWithData.rendered.xyz).not.toBeNull();
+    expect(seriesWithData.rendered.xyz).toHaveLength(5);
+
+    for (let [index, value] of data.freq.entries()) {
+        expect(seriesWithData.rendered.xyz[index].x).toBe(value);
+        expect(seriesWithData.rendered.xyz[index].y).toBe(data.val[index]);
+        expect(seriesWithData.rendered.xyz[index].z).toBe(1);
+    }
+
+    const withReference = seriesWithData.normalise('ref', seriesWithData.rendered);
+    expect(withReference.rendered).not.toBeNull();
+    expect(withReference.rendered.minX).toBe(11);
+    expect(withReference.rendered.maxX).toBe(15);
+    expect(withReference.rendered.minY).toBe(-3);
+    expect(withReference.rendered.maxY).toBe(5);
+    expect(withReference.rendered.xyz).not.toBeNull();
+    expect(withReference.rendered.xyz).toHaveLength(5);
+    for (let [index, value] of data.freq.entries()) {
+        expect(withReference.rendered.xyz[index].x).toBe(value);
+        expect(withReference.rendered.xyz[index].y).toBe(data.val[index]);
+        expect(withReference.rendered.xyz[index].z).toBe(1);
+    }
+    expect(withReference.normalisedData.count()).toBe(1);
+    const normalised = withReference.normalisedData.get('ref');
+    expect(normalised).not.toBeNull();
+    expect(normalised.minX).toBe(11);
+    expect(normalised.maxX).toBe(15);
+    expect(normalised.minY).toBeCloseTo(0);
+    expect(normalised.maxY).toBeCloseTo(0);
+    expect(normalised.xyz).not.toBeNull();
+    expect(normalised.xyz).toHaveLength(5);
+    for (let [index, value] of data.freq.entries()) {
+        expect(normalised.xyz[index].x).toBe(value);
+        expect(normalised.xyz[index].y).toBe(0);
+        expect(normalised.xyz[index].z).toBe(1);
+    }
+});
