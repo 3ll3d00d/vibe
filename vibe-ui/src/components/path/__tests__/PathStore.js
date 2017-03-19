@@ -586,10 +586,12 @@ describe('measurement data is loaded into paths', () => {
         const toLoad = store.load(1, testData);
         expect(toLoad).toHaveLength(0);
         expect(store.getPathCount()).toBe(1);
+        expect(store.allPathsAreComplete()).toBeTruthy();
         const pathWithData = store.getPathAtIdx(0);
         verifyPath(pathWithData, 1, nav1, measurementMeta, '/test_measurement_1/test_device_1/test_analysis_1/a');
         expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analysis_1/a');
         expect(pathWithData.data).not.toBeNull();
+        expect(pathWithData.data.fulfilled).toBeTruthy();
         expect(pathWithData.loaded).toBeTruthy();
         expect(pathWithData.series.count()).toBe(3);
         expect(pathWithData.series.filter(s => s.rendered).count()).toBe(3);
@@ -624,6 +626,8 @@ describe('measurement data is loaded into paths', () => {
         const toLoad = store.load(1, testData);
         expect(toLoad).toHaveLength(1);
         expect(toLoad[0]).toBe('test_measurement_2');
+        expect(store.allPathsAreComplete()).toBeFalsy();
+        expect(store.anyPathIsComplete()).toBeTruthy();
     });
 
     test('data can be loaded en masse', () => {

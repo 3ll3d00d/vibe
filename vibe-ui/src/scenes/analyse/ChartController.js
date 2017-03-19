@@ -70,14 +70,12 @@ export default class ChartController extends Component {
     handleMinY = (valNum, valStr) => {
         this.setState((previousState, props) => {
             const val = props.range.minY !== valNum ? valNum : previousState.minY;
-            console.log("MinY: " + valNum + "/" + valStr + "/" + val);
             return {minY: val};
         });
     };
     handleMaxY = (valNum, valStr) => {
         this.setState((previousState, props) => {
             const val = props.range.maxY !== valNum ? valNum : previousState.maxY;
-            console.log("MaxY: " + valNum + "/" + valStr + "/" + val);
             return {maxY: val};
         });
     };

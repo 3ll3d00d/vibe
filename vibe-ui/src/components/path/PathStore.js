@@ -63,6 +63,13 @@ class PathStore {
     }
 
     /**
+     * @returns {boolean} if all paths are complete.
+     */
+    allPathsAreComplete() {
+        return !(this.paths.find(p => !p.isComplete()));
+    }
+
+    /**
      * @returns {string} a react router path that contains the stored paths.
      */
     toRouterPath() {
@@ -124,9 +131,7 @@ class PathStore {
      * @returns {PathStore} the store.
      */
     updateData(namedPromises) {
-        this.paths = this.paths.map((path) => {
-            return path.acceptData(namedPromises.find(promise => promise.name === path.measurementId));
-        });
+        this.paths = this.paths.map((path) => path.acceptData(namedPromises.find(p => p.name === path.measurementId)));
         return this;
     }
 

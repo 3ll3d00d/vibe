@@ -118,7 +118,7 @@ class Analyse extends Component {
                 return {pathStore: newStore};
             });
         }
-        if (!this.state.pathStore.anyPathIsComplete()) {
+        if (!this.state.pathStore.allPathsAreComplete()) {
             const namedPromises = this.extractDataPromises(nextProps);
             this.setState((previousState, props) => {
                 return {pathStore: previousState.pathStore.updateData(namedPromises)};
