@@ -137,10 +137,34 @@ export default class ChartController extends Component {
     }
 
     makeReferenceSeriesOptions() {
-        return this.props.series.map(s => {
-            const val = `${s.id}/${s.series}`;
+        return [...new Set(this.props.series.map(s => `${s.id}/${s.series}`))].sort().map(val => {
             return <option key={val} value={val}>{val}</option>
         });
+    }
+
+    /**
+     * Creates a reference series selector if we have >1 series in the chart.
+     * @returns {*}
+     */
+    makeReferenceSeriesSelector() {
+        const options = this.makeReferenceSeriesOptions();
+        if (options && options.length > 1) {
+            return (
+                <FormGroup controlId="normalise">
+                    <ControlLabel>Reference Series:</ControlLabel>
+                    <FormControl componentClass="select"
+                                 value={this.props.referenceSeriesId}
+                                 onChange={this.props.referenceSeriesHandler}
+                                 placeholder="select">
+                        <option key="disabled" value={NO_OPTION_SELECTED}>Disabled</option>
+                        {options}
+                    </FormControl>
+                </FormGroup>
+            );
+        } else {
+            return null;
+        }
+
     }
 
     /**
@@ -176,16 +200,7 @@ export default class ChartController extends Component {
                             {updateButton}{resetButton}
                         </Col>
                         <Col md={6} xs={8}>
-                            <FormGroup controlId="normalise">
-                                <ControlLabel>Reference Series:</ControlLabel>
-                                <FormControl componentClass="select"
-                                             value={this.props.referenceSeriesId}
-                                             onChange={this.props.referenceSeriesHandler}
-                                             placeholder="select">
-                                    <option key="disabled" value={NO_OPTION_SELECTED}>Disabled</option>
-                                    {this.makeReferenceSeriesOptions()}
-                                </FormControl>
-                            </FormGroup>
+                            {this.makeReferenceSeriesSelector()}
                         </Col>
                     </Row>
                     <Row>

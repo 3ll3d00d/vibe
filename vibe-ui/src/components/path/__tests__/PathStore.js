@@ -1,4 +1,5 @@
 import {createStore} from "../PathStore";
+import {NO_OPTION_SELECTED} from "../../../constants.js";
 
 const measurementMeta = [
     {
@@ -94,14 +95,14 @@ let verifyPath = function (path, pathId, params, measurementMeta, encodedPath) {
     } else {
         expect(path.deviceId).toBeNull();
     }
-    if (analyserId) {
+    if (analyserId && analyserId !== NO_OPTION_SELECTED) {
         expect(path.analyserId).toBe(analyserId);
     } else {
         expect(path.analyserId).toBeNull();
     }
     expect(path.series).toBeDefined();
     const visibleSeries = path.series.filter(s => s.visible);
-    if (series) {
+    if (series && series !== NO_OPTION_SELECTED) {
         const expectedSeries = series.split('-');
         const visibleSeriesNames = visibleSeries.map(s => s.seriesName);
         expect(visibleSeries.count()).toBe(expectedSeries.length);
@@ -115,7 +116,7 @@ let verifyPath = function (path, pathId, params, measurementMeta, encodedPath) {
         expect(path.measurementMeta).toBeNull();
     }
     expect(path.encode()).toBe(encodedPath);
-    if (measurementId && deviceId && analyserId) {
+    if (measurementId && deviceId && analyserId && analyserId !== NO_OPTION_SELECTED) {
         expect(path.getExternalId()).toBe(`${measurementId}/${deviceId}/${analyserId}`);
     }
 };
@@ -142,8 +143,8 @@ describe('a path can be loaded from a URL', () => {
         store.fromRouterPath(nav1);
         expect(store.getPathCount()).toBe(1);
         expect(store.anyPathIsComplete()).toBeFalsy();
-        verifyPath(store.getPathAtIdx(0), 1, nav1, null, '/test_measurement_1/test_device_1');
-        expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1');
+        verifyPath(store.getPathAtIdx(0), 1, nav1, null, '/test_measurement_1/test_device_1/none/none');
+        expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/none/none');
     });
     test('with measurement, device and analyser ids', () => {
         const store = initialiseStore(false);
@@ -155,8 +156,8 @@ describe('a path can be loaded from a URL', () => {
         store.fromRouterPath(nav1);
         expect(store.getPathCount()).toBe(1);
         expect(store.anyPathIsComplete()).toBeFalsy();
-        verifyPath(store.getPathAtIdx(0), 1, nav1, null, '/test_measurement_1/test_device_1/test_analyser_1');
-        expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analyser_1');
+        verifyPath(store.getPathAtIdx(0), 1, nav1, null, '/test_measurement_1/test_device_1/test_analyser_1/none');
+        expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analyser_1/none');
     });
     test('with all IDs set', () => {
         const store = initialiseStore(false);
@@ -225,7 +226,7 @@ describe('multiple paths can be loaded from a URL', () => {
         verifyPath(store.getPathAtIdx(2), 3, nav3, null, '/test_measurement_3/test_device_3/test_analyser_3/c-d-e');
         expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analyser_1/a-b/test_measurement_2/test_device_2/test_analyser_2/1-2-3/test_measurement_3/test_device_3/test_analyser_3/c-d-e');
     });
-    test('incomplete paths', () => {
+    test('incomplete last path', () => {
         const store = initialiseStore(false);
         const nav1 = {
             measurementId: 'test_measurement_1',
@@ -242,8 +243,30 @@ describe('multiple paths can be loaded from a URL', () => {
         expect(store.getPathCount()).toBe(2);
         expect(store.anyPathIsComplete()).toBeFalsy();
         verifyPath(store.getPathAtIdx(0), 1, nav1, null, '/test_measurement_1/test_device_1/test_analyser_1/a-b');
-        verifyPath(store.getPathAtIdx(1), 2, nav2, null, '/test_measurement_2/test_device_2');
-        expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analyser_1/a-b/test_measurement_2/test_device_2');
+        verifyPath(store.getPathAtIdx(1), 2, nav2, null, '/test_measurement_2/test_device_2/none/none');
+        expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analyser_1/a-b/test_measurement_2/test_device_2/none/none');
+    });
+    test('incomplete first path', () => {
+        const store = initialiseStore(false);
+        const nav1 = {
+            measurementId: 'test_measurement_1',
+            deviceId: 'test_device_1',
+            analyserId: 'none',
+            series: 'none',
+            splat: 'test_measurement_2/test_device_2/test_analysis_2/1-2'
+        };
+        const nav2 = {
+            measurementId: 'test_measurement_2',
+            deviceId: 'test_device_2',
+            analyserId: 'test_analysis_2',
+            series: '1-2',
+        };
+        store.fromRouterPath(nav1);
+        expect(store.getPathCount()).toBe(2);
+        expect(store.anyPathIsComplete()).toBeFalsy();
+        verifyPath(store.getPathAtIdx(0), 1, nav1, null, '/test_measurement_1/test_device_1/none/none');
+        verifyPath(store.getPathAtIdx(1), 2, nav2, null, '/test_measurement_2/test_device_2/test_analysis_2/1-2');
+        expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/none/none/test_measurement_2/test_device_2/test_analysis_2/1-2');
     });
 });
 
@@ -266,8 +289,8 @@ describe('paths can navigate', () => {
         const nav2 = {measurementId: 'test_measurement_1', deviceId: 'test_device_1'};
         store.navigate(1, nav2);
         expect(store.getPathCount()).toBe(1);
-        verifyPath(store.getPathAtIdx(0), 1, nav2, measurementMeta, '/test_measurement_1/test_device_1');
-        expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1');
+        verifyPath(store.getPathAtIdx(0), 1, nav2, measurementMeta, '/test_measurement_1/test_device_1/none/none');
+        expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/none/none');
 
         const nav3 = {measurementId: 'test_measurement_1', deviceId: 'test_device_1', analyserId: 'test_analysis_1'};
         store.navigate(1, nav3);
@@ -329,8 +352,8 @@ describe('paths can navigate', () => {
         };
         store.navigate(1, nav2);
         expect(store.getPathCount()).toBe(1);
-        verifyPath(store.getPathAtIdx(0), 1, nav2, measurementMeta, '/test_measurement_2/test_device_2');
-        expect(store.toRouterPath()).toBe('/analyse/test_measurement_2/test_device_2');
+        verifyPath(store.getPathAtIdx(0), 1, nav2, measurementMeta, '/test_measurement_2/test_device_2/none/none');
+        expect(store.toRouterPath()).toBe('/analyse/test_measurement_2/test_device_2/none/none');
     });
 
     test('path navigation is independent of other paths', () => {
@@ -362,15 +385,24 @@ describe('paths can navigate', () => {
 
     });
 
-    // TODO fix this case
-    xtest('early paths can be incomplete', () => {
-        const nav3 = {
+    test('early paths can be incomplete', () => {
+        let store = initialiseStore(true);
+        store = store.addPath();
+        const nav1 = {
             measurementId: 'test_measurement_2',
             deviceId: 'test_device_2'
         };
-        store.navigate(1, nav3);
+        store.navigate(1, nav1);
+        store = store.addPath();
+        const nav2 = {
+            measurementId: 'test_measurement_1',
+            deviceId: 'test_device_1',
+            analyserId: 'test_analysis_1',
+            series: 'c'
+        };
+        store.navigate(2, nav2);
         expect(store.getPathCount()).toBe(2);
-        verifyPath(store.getPathAtIdx(0), 1, nav3, measurementMeta, '/test_measurement_2/test_device_2');
+        verifyPath(store.getPathAtIdx(0), 1, nav1, measurementMeta, '/test_measurement_2/test_device_2/none/none');
         verifyPath(store.getPathAtIdx(1), 2, nav2, measurementMeta, '/test_measurement_1/test_device_1/test_analysis_1/c');
         expect(store.toRouterPath()).toBe('/analyse/test_measurement_2/test_device_2/none/none/test_measurement_1/test_device_1/test_analysis_1/c');
     });
@@ -465,8 +497,8 @@ describe('measurementMeta is loaded into the store', () => {
             store = store.addPath();
             store.navigate(1, nav1);
             expect(store.getPathCount()).toBe(1);
-            verifyPath(store.getPathAtIdx(0), 1, nav1, null, '/test_measurement_1/test_device_1/test_analysis_1');
-            expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analysis_1');
+            verifyPath(store.getPathAtIdx(0), 1, nav1, null, '/test_measurement_1/test_device_1/test_analysis_1/none');
+            expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analysis_1/none');
 
             const nav2 = {
                 measurementId: 'test_measurement_2',
@@ -476,14 +508,13 @@ describe('measurementMeta is loaded into the store', () => {
             store = store.addPath();
             store.navigate(2, nav2);
             expect(store.getPathCount()).toBe(2);
-            verifyPath(store.getPathAtIdx(0), 1, nav1, null, '/test_measurement_1/test_device_1/test_analysis_1');
-            verifyPath(store.getPathAtIdx(1), 2, nav2, null, '/test_measurement_2/test_device_2/test_analysis_2');
-            // TODO fix this
-            // expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analysis_1/none/test_measurement_2/test_device_2/test_analysis_2');
+            verifyPath(store.getPathAtIdx(0), 1, nav1, null, '/test_measurement_1/test_device_1/test_analysis_1/none');
+            verifyPath(store.getPathAtIdx(1), 2, nav2, null, '/test_measurement_2/test_device_2/test_analysis_2/none');
+            expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analysis_1/none/test_measurement_2/test_device_2/test_analysis_2/none');
 
             store = store.storeMeta(measurementMeta);
             const path1WithMeta = store.getPathAtIdx(0);
-            verifyPath(path1WithMeta, 1, nav1, measurementMeta, '/test_measurement_1/test_device_1/test_analysis_1');
+            verifyPath(path1WithMeta, 1, nav1, measurementMeta, '/test_measurement_1/test_device_1/test_analysis_1/none');
             const expectedSeries1 = measurementMeta[0].analysis.test_analysis_1;
             expect(path1WithMeta.series.count()).toBe(expectedSeries1.length);
             expectedSeries1.forEach(s => {
@@ -492,11 +523,10 @@ describe('measurementMeta is loaded into the store', () => {
                 expect(pathSeries.seriesName).toBe(s);
                 expect(pathSeries.visible).toBe(false);
             });
-            // TODO fix this
-            // expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analysis_1/none/test_measurement_2/test_device_2/test_analysis_2');
+            expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analysis_1/none/test_measurement_2/test_device_2/test_analysis_2/none');
 
             const path2WithMeta = store.getPathAtIdx(1);
-            verifyPath(path2WithMeta, 2, nav2, measurementMeta, '/test_measurement_2/test_device_2/test_analysis_2');
+            verifyPath(path2WithMeta, 2, nav2, measurementMeta, '/test_measurement_2/test_device_2/test_analysis_2/none');
             const expectedSeries2 = measurementMeta[0].analysis.test_analysis_2;
             expect(path2WithMeta.series.count()).toBe(expectedSeries2.length);
             expectedSeries2.forEach(s => {
@@ -505,8 +535,7 @@ describe('measurementMeta is loaded into the store', () => {
                 expect(pathSeries.seriesName).toBe(s);
                 expect(pathSeries.visible).toBe(false);
             });
-            // TODO fix this
-            // expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analysis_1/none/test_measurement_2/test_device_2/test_analysis_2');
+            expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analysis_1/none/test_measurement_2/test_device_2/test_analysis_2/none');
         });
         test('when a series has been selected', () => {
             let store = initialiseStore(false);
