@@ -105,6 +105,7 @@ def main(args=None):
             """
 
             def __init__(self, path):
+                # TODO allow this to load when in debug mode even if the files don't exist
                 self.publicFiles = {f: static.File(os.path.join(path, f)) for f in os.listdir(path) if
                                     os.path.exists(os.path.join(path, f))}
                 self.indexHtml = ReactIndex(os.path.join(path, 'index.html'))
