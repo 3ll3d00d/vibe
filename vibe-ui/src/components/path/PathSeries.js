@@ -1,4 +1,9 @@
-import {Map, Record} from "immutable";
+import {List, Map, Record} from "immutable";
+
+class DataPoint extends Record({x: 0, y: 0, z: 0}) {
+}
+class RenderedData extends Record({xyz: new List(), minX: 0, maxX: 0, minY: 0, maxY: 0}) {
+}
 
 /**
  * An individual series that has a dataset which can be displayed on a chart.
@@ -32,21 +37,21 @@ export default class PathSeries extends Record({
      * @returns {Map<string, {xyz: Array, minX: Number, maxX: Number, minY: Number, maxY: Number}>}
      */
     calculateData(data) {
-        const xyz = [];
+        let xyz = new List();
         let minX = Number.MAX_VALUE;
         let minY = Number.MAX_VALUE;
         let maxX = Number.MIN_VALUE;
         let maxY = Number.MIN_VALUE;
         for (let [idx, value] of data.freq.entries()) {
             if (value > 0) {
-                xyz.push({x: value, y: data.val[idx], z: 1});
+                xyz = xyz.push(new DataPoint({x: value, y: data.val[idx], z: 1}));
                 if (value < minX) minX = value;
                 if (value > maxX) maxX = value;
                 if (data.val[idx] < minY) minY = data.val[idx];
                 if (data.val[idx] > maxY) maxY = data.val[idx];
             }
         }
-        return this.set('rendered', {xyz: xyz, minX: minX, maxX: maxX, minY: minY, maxY: maxY});
+        return this.set('rendered', new RenderedData({xyz: xyz, minX: minX, maxX: maxX, minY: minY, maxY: maxY}));
     }
 
     /**
@@ -70,17 +75,25 @@ export default class PathSeries extends Record({
      * @returns {*}
      */
     normaliseData(referenceData) {
-        const normedData = new Array(this.rendered.xyz.length);
+        let normedData = new List();
         let minY = Number.MAX_VALUE;
         let maxY = Number.MIN_VALUE;
         referenceData.xyz.forEach((val, idx) => {
-            const normedVal = this.rendered.xyz[idx].y - val.y;
-            normedData[idx] = {x: this.rendered.xyz[idx].x, y: normedVal, z: this.rendered.xyz[idx].z};
+            const normedVal = this.rendered.xyz.get(idx).y - val.y;
+            normedData = normedData.push(new DataPoint({
+                x: this.rendered.xyz.get(idx).x,
+                y: normedVal,
+                z: this.rendered.xyz.get(idx).z
+            }));
             minY = Math.min(minY, normedVal);
             maxY = Math.max(maxY, normedVal);
         });
-        // copy twice to make sure the new normed data doesn't overwrite the data stored in the props
-        const copy = Object.assign({}, this.rendered);
-        return Object.assign(copy, {xyz: normedData, minY: minY, maxY: maxY});
+        return new RenderedData({
+            xyz: normedData,
+            minX: this.rendered.minX,
+            maxX: this.rendered.maxX,
+            minY: minY,
+            maxY: maxY
+        });
     }
 }

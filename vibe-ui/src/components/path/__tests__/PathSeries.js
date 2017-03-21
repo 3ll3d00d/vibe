@@ -30,12 +30,12 @@ test('a series accepts data', () => {
     expect(withData.rendered.minY).toBe(-3);
     expect(withData.rendered.maxY).toBe(5);
     expect(withData.rendered.xyz).not.toBeNull();
-    expect(withData.rendered.xyz).toHaveLength(5);
+    expect(withData.rendered.xyz.count()).toBe(5);
 
     for (let [index, value] of data.freq.entries()) {
-        expect(withData.rendered.xyz[index].x).toBe(value);
-        expect(withData.rendered.xyz[index].y).toBe(data.val[index]);
-        expect(withData.rendered.xyz[index].z).toBe(1);
+        expect(withData.rendered.xyz.get(index).x).toBe(value);
+        expect(withData.rendered.xyz.get(index).y).toBe(data.val[index]);
+        expect(withData.rendered.xyz.get(index).z).toBe(1);
     }
     // repeated calls are nops
     const idempotentCall = withData.acceptData(data);
@@ -84,12 +84,12 @@ test('data can be normalised', () => {
     expect(seriesWithData.rendered.minY).toBe(-3);
     expect(seriesWithData.rendered.maxY).toBe(5);
     expect(seriesWithData.rendered.xyz).not.toBeNull();
-    expect(seriesWithData.rendered.xyz).toHaveLength(5);
+    expect(seriesWithData.rendered.xyz.count()).toBe(5);
 
     for (let [index, value] of data.freq.entries()) {
-        expect(seriesWithData.rendered.xyz[index].x).toBe(value);
-        expect(seriesWithData.rendered.xyz[index].y).toBe(data.val[index]);
-        expect(seriesWithData.rendered.xyz[index].z).toBe(1);
+        expect(seriesWithData.rendered.xyz.get(index).x).toBe(value);
+        expect(seriesWithData.rendered.xyz.get(index).y).toBe(data.val[index]);
+        expect(seriesWithData.rendered.xyz.get(index).z).toBe(1);
     }
 
     const refSeries = new PathSeries('ref');
@@ -111,12 +111,12 @@ test('data can be normalised', () => {
     expect(refSeriesWithData.rendered.minY).toBe(-9);
     expect(refSeriesWithData.rendered.maxY).toBe(11);
     expect(refSeriesWithData.rendered.xyz).not.toBeNull();
-    expect(refSeriesWithData.rendered.xyz).toHaveLength(5);
+    expect(refSeriesWithData.rendered.xyz.count()).toBe(5);
 
     for (let [index, value] of referenceData.freq.entries()) {
-        expect(refSeriesWithData.rendered.xyz[index].x).toBe(value);
-        expect(refSeriesWithData.rendered.xyz[index].y).toBe(referenceData.val[index]);
-        expect(refSeriesWithData.rendered.xyz[index].z).toBe(1);
+        expect(refSeriesWithData.rendered.xyz.get(index).x).toBe(value);
+        expect(refSeriesWithData.rendered.xyz.get(index).y).toBe(referenceData.val[index]);
+        expect(refSeriesWithData.rendered.xyz.get(index).z).toBe(1);
     }
 
     const withReference = seriesWithData.normalise('ref', refSeriesWithData.rendered);
@@ -126,11 +126,11 @@ test('data can be normalised', () => {
     expect(withReference.rendered.minY).toBe(-3);
     expect(withReference.rendered.maxY).toBe(5);
     expect(withReference.rendered.xyz).not.toBeNull();
-    expect(withReference.rendered.xyz).toHaveLength(5);
+    expect(withReference.rendered.xyz.count()).toBe(5);
     for (let [index, value] of data.freq.entries()) {
-        expect(withReference.rendered.xyz[index].x).toBe(value);
-        expect(withReference.rendered.xyz[index].y).toBe(data.val[index]);
-        expect(withReference.rendered.xyz[index].z).toBe(1);
+        expect(withReference.rendered.xyz.get(index).x).toBe(value);
+        expect(withReference.rendered.xyz.get(index).y).toBe(data.val[index]);
+        expect(withReference.rendered.xyz.get(index).z).toBe(1);
     }
     expect(withReference.normalisedData.count()).toBe(1);
     const normalised = withReference.normalisedData.get('ref');
@@ -140,12 +140,12 @@ test('data can be normalised', () => {
     expect(normalised.minY).toBe(-6);
     expect(normalised.maxY).toBe(6);
     expect(normalised.xyz).not.toBeNull();
-    expect(normalised.xyz).toHaveLength(5);
+    expect(normalised.xyz.count()).toBe(5);
     const expectedReferenceVals = [1, -2, 6, -4, -6];
     for (let [index, value] of data.freq.entries()) {
-        expect(normalised.xyz[index].x).toBe(value);
-        expect(normalised.xyz[index].y).toBe(expectedReferenceVals[index]);
-        expect(normalised.xyz[index].z).toBe(1);
+        expect(normalised.xyz.get(index).x).toBe(value);
+        expect(normalised.xyz.get(index).y).toBe(expectedReferenceVals[index]);
+        expect(normalised.xyz.get(index).z).toBe(1);
     }
     expect(withReference.normalise('ref', refSeriesWithData.rendered)).toBe(withReference);
     expect(withReference.normalise('ref', refSeriesWithData.rendered)).toBe(withReference);
@@ -172,12 +172,12 @@ test('data can be normalised to itself', () => {
     expect(seriesWithData.rendered.minY).toBe(-3);
     expect(seriesWithData.rendered.maxY).toBe(5);
     expect(seriesWithData.rendered.xyz).not.toBeNull();
-    expect(seriesWithData.rendered.xyz).toHaveLength(5);
+    expect(seriesWithData.rendered.xyz.count()).toBe(5);
 
     for (let [index, value] of data.freq.entries()) {
-        expect(seriesWithData.rendered.xyz[index].x).toBe(value);
-        expect(seriesWithData.rendered.xyz[index].y).toBe(data.val[index]);
-        expect(seriesWithData.rendered.xyz[index].z).toBe(1);
+        expect(seriesWithData.rendered.xyz.get(index).x).toBe(value);
+        expect(seriesWithData.rendered.xyz.get(index).y).toBe(data.val[index]);
+        expect(seriesWithData.rendered.xyz.get(index).z).toBe(1);
     }
 
     const withReference = seriesWithData.normalise('ref', seriesWithData.rendered);
@@ -187,11 +187,11 @@ test('data can be normalised to itself', () => {
     expect(withReference.rendered.minY).toBe(-3);
     expect(withReference.rendered.maxY).toBe(5);
     expect(withReference.rendered.xyz).not.toBeNull();
-    expect(withReference.rendered.xyz).toHaveLength(5);
+    expect(withReference.rendered.xyz.count()).toBe(5);
     for (let [index, value] of data.freq.entries()) {
-        expect(withReference.rendered.xyz[index].x).toBe(value);
-        expect(withReference.rendered.xyz[index].y).toBe(data.val[index]);
-        expect(withReference.rendered.xyz[index].z).toBe(1);
+        expect(withReference.rendered.xyz.get(index).x).toBe(value);
+        expect(withReference.rendered.xyz.get(index).y).toBe(data.val[index]);
+        expect(withReference.rendered.xyz.get(index).z).toBe(1);
     }
     expect(withReference.normalisedData.count()).toBe(1);
     const normalised = withReference.normalisedData.get('ref');
@@ -201,10 +201,10 @@ test('data can be normalised to itself', () => {
     expect(normalised.minY).toBeCloseTo(0);
     expect(normalised.maxY).toBeCloseTo(0);
     expect(normalised.xyz).not.toBeNull();
-    expect(normalised.xyz).toHaveLength(5);
+    expect(normalised.xyz.count()).toBe(5);
     for (let [index, value] of data.freq.entries()) {
-        expect(normalised.xyz[index].x).toBe(value);
-        expect(normalised.xyz[index].y).toBe(0);
-        expect(normalised.xyz[index].z).toBe(1);
+        expect(normalised.xyz.get(index).x).toBe(value);
+        expect(normalised.xyz.get(index).y).toBe(0);
+        expect(normalised.xyz.get(index).z).toBe(1);
     }
 });

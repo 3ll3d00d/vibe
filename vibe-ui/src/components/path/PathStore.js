@@ -116,11 +116,17 @@ class PathStore {
      * @param referenceSeriesId the reference path id.
      */
     setReferenceSeriesId(referenceSeriesId) {
-        this.referenceSeriesId = referenceSeriesId;
-        const referencePath = this.paths.find(p => p.ownsReference(referenceSeriesId));
-        if (referencePath) {
-            const referenceData = referencePath.getReferenceData(referenceSeriesId);
-            this.paths = this.paths.map(p => p.normalise(referenceSeriesId, referenceData));
+        if (referenceSeriesId === null) {
+            this.referenceSeriesId = NO_OPTION_SELECTED;
+        } else {
+            this.referenceSeriesId = referenceSeriesId;
+        }
+        if (referenceSeriesId !== NO_OPTION_SELECTED) {
+            const referencePath = this.paths.find(p => p.ownsReference(referenceSeriesId));
+            if (referencePath) {
+                const referenceData = referencePath.getReferenceData(referenceSeriesId);
+                this.paths = this.paths.map(p => p.normalise(referenceSeriesId, referenceData));
+            }
         }
         return this;
     }
@@ -154,7 +160,7 @@ class PathStore {
     asChartData() {
         if (this.anyPathIsComplete()) {
             const chartData = this.convertToChartData();
-            if (chartData.length > 0) {
+            if (chartData.count() > 0) {
                 return this.calculateRange(chartData);
             }
         }
@@ -168,12 +174,12 @@ class PathStore {
      */
     calculateRange(chartData) {
         return {
-            chartData: chartData,
+            chartData: chartData.toJS(),
             range: {
-                minX: Math.min(...chartData.map(k => k.minX)),
-                minY: Math.min(...chartData.map(k => k.minY)),
-                maxX: Math.max(...chartData.map(k => k.maxX)),
-                maxY: Math.max(...chartData.map(k => k.maxY))
+                minX: chartData.map(k => k.minX).reduce((r, n) => Math.min(r,n), Number.MAX_VALUE),
+                minY: chartData.map(k => k.minY).reduce((r, n) => Math.min(r,n), Number.MAX_VALUE),
+                maxX: chartData.map(k => k.maxX).reduce((r, n) => Math.max(r,n), Number.MIN_VALUE),
+                maxY: chartData.map(k => k.maxY).reduce((r, n) => Math.max(r,n), Number.MIN_VALUE)
             }
         };
     }
@@ -186,9 +192,9 @@ class PathStore {
     convertToChartData() {
         // convert each path to a set of data (1 per series)
         let seriesIdx = -1;
-        const dataByPath = this.paths.map(p => p.convertToChartData(++seriesIdx, this.getReferenceSeriesId())).toJS();
+        const dataByPath = this.paths.map(p => p.convertToChartData(++seriesIdx, this.getReferenceSeriesId()));
         // now flatten to one list
-        return [].concat(...dataByPath).filter(p => p !== null);
+        return dataByPath.flatten().filter(p => p !== null);
     }
 
     /**
