@@ -80,7 +80,7 @@ class Analyse extends Component {
      * @param event the event from the option.
      */
     handleReferenceSeries = (event) => {
-        const val = event.target.value === "-1" ? null : event.target.value;
+        const val = event.target.value;
         this.setState((previousState, props) => {
             return {pathStore: previousState.pathStore.setReferenceSeriesId(val)};
         })
