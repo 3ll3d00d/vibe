@@ -208,12 +208,12 @@ export default class Path extends Record({
      */
     convertToChartData(idx, referenceSeriesId) {
         return this.series.filter(s => s.visible && this.loaded && s.rendered).map(s => {
-            if (referenceSeriesId !== NO_OPTION_SELECTED) {
+            if (referenceSeriesId !== NO_OPTION_SELECTED && s.normalisedData.get(referenceSeriesId)) {
                 return {name: s.seriesName, data: s.normalisedData.get(referenceSeriesId)};
             } else {
                 return {name: s.seriesName, data: s.rendered}
             }
-        }).map(d => Object.assign({id: this.getExternalId(), series: d.name, seriesIdx: idx}, d.data));
+        }).map(d => Object.assign({id: this.getExternalId(), series: d.name, seriesIdx: idx}, d.data.toJS()));
     }
 
     /**
