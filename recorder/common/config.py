@@ -37,7 +37,7 @@ class Config(BaseConfig):
                 {
                     'name': 'remote',
                     'type': 'post',
-                    'target': 'http://127.0.0.1:10001'
+                    'target': 'http://127.0.0.1:8080'
                 }
             ]
         }
@@ -65,6 +65,7 @@ class Config(BaseConfig):
         type = deviceCfg['type']
         if type == 'mpu6050':
             fs = deviceCfg.get('fs')
+            name = deviceCfg.get('name')
             if ioCfg['type'] == 'mock':
                 provider = ioCfg.get('provider')
                 if provider is not None and provider == 'white noise':
@@ -80,7 +81,7 @@ class Config(BaseConfig):
             else:
                 raise ValueError(ioCfg['type'] + " is not a supported io provider")
 
-            return mpu6050(io, fs=fs)
+            return mpu6050(io, name=name, fs=fs) if name is not None else mpu6050(io, fs=fs)
         else:
             raise ValueError(type + " is not a supported device")
 

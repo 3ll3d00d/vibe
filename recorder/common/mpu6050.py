@@ -245,12 +245,12 @@ class mpu6050(Accelerometer):
         # Enable data ready interrupt    LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_INT_ENABLE, 0x00);
         MPU6050_RA_FIFO_R_W]  # LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_FIFO_R_W, 0x00);
 
-    def __init__(self, i2c_io, fs=None, samplesPerBatch=None, dataHandler=None):
+    def __init__(self, i2c_io, fs=None, name='mpu6050', samplesPerBatch=None, dataHandler=None):
         """
         initialises to a default state set to measure acceleration only.
         """
         super().__init__(fs, samplesPerBatch, dataHandler)
-        self.name = 'mpu6050'
+        self.name = name
         self.fifoSensorMask = self.enableAccelerometerMask
         self._accelEnabled = True
         self._gyroEnabled = False
