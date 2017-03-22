@@ -125,9 +125,13 @@ Wiring up the MPU6050
 1) disconnect your rpi from the screen and powerdown
 2) connect your MPU6050, remember to wire as per `this wiring example`_
 3) boot up
-4) follow the i2c section of `this guide`_, if everything is functioning correctly the result should be::
+4) install `i2c-tools`::
 
-    pi@swoop:~ $ i2cdetect -y 1
+    $ sudo apt install i2c-tools
+
+5) follow the i2c section of `this guide`_, if everything is functioning correctly the result should be::
+
+    $ i2cdetect -y 1
          0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
     00:          -- -- -- -- -- -- -- -- -- -- -- -- --
     10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
@@ -161,7 +165,7 @@ If all has gone well then you should now be able to do the following and see
     Loading smbus 1
     Reactor reactor is starting
 
-Now open a browser and enter the IP or hostname of your rpi and port 10002, e.g. http://192.168.1.1:10002/devices, you should see some
+Now open a browser and enter the IP or hostname of your rpi and port 10002, e.g. http://192.168.1.1:10002/api/1/devices, you should see some
 plain text output like::
 
   [{"gyroSens": 500, "gyroEnabled": false, "name": "mpu6050", "failureCode": null, "accelerometerSens": 2, "accelerometerEnabled": true, "samplesPerBatch": 125, "status": "INITIALISED", "fs": 500}]
