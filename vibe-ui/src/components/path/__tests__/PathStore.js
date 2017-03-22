@@ -953,7 +953,14 @@ describe('paths can be normalised against a reference series', () => {
             expect(range.maxX).toBe(6);
             expect(range.maxY).toBe(10);
         }
+    });
 
+    test('removing the reference series, disables the reference', () => {
+        // TODO
+    });
 
+    test('changing the analyser, maintains the reference', () => {
+        // TODO
     });
 });
+

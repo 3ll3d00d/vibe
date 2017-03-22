@@ -108,6 +108,8 @@ class PathStore {
         if (pathIdx !== -1) {
             this.paths = this.paths.update(pathIdx, p => p.decodeParams(routerPath));
         }
+        // make sure we propagate the reference whenever we navigate to make sure all series have the right data loaded
+        this.propagateReferenceSeries();
         return this;
     }
 
@@ -131,6 +133,8 @@ class PathStore {
             if (referencePath) {
                 const referenceData = referencePath.getReferenceData(this.referenceSeriesId);
                 this.paths = this.paths.map(p => p.normalise(this.referenceSeriesId, referenceData));
+            } else {
+                this.referenceSeriesId = NO_OPTION_SELECTED;
             }
         }
     }
@@ -142,7 +146,8 @@ class PathStore {
      */
     updateData(namedPromises) {
         this.paths = this.paths.map((path) => path.acceptData(namedPromises.find(p => p.name === path.measurementId)));
-        this.propagateReferenceSeries(); // propagate the reference series in case a reference is set
+        // make sure we propagate the reference whenever data is loaded to make sure all series have the right data loaded
+        this.propagateReferenceSeries();
         return this;
     }
 
