@@ -867,4 +867,93 @@ describe('paths can be normalised against a reference series', () => {
             expect(range.maxY).toBe(20);
         }
     });
+
+    test('adding a path when a reference is set, is normalised', () => {
+        let store = initialiseStore(true);
+        const nav1 = {
+            measurementId: 'test_measurement_1',
+            deviceId: 'test_device_1',
+            analyserId: 'test_analysis_1',
+            series: 'a'
+        };
+        store = store.addPath();
+        store.navigate(1, nav1);
+        expect(store.getPathCount()).toBe(1);
+        verifyPath(store.getPathAtIdx(0), 1, nav1, measurementMeta, '/test_measurement_1/test_device_1/test_analysis_1/a');
+        expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analysis_1/a');
+
+        store.updateData(testData);
+        expect(store.getPathCount()).toBe(1);
+        const pathWithData = store.getPathAtIdx(0);
+        verifyPath(pathWithData, 1, nav1, measurementMeta, '/test_measurement_1/test_device_1/test_analysis_1/a');
+        expect(pathWithData.data).not.toBeNull();
+        expect(pathWithData.loaded).toBeTruthy();
+        expect(pathWithData.series.count()).toBe(3);
+        expect(pathWithData.series.filter(s => s.rendered).count()).toBe(3);
+        {
+            const {chartData, range} = store.asChartData();
+            expect(chartData).not.toBeNull();
+            expect(chartData).toHaveLength(1);
+            expect(chartData.map(d => d.id).filter(d => d === pathWithData.getExternalId())).toHaveLength(1);
+            const seriesInData = chartData.map(d => d.series);
+            ['a'].forEach(s => expect(seriesInData.includes(s)).toBeTruthy());
+            expect(range).not.toBeNull();
+            expect(range.minX).toBe(1);
+            expect(range.minY).toBe(1);
+            expect(range.maxX).toBe(6);
+            expect(range.maxY).toBe(6);
+        }
+        store.setReferenceSeriesId('test_measurement_1/test_device_1/test_analysis_1/a');
+        {
+            expect(store.getReferenceSeriesId()).toBe('test_measurement_1/test_device_1/test_analysis_1/a');
+            const {chartData, range} = store.asChartData();
+            expect(chartData).not.toBeNull();
+            expect(chartData).toHaveLength(1);
+            expect(chartData.map(d => d.id).filter(d => d === pathWithData.getExternalId())).toHaveLength(1);
+            const seriesInData = chartData.map(d => d.series);
+            ['a'].forEach(s => expect(seriesInData.includes(s)).toBeTruthy());
+            expect(range).not.toBeNull();
+            expect(range.minX).toBe(1);
+            expect(range.minY).toBe(0);
+            expect(range.maxX).toBe(6);
+            expect(range.maxY).toBeCloseTo(0);
+        }
+
+        // add a series and expect it to be normalised
+        const nav2 = {
+            measurementId: 'test_measurement_1',
+            deviceId: 'test_device_1',
+            analyserId: 'test_analysis_1',
+            series: 'b'
+        };
+        store = store.addPath();
+        store.navigate(2, nav2);
+        store.updateData(testData);
+
+        expect(store.getPathCount()).toBe(2);
+        verifyPath(store.getPathAtIdx(0), 1, nav1, measurementMeta, '/test_measurement_1/test_device_1/test_analysis_1/a');
+        const path2WithData = store.getPathAtIdx(1);
+        verifyPath(path2WithData, 2, nav2, measurementMeta, '/test_measurement_1/test_device_1/test_analysis_1/b');
+        expect(store.toRouterPath()).toBe('/analyse/test_measurement_1/test_device_1/test_analysis_1/a/test_measurement_1/test_device_1/test_analysis_1/b');
+
+        expect(path2WithData.data).not.toBeNull();
+        expect(path2WithData.loaded).toBeTruthy();
+        expect(path2WithData.series.count()).toBe(3);
+        expect(path2WithData.series.filter(s => s.rendered).count()).toBe(3);
+        {
+            const {chartData, range} = store.asChartData();
+            expect(chartData).not.toBeNull();
+            expect(chartData).toHaveLength(2);
+            expect(chartData.map(d => d.id).filter(d => d === path2WithData.getExternalId())).toHaveLength(2);
+            const seriesInData = chartData.map(d => d.series);
+            ['a','b'].forEach(s => expect(seriesInData.includes(s)).toBeTruthy());
+            expect(range).not.toBeNull();
+            expect(range.minX).toBe(1);
+            expect(range.minY).toBe(0);
+            expect(range.maxX).toBe(6);
+            expect(range.maxY).toBe(10);
+        }
+
+
+    });
 });
