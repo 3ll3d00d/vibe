@@ -185,7 +185,7 @@ class ActionCell extends Component {
         } else {
             if (row.status === 'COMPLETE' || row.status === 'FAILED') {
                 return (
-                    <Button bsStyle="danger" onClick={() => this.props.deleteMeasurement()}
+                    <Button bsStyle="danger" onClick={() => row.deleteMeasurement()}
                             bsSize="xsmall">
                         <FontAwesome name="trash"/>
                     </Button>
@@ -208,17 +208,6 @@ class ActionCell extends Component {
     }
 });
 
-class MeasurementTable extends Component {
-
-    render() {
-        return (
-            <Table {...this.props}
-                   columns={columns}
-                   className="table-responsive table-condensed table-bordered table-hover table-striped"/>
-        );
-    }
-}
-
 const columns = [
     {key: 'id', header: 'ID', hidden: true, primaryKey: true},
     {key: 'status', header: 'Status', filterable: true, Component: statusCell},
@@ -232,6 +221,16 @@ const columns = [
     {key: 'devices', header: 'Devices', searchable: true, Component: DeviceCell},
     {key: 'actions', header: 'Actions', Component: ActionCell},
 ];
+
+class MeasurementTable extends Component {
+    render() {
+        return (
+            <Table {...this.props}
+                   columns={columns}
+                   className="table-responsive table-condensed table-bordered table-hover table-striped"/>
+        );
+    }
+}
 
 export default sematable('measurements', MeasurementTable, columns, {
     defaultPageSize: 6,

@@ -8,6 +8,10 @@ class Measurements extends Component {
     };
 
     findResponse(id, responses) {
+        const responseKey = `deleteMeasurementResponse_${id}`;
+        if (responses.hasOwnProperty(responseKey)) {
+            return responses[responseKey];
+        }
         return null;
     }
 
