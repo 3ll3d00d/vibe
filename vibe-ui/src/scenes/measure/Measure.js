@@ -1,8 +1,9 @@
 import React, {Component, PropTypes} from "react";
 import Message from "../../components/Message";
 import {Col, Grid, Panel, Row} from "react-bootstrap";
-import {connect, PromiseState} from "react-refetch";
-import MeasurementTable from "./MeasurementTable";
+import {PromiseState} from "react-refetch";
+import {connect} from "react-refetch";
+import Measurements from "./Measurements";
 import ScheduleMeasurement from "./ScheduleMeasurement";
 
 class Measure extends Component {
@@ -33,8 +34,16 @@ class Measure extends Component {
                         <Row>
                             <Col>
                                 <Panel header="Measurements" bsStyle="info">
-                                    <ScheduleMeasurement deviceStatuses={this.props.deviceStatuses.value}/>
-                                    <MeasurementTable measurements={ this.props.measurements.value }/>
+                                    <Row>
+                                        <Col md={6}>
+                                            <ScheduleMeasurement deviceStatuses={this.props.deviceStatuses.value}/>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col>
+                                            <Measurements measurements={ this.props.measurements.value }/>
+                                        </Col>
+                                    </Row>
                                 </Panel>
                             </Col>
                         </Row>
