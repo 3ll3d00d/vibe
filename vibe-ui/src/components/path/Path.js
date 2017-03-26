@@ -100,11 +100,13 @@ export default class Path extends Record({
                 }
                 path.set('deviceId', deviceId);
             }
+            let analyserChanged = false;
             if (analyserId && analyserId !== path.analyserId) {
                 if (analyserId === NO_OPTION_SELECTED) {
                     path.remove('analyserId');
-                }  else {
+                } else {
                     if (analyserId !== path.analyserId) {
+                        analyserChanged = true;
                         // if the analyser has changed, we need a new set of series but we can only do that if we have meta
                         // already, if we don't have meta then we have to rely on the series in the path
                         if (this.measurementMeta) {
@@ -121,10 +123,26 @@ export default class Path extends Record({
                 const visibleSeries = series === NO_OPTION_SELECTED ? [] : series.split('-');
                 // if we have the series already we must have loaded meta so just map the visible set in
                 if (path.series.size > 0) {
-                    path.set('series', path.series.map(s => s.set('visible', visibleSeries.includes(s.seriesName))));
+                    path.set('series', path.series.map(s => {
+                        if (analyserChanged && path.data && path.data.fulfilled) {
+                            return s.set('visible', visibleSeries.includes(s.seriesName))
+                                    .acceptData(path.data.value[path.deviceId][path.analyserId][s.seriesName]);
+                        } else {
+                            return s.set('visible', visibleSeries.includes(s.seriesName));
+                        }
+                    }));
                 } else {
                     // otherwise just create the missing members
-                    path.set('series', new List(visibleSeries.map(s => new PathSeries(s))));
+                    path.set('series', new List(visibleSeries.map(s => {
+                        if (analyserChanged && path.data && path.data.fulfilled) {
+                            return new PathSeries(s).acceptData(path.data.value[path.deviceId][path.analyserId][s.seriesName]);
+                        } else {
+                            return new PathSeries(s);
+                        }
+                    })));
+                }
+                if (analyserChanged && path.data && path.data.fulfilled) {
+                    this.set('series', path.series.map(s => s.acceptData(path.data.value[path.deviceId][path.analyserId][s.seriesName])))
                 }
             }
         });

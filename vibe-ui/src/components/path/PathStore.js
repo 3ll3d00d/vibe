@@ -108,6 +108,8 @@ class PathStore {
         if (pathIdx !== -1) {
             this.paths = this.paths.update(pathIdx, p => p.decodeParams(routerPath));
         }
+        // make sure we propagate the reference whenever we navigate to make sure all series have the right data loaded
+        this.propagateReferenceSeries();
         return this;
     }
 
@@ -121,14 +123,20 @@ class PathStore {
         } else {
             this.referenceSeriesId = referenceSeriesId;
         }
-        if (referenceSeriesId !== NO_OPTION_SELECTED) {
-            const referencePath = this.paths.find(p => p.ownsReference(referenceSeriesId));
+        this.propagateReferenceSeries();
+        return this;
+    }
+
+    propagateReferenceSeries() {
+        if (this.referenceSeriesId !== NO_OPTION_SELECTED) {
+            const referencePath = this.paths.find(p => p.ownsReference(this.referenceSeriesId));
             if (referencePath) {
-                const referenceData = referencePath.getReferenceData(referenceSeriesId);
-                this.paths = this.paths.map(p => p.normalise(referenceSeriesId, referenceData));
+                const referenceData = referencePath.getReferenceData(this.referenceSeriesId);
+                this.paths = this.paths.map(p => p.normalise(this.referenceSeriesId, referenceData));
+            } else {
+                this.referenceSeriesId = NO_OPTION_SELECTED;
             }
         }
-        return this;
     }
 
     /**
@@ -138,6 +146,8 @@ class PathStore {
      */
     updateData(namedPromises) {
         this.paths = this.paths.map((path) => path.acceptData(namedPromises.find(p => p.name === path.measurementId)));
+        // make sure we propagate the reference whenever data is loaded to make sure all series have the right data loaded
+        this.propagateReferenceSeries();
         return this;
     }
 
@@ -241,4 +251,3 @@ class PathStore {
 
 export let pathStore = new PathStore();
 export let createStore = (idProvider) => new PathStore(idProvider);
-

@@ -68,14 +68,14 @@ class ScheduleMeasurement extends Component {
             <Well>
                 <Form onSubmit={false}>
                     <Row>
-                        <Col md={2}>
+                        <Col md={6}>
                             <FormGroup controlId="name">
                                 <ControlLabel>Name: </ControlLabel>
                                 {' '}
                                 <FormControl type="text" onChange={this.handleName}/>
                             </FormGroup>
                         </Col>
-                        <Col md={10}>
+                        <Col md={6}>
                             <FormGroup controlId="desc">
                                 <ControlLabel>Description: </ControlLabel>
                                 {' '}
@@ -84,7 +84,7 @@ class ScheduleMeasurement extends Component {
                         </Col>
                     </Row>
                     <Row>
-                        <Col md={2}>
+                        <Col md={6}>
                             <FormGroup controlId="duration">
                                 <ControlLabel>Duration: </ControlLabel>
                                 {' '}
@@ -92,7 +92,7 @@ class ScheduleMeasurement extends Component {
                                              onChange={this.handleDuration}/>
                             </FormGroup>
                         </Col>
-                        <Col md={2}>
+                        <Col md={6}>
                             <FormGroup controlId="delay">
                                 <ControlLabel>Delay: </ControlLabel>
                                 {' '}
