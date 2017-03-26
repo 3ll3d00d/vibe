@@ -13,7 +13,7 @@ import {
 } from "react-bootstrap";
 import ToggleButton from "react-toggle-button";
 import FontAwesome from "react-fontawesome";
-import Chart from "./Chart";
+import Chart from "../../components/chart/Chart";
 import PreciseIntNumericInput from "./PreciseIntNumericInput";
 import {NO_OPTION_SELECTED} from "../../constants";
 
