@@ -2,4 +2,5 @@ ignore:
   - "_version.py"
   - "setup_travis.py"
   - "versioneer.py"
-  - "v
+  - "vibe-ui/src/components/chart/ChartJS.js"
+
