@@ -1,9 +1,12 @@
-import React, {PureComponent} from "react";
+import React, {PropTypes, PureComponent} from "react";
 import {Line} from "./ChartJS";
 import {hexToRGBA, SERIES_COLOURS} from "../../constants";
 
 export default class Chart extends PureComponent {
-
+    static propTypes = {
+        series: PropTypes.array.isRequired,
+        config: PropTypes.object.isRequired,
+    };
 
     // credit to https://www.paulirish.com/2009/random-hex-color-code-snippets/
     generateRandomColour() {
@@ -33,46 +36,46 @@ export default class Chart extends PureComponent {
             };
         });
         const xLinLog = this.props.config.xLog ? "logarithmic" : "linear";
-        const yRange = Math.floor(this.props.config.y[1] - this.props.config.y[0]);
-        let yStep = 5;
-        if (yRange > 60) {
-            yStep = Math.floor(yRange / 10);
-        } else if (yRange < 1) {
-            yStep = 0.1;
-        } else if (yRange < 2) {
-            yStep = 0.2;
-        } else if (yRange < 5) {
-            yStep = 0.5;
-        } else if (yRange < 10) {
-            yStep = 1;
-        } else if (yRange < 20) {
-            yStep = 2;
+        let xAxisTicks = {};
+        if (this.props.config.xOverrideRange) {
+            xAxisTicks = Object.assign(xAxisTicks, {min: this.props.config.x[0], max: this.props.config.x[1]});
         }
-        const minY = yStep * Math.floor(this.props.config.y[0] / yStep);
-        const maxY = yStep * Math.ceil(this.props.config.y[1] / yStep);
-        let yAxisTicks = {
-            min: minY,
-            max: maxY,
-            stepSize: yStep
-        };
+        if (this.props.config.xStep) {
+            xAxisTicks = Object.assign(xAxisTicks, {stepSize: this.props.config.xStep});
+        }
+        if (this.props.config.xFormatter) {
+            xAxisTicks = Object.assign(xAxisTicks, {callback: this.props.config.xFormatter});
+        }
+
+        const yLinLog = this.props.config.yLog ? "logarithmic" : "linear";
+        let yAxisTicks = {};
+        if (this.props.config.yOverrideRange) {
+            yAxisTicks = Object.assign(yAxisTicks, {min: this.props.config.y[0], max: this.props.config.y[1]});
+        }
+        if (this.props.config.yStep) {
+            yAxisTicks = Object.assign(yAxisTicks, {stepSize: this.props.config.yStep});
+        }
+        if (this.props.config.yFormatter) {
+            yAxisTicks = Object.assign(yAxisTicks, {callback: this.props.config.yFormatter});
+        }
         const options = {
             scales: {
                 xAxes: [{
                     type: xLinLog,
                     position: 'bottom',
-                    ticks: {
-                        min: Math.round(this.props.config.x[0]),
-                        max: this.props.config.x[1],
-                        callback: (value, index, values) => Math.round(value)
-                    },
+                    ticks: xAxisTicks,
                     scaleLabel: {
                         display: true,
-                        labelString: "Frequency (Hz)"
+                        labelString: this.props.config.xLabel
                     }
                 }],
                 yAxes: [{
-                    type: 'linear',
-                    ticks: yAxisTicks
+                    type: yLinLog,
+                    ticks: yAxisTicks,
+                    scaleLabel: {
+                        display: true,
+                        labelString: this.props.config.yLabel
+                    }
                 }]
             },
             legend: {

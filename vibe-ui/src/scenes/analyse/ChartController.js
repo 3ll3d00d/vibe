@@ -45,11 +45,35 @@ export default class ChartController extends Component {
     }
 
     createChartConfig(state, range) {
+        const rawYRange = [this.chooseValue('minY', state, range), this.chooseValue('maxY', state, range)];
+        const yRange = Math.floor(rawYRange[1] - rawYRange[0]);
+        let yStep = 5;
+        if (yRange > 60) {
+            yStep = Math.floor(yRange / 10);
+        } else if (yRange < 1) {
+            yStep = 0.1;
+        } else if (yRange < 2) {
+            yStep = 0.2;
+        } else if (yRange < 5) {
+            yStep = 0.5;
+        } else if (yRange < 10) {
+            yStep = 1;
+        } else if (yRange < 20) {
+            yStep = 2;
+        }
+        const minY = yStep * Math.floor(rawYRange[0] / yStep);
+        const maxY = yStep * Math.ceil(rawYRange[1] / yStep);
         return {
             config: {
-                x: [this.chooseValue('minX', state, range), this.chooseValue('maxX', state, range)],
-                y: [this.chooseValue('minY', state, range), this.chooseValue('maxY', state, range)],
+                x: [Math.round(this.chooseValue('minX', state, range)), this.chooseValue('maxX', state, range)],
                 xLog: state.xLog,
+                xLabel: 'Frequency (Hz)',
+                xFormatter: (value, index, values) => Math.round(value),
+                xOverrideRange: true,
+                y: [minY, maxY],
+                yStep: yStep,
+                yLog: false,
+                yOverrideRange: true,
                 showDots: state.dots
             }
         };
@@ -209,9 +233,7 @@ export default class ChartController extends Component {
                 </Well>
                 <Row>
                     <Col>
-                        <LineChart pathCount={this.props.pathCount}
-                               series={this.props.series}
-                               config={this.state.config}/>
+                        <LineChart series={this.props.series} config={this.state.config}/>
                     </Col>
                 </Row>
             </div>

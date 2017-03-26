@@ -20,22 +20,25 @@ class Measurements extends Component {
      * @param row the raw data received from the server.
      * @param responses any responses to delete requests.
      * @param deleteFunc the delete function.
+     * @param fetchFunc the fetch time series function.
      * @returns {*}
      */
-    convert(row, responses, deleteFunc) {
+    convert(row, responses, deleteFunc, fetchFunc) {
         const deleteMeasurement = () => deleteFunc(row.id);
+        const fetchTimeSeries = () => fetchFunc(row.id);
         return Object.assign(row, {
             date: row.startTime.split('_')[0],
             time: row.startTime.split('_')[1],
             fs: row.measurementParameters.fs,
             deleteMeasurement: deleteMeasurement,
-            deleteResponse: this.findResponse(row.id, responses)
+            deleteResponse: this.findResponse(row.id, responses),
+            fetchTimeSeries: fetchTimeSeries
         });
     }
 
     render() {
-        const {measurements, deleteFunc, ...responses} = this.props;
-        return <MeasurementTable data={measurements.map(m => this.convert(m, responses, deleteFunc))}/>
+        const {measurements, deleteFunc, fetcher, ...responses} = this.props;
+        return <MeasurementTable data={measurements.map(m => this.convert(m, responses, deleteFunc, fetcher))}/>
     }
 }
 
