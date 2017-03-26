@@ -9,6 +9,7 @@ from analyser.common.devicecontroller import DeviceController
 from analyser.common.measurementcontroller import MeasurementController
 from analyser.common.targetstatecontroller import TargetStateProvider, TargetStateController
 from analyser.resources.analyse import Analyse
+from analyser.resources.timeseries import TimeSeries
 from analyser.resources.measurement import InitialiseMeasurement, RecordData, CompleteMeasurement, Measurement, \
     FailMeasurement
 from analyser.resources.measurementdevices import MeasurementDevices, MeasurementDevice
@@ -75,6 +76,9 @@ api.add_resource(FailMeasurement, API_PREFIX + '/measurements/<measurementId>/<d
 
 # PUT: analyse the measurement
 api.add_resource(Analyse, API_PREFIX + '/measurements/<measurementId>/analyse', resource_class_kwargs=resourceArgs)
+
+# PUT: get time series data for the measurement
+api.add_resource(TimeSeries, API_PREFIX + '/measurements/<measurementId>/timeseries', resource_class_kwargs=resourceArgs)
 
 
 def main(args=None):

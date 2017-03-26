@@ -30,6 +30,24 @@ class Signal(object):
     def getSegmentLength(self):
         return min(1 << (self.fs - 1).bit_length(), self.samples.shape[-1])
 
+    def raw(self):
+        """
+        :return: the raw acceleration vs time data.  
+        """
+        return self.samples
+
+    def vibration(self):
+        """
+        :return: the raw acceleration vs time data high passed to remove gravity.  
+        """
+        return self.highPass().samples
+
+    def tilt(self):
+        """
+        :return: the raw acceleration vs time data low passed to isolate gravity.  
+        """
+        return self.lowPass().samples
+
     def psd(self, toReference='ref'):
         """
         analyses the source and returns a PSD, segment is set to get sub 1Hz frequency resolution
@@ -40,8 +58,8 @@ class Signal(object):
             Power spectral density.
 
         """
-        lowPass = self.highPass()
-        f, Pxx_den = signal.welch(lowPass.samples, lowPass.fs, nperseg=self.getSegmentLength(), detrend=False)
+        highPass = self.highPass()
+        f, Pxx_den = signal.welch(highPass.samples, highPass.fs, nperseg=self.getSegmentLength(), detrend=False)
         if toReference == 'ref':
             Pxx_den = 20 * np.log10(Pxx_den)
         return f, Pxx_den
@@ -248,7 +266,39 @@ class TriAxisSignal(object):
         }
 
     def _canSum(self, analysis):
-        return analysis != 'psd'
+        return analysis == 'spectrum' or analysis == 'peakSpectrum'
+
+    def raw(self, axis):
+        """
+        :param axis: the axis 
+        :return: time vs measured acceleration. 
+        """
+        return self._getRaw(axis, 'raw')
+
+    def vibration(self, axis):
+        """
+        :param axis: the axis 
+        :return: time vs high passed acceleration to remove gravity. 
+        """
+        return self._getRaw(axis, 'vibration')
+
+    def tilt(self, axis):
+        """
+        :param axis: the axis 
+        :return: time vs high low acceleration to isolate gravity. 
+        """
+        return self._getRaw(axis, 'tilt')
+
+    def _getRaw(self, axis, analysis):
+        cache = self.rawCache
+        if axis in cache:
+            cachedAxis = cache.get(axis)
+            data = cachedAxis.get('data')
+            if cachedAxis.get(analysis) is None:
+                cachedAxis[analysis] = getattr(data, analysis)()
+            return cachedAxis[analysis]
+        else:
+            return None
 
     def spectrum(self, axis):
         """
