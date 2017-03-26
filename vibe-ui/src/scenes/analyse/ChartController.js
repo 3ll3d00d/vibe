@@ -13,7 +13,7 @@ import {
 } from "react-bootstrap";
 import ToggleButton from "react-toggle-button";
 import FontAwesome from "react-fontawesome";
-import Chart from "../../components/chart/Chart";
+import LineChart from "../../components/chart/LineChart";
 import PreciseIntNumericInput from "./PreciseIntNumericInput";
 import {NO_OPTION_SELECTED} from "../../constants";
 
@@ -209,7 +209,7 @@ export default class ChartController extends Component {
                 </Well>
                 <Row>
                     <Col>
-                        <Chart pathCount={this.props.pathCount}
+                        <LineChart pathCount={this.props.pathCount}
                                series={this.props.series}
                                config={this.state.config}/>
                     </Col>
