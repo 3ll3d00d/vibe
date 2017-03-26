@@ -2,7 +2,9 @@ import React, {PureComponent} from "react";
 import {Line} from "./ChartJS";
 import {hexToRGBA, SERIES_COLOURS} from "../../constants";
 
-export default class Chartjs extends PureComponent {
+export default class Chart extends PureComponent {
+
+
     // credit to https://www.paulirish.com/2009/random-hex-color-code-snippets/
     generateRandomColour() {
         return '#' + ~~(Math.random() * (1 << 24)).toString(16);
