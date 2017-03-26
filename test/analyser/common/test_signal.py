@@ -103,3 +103,15 @@ def test_whenTriAxisTxtIsInDefaultFormat_IsReadCorrectly():
     assert measurement.psd('y') is not None
     assert measurement.psd('z') is not None
     assert measurement.psd('sum') is None
+    assert measurement.raw('x') is not None
+    assert measurement.raw('y') is not None
+    assert measurement.raw('z') is not None
+    assert measurement.raw('woot') is None
+    assert measurement.vibration('x') is not None
+    assert measurement.vibration('y') is not None
+    assert measurement.vibration('z') is not None
+    assert measurement.vibration('woot') is None
+    assert measurement.tilt('x') is not None
+    assert measurement.tilt('y') is not None
+    assert measurement.tilt('z') is not None
+    assert measurement.tilt('woot') is None
