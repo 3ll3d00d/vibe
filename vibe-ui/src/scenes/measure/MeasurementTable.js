@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from "react";
-import {Button, ButtonToolbar, Label, OverlayTrigger, Tooltip, Table as RBTable} from "react-bootstrap";
+import {Button, ButtonToolbar, Label, OverlayTrigger, Table as RBTable, Tooltip} from "react-bootstrap";
 import {Line} from "rc-progress";
 import FontAwesome from "react-fontawesome";
 import sematable, {Table} from "sematable";
@@ -147,14 +147,23 @@ class DeviceCell extends Component {
 
 class ActionCell extends Component {
     getAnalyseButton(measurement) {
-        return measurement.status === 'COMPLETE'
-            ?
-            (
-                <Button bsStyle="primary" onClick={() => measurement.fetchTimeSeries()} bsSize="xsmall">
-                    <FontAwesome name="line-chart"/>
-                </Button>
-            )
-            : null;
+        if (measurement.status === 'COMPLETE') {
+            if (measurement.isSelected) {
+                return (
+                    <Button bsStyle="success"
+                            onClick={() => measurement.clearTimeSeries()} bsSize="xsmall">
+                        <FontAwesome name="eject"/>
+                    </Button>
+                );
+            } else {
+                return (
+                    <Button bsStyle="primary" onClick={() => measurement.fetchTimeSeries()} bsSize="xsmall">
+                        <FontAwesome name="line-chart"/>
+                    </Button>
+                );
+            }
+        }
+        return null;
     }
 
     getDeleteButton(row) {
