@@ -150,7 +150,7 @@ class ActionCell extends Component {
         return measurement.status === 'COMPLETE'
             ?
             (
-                <Button bsStyle="primary" href={`/analyse/${measurement.id}`} bsSize="xsmall">
+                <Button bsStyle="primary" onClick={() => measurement.fetchTimeSeries()} bsSize="xsmall">
                     <FontAwesome name="line-chart"/>
                 </Button>
             )

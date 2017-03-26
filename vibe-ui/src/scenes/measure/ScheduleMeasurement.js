@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from "react";
-import {Button, Col, ControlLabel, Form, FormControl, FormGroup, Row, Well} from "react-bootstrap";
+import {Button, Col, ControlLabel, Form, FormControl, FormGroup, Modal, Row, Well} from "react-bootstrap";
 import {connect} from "react-refetch";
 import FontAwesome from "react-fontawesome";
 
@@ -14,14 +14,25 @@ class ScheduleMeasurement extends Component {
             name: null,
             description: null,
             duration: null,
-            delay: null
+            delay: null,
+            showModal: false
         };
         this.handleName = this.handleName.bind(this);
         this.handleDescription = this.handleDescription.bind(this);
         this.handleDuration = this.handleDuration.bind(this);
         this.handleDelay = this.handleDelay.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.closeModal = this.closeModal.bind(this);
+        this.openModal = this.openModal.bind(this);
     }
+
+    closeModal = () => {
+        this.setState({showModal: false});
+    };
+
+    openModal = () => {
+        this.setState({showModal: true});
+    };
 
     // handlers that put the form values into component state
     handleName = (event) => {
@@ -64,50 +75,64 @@ class ScheduleMeasurement extends Component {
     }
 
     render() {
+        let openButton = <Button bsStyle="danger" disabled>No Devices Available&nbsp;<FontAwesome name="exclamation"/></Button>;
+        if (this.props.deviceStatuses.some((status) => status === 'INITIALISED' || status === 'RECORDING')) {
+            openButton = <Button bsStyle="info" onClick={this.openModal}>Schedule Measurement</Button>;
+        }
         return (
-            <Well>
-                <Form onSubmit={false}>
-                    <Row>
-                        <Col md={6}>
-                            <FormGroup controlId="name">
-                                <ControlLabel>Name: </ControlLabel>
-                                {' '}
-                                <FormControl type="text" onChange={this.handleName}/>
-                            </FormGroup>
-                        </Col>
-                        <Col md={6}>
-                            <FormGroup controlId="desc">
-                                <ControlLabel>Description: </ControlLabel>
-                                {' '}
-                                <FormControl componentClass="textarea" onChange={this.handleDescription}/>
-                            </FormGroup>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col md={6}>
-                            <FormGroup controlId="duration">
-                                <ControlLabel>Duration: </ControlLabel>
-                                {' '}
-                                <FormControl type="number" min="0.1" step="0.1" placeholder="in seconds"
-                                             onChange={this.handleDuration}/>
-                            </FormGroup>
-                        </Col>
-                        <Col md={6}>
-                            <FormGroup controlId="delay">
-                                <ControlLabel>Delay: </ControlLabel>
-                                {' '}
-                                <FormControl type="number" min="1" step="1" placeholder="in seconds"
-                                             onChange={this.handleDelay}/>
-                            </FormGroup>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col md={2}>
-                            {this.getSubmitButton()}
-                        </Col>
-                    </Row>
-                </Form>
-            </Well>
+            <div>
+                {openButton}
+                <Modal show={this.state.showModal} onHide={this.closeModal}>
+                    <Modal.Header>
+                        <Modal.Title>Schedule Measurement</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Well>
+                            <Form onSubmit={false}>
+                                <Row>
+                                    <Col md={6}>
+                                        <FormGroup controlId="name">
+                                            <ControlLabel>Name: </ControlLabel>
+                                            {' '}
+                                            <FormControl componentClass="textarea" onChange={this.handleName}/>
+                                        </FormGroup>
+                                    </Col>
+                                    <Col md={6}>
+                                        <FormGroup controlId="desc">
+                                            <ControlLabel>Description: </ControlLabel>
+                                            {' '}
+                                            <FormControl componentClass="textarea" onChange={this.handleDescription}/>
+                                        </FormGroup>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col md={6}>
+                                        <FormGroup controlId="duration">
+                                            <ControlLabel>Duration: </ControlLabel>
+                                            {' '}
+                                            <FormControl type="number" min="0.1" step="0.1" placeholder="in seconds"
+                                                         onChange={this.handleDuration}/>
+                                        </FormGroup>
+                                    </Col>
+                                    <Col md={6}>
+                                        <FormGroup controlId="delay">
+                                            <ControlLabel>Delay: </ControlLabel>
+                                            {' '}
+                                            <FormControl type="number" min="1" step="1" placeholder="in seconds"
+                                                         onChange={this.handleDelay}/>
+                                        </FormGroup>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col md={2}>
+                                        {this.getSubmitButton()}
+                                    </Col>
+                                </Row>
+                            </Form>
+                        </Well>
+                    </Modal.Body>
+                </Modal>
+            </div>
         );
     }
 
