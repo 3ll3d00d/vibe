@@ -24,6 +24,12 @@ class Measure extends Component {
         });
     };
 
+    clearTimeSeries = () => {
+        this.setState((previousState, props) => {
+            return {selectedMeasurement: null};
+        });
+    };
+
     findTimeSeriesData() {
         const mId = this.state.selectedMeasurement;
         if (mId) {
@@ -75,7 +81,9 @@ class Measure extends Component {
                                     <Row>
                                         <Col>
                                             <Measurements measurements={this.props.measurements.value}
-                                                          fetcher={this.showTimeSeries}/>
+                                                          fetcher={this.showTimeSeries}
+                                                          clearFunc={this.clearTimeSeries}
+                                                          selectedMeasurement={this.state.selectedMeasurement}/>
                                         </Col>
                                     </Row>
                                     <Row>

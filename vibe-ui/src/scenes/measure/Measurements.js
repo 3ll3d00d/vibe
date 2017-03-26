@@ -21,9 +21,10 @@ class Measurements extends Component {
      * @param responses any responses to delete requests.
      * @param deleteFunc the delete function.
      * @param fetchFunc the fetch time series function.
+     * @parma selectedMeasurement the selected measurement, if any.
      * @returns {*}
      */
-    convert(row, responses, deleteFunc, fetchFunc) {
+    convert(row, responses, deleteFunc, fetchFunc, clearFunc, selectedMeasurement) {
         const deleteMeasurement = () => deleteFunc(row.id);
         const fetchTimeSeries = () => fetchFunc(row.id);
         return Object.assign(row, {
@@ -32,13 +33,16 @@ class Measurements extends Component {
             fs: row.measurementParameters.fs,
             deleteMeasurement: deleteMeasurement,
             deleteResponse: this.findResponse(row.id, responses),
-            fetchTimeSeries: fetchTimeSeries
+            fetchTimeSeries: fetchTimeSeries,
+            clearTimeSeries: clearFunc,
+            isSelected: row.id === selectedMeasurement
         });
     }
 
     render() {
-        const {measurements, deleteFunc, fetcher, ...responses} = this.props;
-        return <MeasurementTable data={measurements.map(m => this.convert(m, responses, deleteFunc, fetcher))}/>
+        const {measurements, deleteFunc, fetcher, clearFunc, selectedMeasurement, ...responses} = this.props;
+        const data = measurements.map(m => this.convert(m, responses, deleteFunc, fetcher, clearFunc, selectedMeasurement));
+        return <MeasurementTable data={data}/>
     }
 }
 
