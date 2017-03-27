@@ -122,7 +122,7 @@ class ActiveMeasurement(object):
         self.recordingDevices[deviceName] = {
             'state': state.name,
             'reason': reason,
-            'time': datetime.datetime.now().strftime(DATETIME_FORMAT),
+            'time': datetime.datetime.utcnow().strftime(DATETIME_FORMAT),
             'count': count
         }
 
@@ -136,7 +136,7 @@ class ActiveMeasurement(object):
         status = self.recordingDevices[deviceId]
         if status is not None:
             if status['state'] == MeasurementStatus.RECORDING.name:
-                status['last'] = datetime.datetime.now().strftime(DATETIME_FORMAT)
+                status['last'] = datetime.datetime.utcnow().strftime(DATETIME_FORMAT)
                 status['count'] = status['count'] + dataCount
 
     def __str__(self):
@@ -231,7 +231,7 @@ class MeasurementController(object):
         """
         while self.running:
             for am in list(self.activeMeasurements):
-                now = datetime.datetime.now()
+                now = datetime.datetime.utcnow()
                 # devices were allocated and have completed == complete
                 recordingDeviceCount = len(am.recordingDevices)
                 if recordingDeviceCount > 0:
@@ -260,7 +260,7 @@ class MeasurementController(object):
 
     def _handleDeathbed(self, am):
         # check if in the deathbed, if not add it
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         if am in self.deathBed.keys():
             # if it is, check if it's been there for too long
             if now > (self.deathBed[am] + datetime.timedelta(days=0, seconds=self.maxTimeOnDeathbedSeconds)):

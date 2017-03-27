@@ -68,7 +68,7 @@ def test_scheduledMeasurementWithNoDevice_fails(measurementController, tmpdirPat
     assert am is not None
     assert len(am) == 0
 
-    startTime = datetime.datetime.now()
+    startTime = datetime.datetime.utcnow()
     accepted, message = measurementController.schedule('first', 0.2, startTime, 'desc')
     assert accepted
     assert message is None
@@ -102,7 +102,7 @@ def test_clashingMeasurement_isRejected(measurementController, tmpdirPath):
     assert am is not None
     assert len(am) == 0
 
-    startTime = datetime.datetime.now()
+    startTime = datetime.datetime.utcnow()
     accepted, message = measurementController.schedule('first', 0.2, startTime, 'desc')
     assert accepted
     assert message is None
@@ -119,7 +119,7 @@ def test_scheduledMeasurement_IsSentToDevice(measurementController, deviceContro
     assert am is not None
     assert len(am) == 0
 
-    startTime = datetime.datetime.now()
+    startTime = datetime.datetime.utcnow()
     accepted, message = measurementController.schedule('first', 0.2, startTime, 'desc')
     assert accepted
     assert message is None
@@ -163,7 +163,7 @@ def test_scheduledMeasurementThatReceivesData_CompletesNormally(measurementContr
     assert devices[0].deviceId is not None
     assert devices[0].deviceId == 'd1'
 
-    startTime = datetime.datetime.now()
+    startTime = datetime.datetime.utcnow()
     measurementName = 'first'
     measurementId = getMeasurementId(startTime, measurementName)
     accepted, message = measurementController.schedule(measurementName, 0.2, startTime, 'desc')
@@ -266,7 +266,7 @@ def test_scheduledMeasurementThatReceivesData_CompletesNormally(measurementContr
         assert cm.recordingDevices.get('d1').get('reason') == None
 
 
-def getFormattedStartTime(time=datetime.datetime.now()):
+def getFormattedStartTime(time=datetime.datetime.utcnow()):
     return datetime.datetime.strptime(time.strftime(DATETIME_FORMAT), DATETIME_FORMAT)
 
 
@@ -303,7 +303,7 @@ def test_scheduledMeasurement_IsPutOnDeathbed_BeforeFailure(measurementControlle
     assert devices[0].deviceId is not None
     assert devices[0].deviceId == 'd1'
 
-    startTime = datetime.datetime.now() + datetime.timedelta(seconds=0.5)
+    startTime = datetime.datetime.utcnow() + datetime.timedelta(seconds=0.5)
     measurementName = 'first'
     measurementId = getMeasurementId(startTime, measurementName)
     accepted, message = measurementController.schedule(measurementName, 0.2, startTime, 'desc')
@@ -407,7 +407,7 @@ def test_scheduledMeasurement_FailsDuringMeasurement_IsStoredAsFailed(measuremen
     assert devices[0].deviceId is not None
     assert devices[0].deviceId == 'd1'
 
-    startTime = datetime.datetime.now()
+    startTime = datetime.datetime.utcnow()
     measurementName = 'first'
     measurementId = getMeasurementId(startTime, measurementName)
     accepted, message = measurementController.schedule(measurementName, 0.2, startTime, 'desc')

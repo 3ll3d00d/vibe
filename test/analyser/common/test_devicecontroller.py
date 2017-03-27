@@ -44,7 +44,7 @@ def test_whenNewDeviceArrives_ItIsStoredInTheCache_AndTargetStateIsReached(devic
     assert storedDevice.lastUpdateTime is not None
     assert storedDevice.payload is not None
     assert storedDevice.payload is device
-    assert datetime.datetime.now() >= storedDevice.lastUpdateTime
+    assert datetime.datetime.utcnow() >= storedDevice.lastUpdateTime
     # FIXFIX I appear to have no clue how to use python's mock, this appears to be pass but blows up inside the
     # equals function
     # assert targetStateController.update.assert_called_once_with(device)
@@ -88,7 +88,7 @@ def test_measurementsAreNotScheduledForUninitialisedDevices(deviceController):
     assert devices[0] is not None
     assert devices[0].deviceId is not None
     assert devices[0].deviceId == 'old'
-    assert len(deviceController.scheduleMeasurement('next', 10, datetime.datetime.now())) == 0
+    assert len(deviceController.scheduleMeasurement('next', 10, datetime.datetime.utcnow())) == 0
 
 
 def test_measurementsAreScheduledForInitialisedDevices(deviceController, httpclient):
@@ -99,7 +99,7 @@ def test_measurementsAreScheduledForInitialisedDevices(deviceController, httpcli
     assert devices[0] is not None
     assert devices[0].deviceId is not None
     assert devices[0].deviceId == 'old'
-    startTime = datetime.datetime.now()
+    startTime = datetime.datetime.utcnow()
     measurement = deviceController.scheduleMeasurement('next', 10, startTime)
     assert len(measurement) == 1  # there is a response
     assert len(httpclient.record) == 1  # measurement was sent to the device

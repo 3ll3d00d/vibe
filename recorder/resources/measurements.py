@@ -142,7 +142,7 @@ class ScheduledMeasurement:
         self.name = name
         self.device = device
         self.recording = False
-        self.statuses = [{'name': ScheduledMeasurementStatus.INITIALISING.name, 'time': datetime.now()}]
+        self.statuses = [{'name': ScheduledMeasurementStatus.INITIALISING.name, 'time': datetime.utcnow()}]
         self.callback = None
 
     def schedule(self, duration, at=None, delay=None, callback=None):
@@ -157,7 +157,7 @@ class ScheduledMeasurement:
         delay = self.calculateDelay(at, delay)
         self.callback = callback
         logger.info('Initiating measurement ' + self.name + ' for ' + str(duration) + 's in ' + str(delay) + 's')
-        self.statuses.append({'name': ScheduledMeasurementStatus.SCHEDULED.name, 'time': datetime.now()})
+        self.statuses.append({'name': ScheduledMeasurementStatus.SCHEDULED.name, 'time': datetime.utcnow()})
         threading.Timer(delay, self.execute, [duration]).start()
 
     def execute(self, duration):
@@ -166,7 +166,7 @@ class ScheduledMeasurement:
         :param duration: the time to run for.
         :return: nothing.
         """
-        self.statuses.append({'name': ScheduledMeasurementStatus.RUNNING.name, 'time': datetime.now()})
+        self.statuses.append({'name': ScheduledMeasurementStatus.RUNNING.name, 'time': datetime.utcnow()})
         try:
             self.recording = True
             self.device.start(self.name, durationInSeconds=duration)
@@ -174,10 +174,10 @@ class ScheduledMeasurement:
             self.recording = False
         if self.device.status == RecordingDeviceStatus.FAILED:
             self.statuses.append({'name': ScheduledMeasurementStatus.FAILED.name,
-                                  'time': datetime.now(),
+                                  'time': datetime.utcnow(),
                                   'reason': self.device.failureCode})
         else:
-            self.statuses.append({'name': ScheduledMeasurementStatus.COMPLETE.name, 'time': datetime.now()})
+            self.statuses.append({'name': ScheduledMeasurementStatus.COMPLETE.name, 'time': datetime.utcnow()})
         # this is a bit of a hack, need to remove this at some point by refactoring the way measurements are stored
         if self.callback is not None:
             self.callback()
@@ -190,7 +190,7 @@ class ScheduledMeasurement:
         :return: the delay.
         """
         if at is not None:
-            return max((datetime.strptime(at, DATETIME_FORMAT) - datetime.now()).total_seconds(), 0)
+            return max((datetime.strptime(at, DATETIME_FORMAT) - datetime.utcnow()).total_seconds(), 0)
         elif delay is not None:
             return delay
         else:
