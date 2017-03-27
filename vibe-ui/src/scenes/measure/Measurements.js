@@ -21,7 +21,8 @@ class Measurements extends Component {
      * @param responses any responses to delete requests.
      * @param deleteFunc the delete function.
      * @param fetchFunc the fetch time series function.
-     * @parma selectedMeasurement the selected measurement, if any.
+     * @param clearFunc the clear selected time series function.
+     * @param selectedMeasurement the selected measurement, if any.
      * @returns {*}
      */
     convert(row, responses, deleteFunc, fetchFunc, clearFunc, selectedMeasurement) {

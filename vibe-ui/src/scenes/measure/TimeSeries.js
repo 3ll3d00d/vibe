@@ -5,7 +5,8 @@ import Message from "../../components/Message";
 
 export default class TimeSeries extends Component {
     static propTypes = {
-        dataPromise: PropTypes.object.isRequired
+        dataPromise: PropTypes.object.isRequired,
+        fs: PropTypes.number.isRequired
     };
 
     static idxToSeriesName = {
@@ -36,14 +37,11 @@ export default class TimeSeries extends Component {
         let maxX = Number.MIN_VALUE;
         let maxY = Number.MIN_VALUE;
         for (let [idx, value] of raw.entries()) {
-            if (value > 0) {
-                // TODO pass fs in
-                xyz.push({x: idx / 500, y: raw[idx], z: 1});
-                if (value < minX) minX = value;
-                if (value > maxX) maxX = value;
-                if (raw[idx] < minY) minY = raw[idx];
-                if (raw[idx] > maxY) maxY = raw[idx];
-            }
+            xyz.push({x: idx / this.props.fs, y: raw[idx], z: 1});
+            if (value < minX) minX = value;
+            if (value > maxX) maxX = value;
+            if (raw[idx] < minY) minY = raw[idx];
+            if (raw[idx] > maxY) maxY = raw[idx];
         }
         return {
             id: `${device}/${series}`,

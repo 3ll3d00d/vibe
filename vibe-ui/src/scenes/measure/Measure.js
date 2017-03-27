@@ -44,7 +44,11 @@ class Measure extends Component {
     renderTimeSeriesIfAny() {
         const dataPromise = this.findTimeSeriesData();
         if (dataPromise) {
-            return <TimeSeries dataPromise={dataPromise}/>
+            const selected = this.props.measurements.value.find(m => m.id === this.state.selectedMeasurement);
+            if (selected) {
+                return <TimeSeries fs={selected.measurementParameters.fs}
+                                   dataPromise={dataPromise}/>
+            }
         }
         return <div/>;
     }
@@ -74,11 +78,6 @@ class Measure extends Component {
                             <Col>
                                 <Panel header="Measurements" bsStyle="info">
                                     <Row>
-                                        <Col md={1}>
-                                            <ScheduleMeasurement deviceStatuses={this.props.deviceStatuses.value}/>
-                                        </Col>
-                                    </Row>
-                                    <Row>
                                         <Col>
                                             <Measurements measurements={this.props.measurements.value}
                                                           fetcher={this.showTimeSeries}
@@ -87,8 +86,11 @@ class Measure extends Component {
                                         </Col>
                                     </Row>
                                     <Row>
-                                        <Col>
+                                        <Col md={9}>
                                             {timeSeries}
+                                        </Col>
+                                        <Col md={3}>
+                                            <ScheduleMeasurement deviceStatuses={this.props.deviceStatuses.value}/>
                                         </Col>
                                     </Row>
                                 </Panel>
