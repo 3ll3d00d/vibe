@@ -34,7 +34,7 @@ class Device(object):
         """
         :return: true if the lastUpdateTime is more than maxAge seconds ago.
         """
-        return (datetime.datetime.now() - self.lastUpdateTime).total_seconds() > self.maxAgeSeconds
+        return (datetime.datetime.utcnow() - self.lastUpdateTime).total_seconds() > self.maxAgeSeconds
 
     def __str__(self):
         return "Device[" + self.deviceId + "-" + self.lastUpdateTime.strftime(DATETIME_FORMAT) + "]"
@@ -80,7 +80,7 @@ class DeviceController(object):
         else:
             logger.debug('Pinged by device ' + deviceId)
         storedDevice.payload = device
-        storedDevice.lastUpdateTime = datetime.datetime.now()
+        storedDevice.lastUpdateTime = datetime.datetime.utcnow()
         # TODO if device has FAILED, do something?
         self.devices.update({deviceId: storedDevice})
         self.targetStateController.updateDeviceState(storedDevice.payload)

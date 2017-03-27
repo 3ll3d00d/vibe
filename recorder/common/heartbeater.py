@@ -20,7 +20,7 @@ class Heartbeater(object):
         :return:
         """
         from datetime import datetime
-        nextRun = datetime.now().timestamp() + self.cfg.getPingInterval()
+        nextRun = datetime.utcnow().timestamp() + self.cfg.getPingInterval()
         self.sendHeartbeat()
         self.scheduleNextHeartbeat(nextRun)
 
@@ -54,6 +54,6 @@ class Heartbeater(object):
         """
         import threading
         from datetime import datetime
-        tilNextTime = max(nextRun - datetime.now().timestamp(), 0)
+        tilNextTime = max(nextRun - datetime.utcnow().timestamp(), 0)
         logging.getLogger('recorder').info("Scheduling next ping in " + str(round(tilNextTime, 3)) + " seconds")
         threading.Timer(tilNextTime, self.ping).start()
