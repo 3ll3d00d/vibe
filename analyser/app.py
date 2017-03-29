@@ -7,8 +7,11 @@ from flask_restful import Api
 from analyser.common.config import Config
 from analyser.common.devicecontroller import DeviceController
 from analyser.common.measurementcontroller import MeasurementController
+from analyser.common.targetcontroller import TargetController
 from analyser.common.targetstatecontroller import TargetStateProvider, TargetStateController
 from analyser.resources.analyse import Analyse
+from analyser.resources.target import Target
+from analyser.resources.targets import Targets
 from analyser.resources.timeseries import TimeSeries
 from analyser.resources.measurement import InitialiseMeasurement, RecordData, CompleteMeasurement, Measurement, \
     FailMeasurement
@@ -35,10 +38,12 @@ targetStateController = TargetStateController(targetStateProvider, reactor, http
 deviceController = DeviceController(targetStateController, cfg.dataDir, httpclient)
 targetStateController.deviceController = deviceController
 measurementController = MeasurementController(targetStateProvider, cfg.dataDir, deviceController)
+targetController = TargetController(cfg.dataDir)
 resourceArgs = {
     'deviceController': deviceController,
     'targetStateController': targetStateController,
     'measurementController': measurementController,
+    'targetController': targetController
 }
 
 # GET: gets the current target state
@@ -80,6 +85,11 @@ api.add_resource(Analyse, API_PREFIX + '/measurements/<measurementId>/analyse', 
 # PUT: get time series data for the measurement
 api.add_resource(TimeSeries, API_PREFIX + '/measurements/<measurementId>/timeseries', resource_class_kwargs=resourceArgs)
 
+# GET: get targets
+api.add_resource(Targets, API_PREFIX + '/targets', resource_class_kwargs=resourceArgs)
+
+# PUT, DELETE: store targets
+api.add_resource(Target, API_PREFIX + '/targets/<targetId>', resource_class_kwargs=resourceArgs)
 
 def main(args=None):
     """ The main routine. """

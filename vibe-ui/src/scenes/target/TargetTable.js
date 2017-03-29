@@ -6,23 +6,20 @@ import "react-select/dist/react-select.css";
 
 class ActionCell extends Component {
     getAnalyseButton(target) {
-        if (target.status === 'COMPLETE') {
-            if (target.isSelected) {
-                return (
-                    <Button bsStyle="success"
-                            onClick={() => target.clearTimeSeries()} bsSize="xsmall">
-                        <FontAwesome name="eject"/>
-                    </Button>
-                );
-            } else {
-                return (
-                    <Button bsStyle="primary" onClick={() => target.fetchTimeSeries()} bsSize="xsmall">
-                        <FontAwesome name="line-chart"/>
-                    </Button>
-                );
-            }
+        if (target.isSelected) {
+            return (
+                <Button bsStyle="success"
+                        onClick={() => target.clearTimeSeries()} bsSize="xsmall">
+                    <FontAwesome name="eject"/>
+                </Button>
+            );
+        } else {
+            return (
+                <Button bsStyle="primary" onClick={() => target.fetchTimeSeries()} bsSize="xsmall">
+                    <FontAwesome name="line-chart"/>
+                </Button>
+            );
         }
-        return null;
     }
 
     getDeleteButton(row) {
@@ -51,14 +48,13 @@ class ActionCell extends Component {
                 );
             }
         } else {
-            if (row.status === 'COMPLETE' || row.status === 'FAILED') {
-                return (
-                    <Button bsStyle="danger" onClick={() => row.deleteTarget()}
-                            bsSize="xsmall">
-                        <FontAwesome name="trash"/>
-                    </Button>
-                );
-            }
+            return (
+                <Button bsStyle="danger"
+                        onClick={() => { row.clearTimeSeries(); row.deleteTarget(); }}
+                        bsSize="xsmall">
+                    <FontAwesome name="trash"/>
+                </Button>
+            );
         }
         return null;
     }
@@ -78,8 +74,7 @@ class ActionCell extends Component {
 
 
 const columns = [
-    {key: 'id', header: 'ID', hidden: true, primaryKey: true},
-    {key: 'name', header: 'Name', filterable: true},
+    {key: 'name', header: 'Name', primaryKey: true, filterable: true},
     {key: 'actions', header: 'Actions', Component: ActionCell},
 ];
 

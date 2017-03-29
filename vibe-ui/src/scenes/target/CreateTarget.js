@@ -7,6 +7,10 @@ class CreateTarget extends Component {
         previewFunc: PropTypes.func.isRequired
     };
 
+    static contextTypes = {
+        apiPrefix: PropTypes.string.isRequired
+    };
+
     constructor(props) {
         super(props);
         this.state = {name: '', hinge: ''};

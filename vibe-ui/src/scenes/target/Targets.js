@@ -10,29 +10,33 @@ class Targets extends Component {
         selected: PropTypes.string
     };
 
+    static contextTypes = {
+        apiPrefix: PropTypes.string.isRequired
+    };
+
     findResponse(id, responses) {
         const responseKey = `deleteTargetResponse_${id}`;
-        if (responses.hasOwnProperty(responseKey)) {
+        if (responses && responses.hasOwnProperty(responseKey)) {
             return responses[responseKey];
         }
         return null;
     }
 
-    convert(row, deleteFunc, showFunc, clearFunc, selectedTarget, responses) {
-        const deleteTarget = () => deleteFunc(row.id);
-        const fetchTimeSeries = () => showFunc(row.id);
+    convert(row, showFunc, clearFunc, selectedTarget, responses) {
+        const deleteTarget = () => this.props.deleteFunc(row.name);
+        const fetchTimeSeries = () => showFunc(row.name);
         return Object.assign(row, {
             deleteTarget: deleteTarget,
-            deleteResponse: this.findResponse(row.id, responses),
+            deleteResponse: this.findResponse(row.name, responses),
             fetchTimeSeries: fetchTimeSeries,
             clearTimeSeries: clearFunc,
-            isSelected: row.id === selectedTarget
+            isSelected: row.name === selectedTarget
         });
     }
 
     render() {
-        const {targets, showFunc, clearFunc, selectedTarget, ...responses} = this.props;
-        const data = targets.map(t => this.convert(t, showFunc, clearFunc, selectedTarget, responses));
+        const {targets, showFunc, clearFunc, selected, ...responses} = this.props;
+        const data = targets.map(t => this.convert(t, showFunc, clearFunc, selected, responses));
         return <TargetTable data={data}/>;
     }
 }
