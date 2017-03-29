@@ -20,18 +20,18 @@ class Measure extends Component {
     showTimeSeries = (measurementId) => {
         this.setState((previousState, props) => {
             props.fetchData(measurementId);
-            return {selectedMeasurement: measurementId};
+            return {selected: measurementId};
         });
     };
 
     clearTimeSeries = () => {
         this.setState((previousState, props) => {
-            return {selectedMeasurement: null};
+            return {selected: null};
         });
     };
 
     findTimeSeriesData() {
-        const mId = this.state.selectedMeasurement;
+        const mId = this.state.selected;
         if (mId) {
             const dataPromiseKey = Object.keys(this.props).find(p => p === `fetchedData_${mId}`);
             if (dataPromiseKey) {
@@ -44,7 +44,7 @@ class Measure extends Component {
     renderTimeSeriesIfAny() {
         const dataPromise = this.findTimeSeriesData();
         if (dataPromise) {
-            const selected = this.props.measurements.value.find(m => m.id === this.state.selectedMeasurement);
+            const selected = this.props.measurements.value.find(m => m.id === this.state.selected);
             if (selected) {
                 return <TimeSeries fs={selected.measurementParameters.fs}
                                    dataPromise={dataPromise}/>
@@ -82,7 +82,7 @@ class Measure extends Component {
                                             <Measurements measurements={this.props.measurements.value}
                                                           fetcher={this.showTimeSeries}
                                                           clearFunc={this.clearTimeSeries}
-                                                          selectedMeasurement={this.state.selectedMeasurement}/>
+                                                          selectedMeasurement={this.state.selected}/>
                                         </Col>
                                     </Row>
                                     <Row>

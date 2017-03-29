@@ -32,11 +32,14 @@ class App extends Component {
                                         <LinkContainer to="/configure">
                                             <NavItem eventKey={1}>Configure</NavItem>
                                         </LinkContainer>
+                                        <LinkContainer to="/target">
+                                            <NavItem eventKey={2}>Target</NavItem>
+                                        </LinkContainer>
                                         <LinkContainer to="/measure">
-                                            <NavItem eventKey={2}>Measure</NavItem>
+                                            <NavItem eventKey={3}>Measure</NavItem>
                                         </LinkContainer>
                                         <LinkContainer to="/analyse">
-                                            <NavItem eventKey={3}>Analyse</NavItem>
+                                            <NavItem eventKey={4}>Analyse</NavItem>
                                         </LinkContainer>
 {/*
                                         <LinkContainer to="/rta">

@@ -26,14 +26,19 @@ export default class Chart extends PureComponent {
                 }
             }
             if (!colour) colour = this.generateRandomColour();
-            return {
+            const dataset = {
                 label: s.id + '/' + s.series,
                 data: s.xyz,
                 pointRadius: this.props.config.showDots ? 1 : 0,
                 borderColor: colour,
                 backgroundColor: hexToRGBA(colour, 2),
-                borderWidth: 1
+                borderWidth: 1,
             };
+            if (s.renderMetaData) {
+                return Object.assign(dataset, s.renderMetaData);
+            } else {
+                return dataset;
+            }
         });
         const xLinLog = this.props.config.xLog ? "logarithmic" : "linear";
         let xAxisTicks = {};
