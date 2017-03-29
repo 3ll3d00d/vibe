@@ -39,7 +39,7 @@ class Target extends Component {
     findTimeSeriesData() {
         const targetId = this.state.selected;
         if (targetId) {
-            return this.props.targets.find(t => t.id === targetId);
+            return this.props.targets.value.find(t => t.name === targetId);
         }
         return null;
     }
@@ -50,9 +50,9 @@ class Target extends Component {
         } else {
             const target = this.findTimeSeriesData();
             if (target) {
-                const selected = this.props.targets.value.find(m => m.id === this.state.selected);
+                const selected = this.props.targets.value.find(m => m.name === this.state.selected);
                 if (selected) {
-                    // render
+                    return <TargetCurve data={selected}/>
                 }
             }
         }
