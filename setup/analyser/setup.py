@@ -38,6 +38,7 @@ setup(name='vibe-analyser',
       install_requires=[
           'flask',
           'flask-restful',
+          'flask-uploads',
           'numpy',
           'pyyaml',
           'requests',
