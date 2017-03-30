@@ -22,6 +22,7 @@
     "react-bootstrap": "^0.30.7",
     "react-bootstrap-multiselect": "^2.3.0",
     "react-dom": "^15.4.2",
+    "react-dropzone-component": "^1.4.1",
     "react-fontawesome": "^1.5.0",
     "react-numeric-input": "^2.0.7",
     "react-redux": "^5.0.3",
