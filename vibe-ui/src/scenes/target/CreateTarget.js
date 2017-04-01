@@ -1,6 +1,9 @@
 import React, {Component, PropTypes} from "react";
 import {Button, ButtonGroup, ControlLabel, FormControl, FormGroup, Well} from "react-bootstrap";
 import {connect} from "react-refetch";
+import DropzoneComponent from "react-dropzone-component";
+import "dropzone/dist/min/dropzone.min.css";
+import "react-dropzone-component/styles/filepicker.css";
 
 class CreateTarget extends Component {
     static propTypes = {
@@ -11,6 +14,88 @@ class CreateTarget extends Component {
         apiPrefix: PropTypes.string.isRequired
     };
 
+    constructor(props) {
+        super(props);
+        this.state = {active: 'hinge'};
+        this.selectHinge.bind(this);
+        this.selectWav.bind(this);
+    }
+
+    selectHinge = () => {
+        this.setState((previousState, props) => {
+            return {active: 'hinge'}
+        });
+    };
+
+    selectWav = () => {
+        this.setState((previousState, props) => {
+            return {active: 'wav'}
+        });
+    };
+
+    render() {
+        const selector = this.state.active === 'hinge'
+            ? <HingeSelector previewFunc={this.props.previewFunc} createTarget={this.props.createTarget}/>
+            : <WavSelector rootURL={`${this.context.apiPrefix}/targets`}/>;
+
+        return (
+            <Well>
+                <ButtonGroup>
+                    <Button active={this.state.active === 'hinge'}
+                            onClick={() => this.selectHinge()}>
+                        Hinge Points
+                    </Button>
+                    <Button active={this.state.active === 'wav'}
+                            onClick={() => this.selectWav()}>
+                        WAV
+                    </Button>
+                </ButtonGroup>
+                {selector}
+            </Well>
+        );
+    }
+}
+
+class WavSelector extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {name: ''};
+        this.handleName.bind(this);
+    }
+
+    handleName = (event) => {
+        const value = event.target.value;
+        this.setState({name: value});
+    };
+
+    render() {
+        let selector = null;
+        if (this.state.name.length > 0) {
+            const dropzoneConfig = {
+                iconFiletypes: ['.wav'],
+                showFiletypeIcon: true,
+                postUrl: `${this.props.rootURL}/${this.state.name}`,
+                maxFiles: 1
+            };
+            selector = <DropzoneComponent key={this.state.name} config={dropzoneConfig}/>
+        }
+        return (
+            <form>
+                <FormGroup>
+                    <FormGroup controlId="name">
+                        <ControlLabel>Name</ControlLabel>
+                        <FormControl type="text"
+                                     value={this.state.name}
+                                     onChange={this.handleName}/>
+                        {selector}
+                    </FormGroup>
+                </FormGroup>
+            </form>
+        );
+    }
+}
+
+class HingeSelector extends Component {
     constructor(props) {
         super(props);
         this.state = {name: '', hinge: ''};
@@ -31,22 +116,18 @@ class CreateTarget extends Component {
 
     handleName = (event) => {
         const value = event.target.value;
-        this.setState((previousState, props) => {
-            return {name: value}
-        });
+        this.setState({name: value});
     };
 
     handleHinge = (event) => {
         const value = event.target.value;
-        this.setState((previousState, props) => {
-            return {hinge: value}
-        });
+        this.setState({hinge: value});
     };
 
     isNotNumeric(hingePoint) {
         const h1 = hingePoint[0].trim();
         const h2 = hingePoint[1].trim();
-        // TODO this doens't really work
+        // TODO this doesn't really work
         return (h1.length === 0 || h2.length === 0) || (Number.isNaN(h1) || Number.isNaN(h2))
     }
 
@@ -96,26 +177,24 @@ class CreateTarget extends Component {
     render() {
         const validationState = this.getHingeValidationState();
         return (
-            <Well>
-                <form onSubmit={this.handleSubmit}>
-                    <FormGroup>
-                        <FormGroup controlId="name">
-                            <ControlLabel>Name</ControlLabel>
-                            <FormControl type="text"
-                                         value={this.state.name}
-                                         onChange={this.handleName}/>
-                        </FormGroup>
-                        <FormGroup controlId="details" validationState={validationState}>
-                            <ControlLabel>Hinge Points</ControlLabel>
-                            <FormControl componentClass="textarea"
-                                         value={this.state.hinge}
-                                         onChange={this.handleHinge}
-                                         placeholder="Enter a set of hinge points&#10;Use dB<space>frequency format such as&#10;0 20&#10;5 40&#10;5 80&#10;4 120"/>
-                        </FormGroup>
+            <form onSubmit={this.handleSubmit}>
+                <FormGroup>
+                    <FormGroup controlId="name">
+                        <ControlLabel>Name</ControlLabel>
+                        <FormControl type="text"
+                                     value={this.state.name}
+                                     onChange={this.handleName}/>
                     </FormGroup>
-                    {this.getSubmitButtons(validationState)}
-                </form>
-            </Well>
+                    <FormGroup controlId="details" validationState={validationState}>
+                        <ControlLabel>Hinge Points</ControlLabel>
+                        <FormControl componentClass="textarea"
+                                     value={this.state.hinge}
+                                     onChange={this.handleHinge}
+                                     placeholder="Enter a set of hinge points&#10;Use dB<space>frequency format such as&#10;0 20&#10;5 40&#10;5 80&#10;4 120"/>
+                    </FormGroup>
+                </FormGroup>
+                {this.getSubmitButtons(validationState)}
+            </form>
         );
     }
 }

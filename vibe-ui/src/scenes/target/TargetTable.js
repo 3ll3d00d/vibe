@@ -66,7 +66,14 @@ class ActionCell extends Component {
     }
 }
 
-[ActionCell].forEach(m => {
+const typeCell = ({row}) => {
+    const icon = row.type === 'hinge' ? "file-code-o" : "file-audio-o";
+    return (
+        <FontAwesome size="lg" name={icon}/>
+    );
+};
+
+[typeCell, ActionCell].forEach(m => {
     m.propTypes = {
         row: PropTypes.object.isRequired,
     }
@@ -74,6 +81,7 @@ class ActionCell extends Component {
 
 
 const columns = [
+    {key: 'type', header: 'Type', Component: typeCell},
     {key: 'name', header: 'Name', primaryKey: true, filterable: true},
     {key: 'actions', header: 'Actions', Component: ActionCell},
 ];
