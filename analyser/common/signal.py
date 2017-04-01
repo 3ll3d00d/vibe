@@ -67,6 +67,24 @@ class Signal(object):
         """
         return self.lowPass().samples
 
+    def _fdw(self, analysisFunc):
+        slices = []
+        initialNperSeg = self.getSegmentLength()
+        nperseg = initialNperSeg
+        # the no of slices is based on a requirement for approximately 1Hz resolution to 128Hz and then halving the
+        # resolution per octave. We calculate this as the
+        # bitlength(fs) - bitlength(128) + 2 (1 for the 1-128Hz range and 1 for 2**n-fs Hz range)
+        bitLength128 = int(128).bit_length()
+        for x in range(0, (self.fs - 1).bit_length() - bitLength128 + 2):
+            f, p = analysisFunc(x, nperseg)
+            n = round(2 ** (x + bitLength128 - 1) / (self.fs / nperseg))
+            m = 0 if x == 0 else round(2 ** (x + bitLength128 - 2) / (self.fs / nperseg))
+            slices.append((f[m:n], p[m:n]))
+            nperseg /= 2
+        f = np.concatenate([n[0] for n in slices])
+        p = np.concatenate([n[1] for n in slices])
+        return f, p
+
     def psd(self, toReference='ref_db'):
         """
         analyses the source and returns a PSD, segment is set to get ~1Hz frequency resolution
@@ -78,26 +96,15 @@ class Signal(object):
             Power spectral density.
 
         """
-        slices = []
-        initialNperSeg = self.getSegmentLength()
-        nperseg = initialNperSeg
-        # the no of slices is based on a requirement for approximately 1Hz resolution to 128Hz and then halving the
-        # resolution per octave. We calculate this as the
-        # bitlength(fs) - bitlength(128) + 2 (1 for the 1-128Hz range and 1 for 2**n-fs Hz range)
-        bitLength128 = int(128).bit_length()
-        for x in range(0, (self.fs - 1).bit_length() - bitLength128 + 2):
+        def func(x, nperseg):
             f, Pxx_den = signal.welch(self.samples, self.fs, nperseg=nperseg, detrend=False)
             if toReference == 'ref_la':
                 Pxx_den = relativeToLa(Pxx_den)
             elif toReference == 'ref_db':
                 Pxx_den = relativeToDb(Pxx_den)
-            n = round(2 ** (x + bitLength128 - 1) / (self.fs / nperseg))
-            m = 0 if x == 0 else round(2 ** (x + bitLength128 - 2) / (self.fs / nperseg))
-            slices.append((f[m:n], Pxx_den[m:n]))
-            nperseg /= 2
-        f = np.concatenate([n[0] for n in slices])
-        Pxx_den = np.concatenate([n[1] for n in slices])
-        return f, Pxx_den
+            return f, Pxx_den
+
+        return self._fdw(func)
 
     def spectrum(self, toReference='ref_la'):
         """
@@ -111,32 +118,19 @@ class Signal(object):
             linear spectrum.
 
         """
-        slices = []
-        initialNperSeg = self.getSegmentLength()
-        nperseg = initialNperSeg
-        # the no of slices is based on a requirement for approximately 1Hz resolution to 128Hz and then halving the
-        # resolution per octave. We calculate this as the
-        # bitlength(fs) - bitlength(128) + 2 (1 for the 1-128Hz range and 1 for 2**n-fs Hz range)
-        bitLength128 = int(128).bit_length()
-        for x in range(0, (self.fs - 1).bit_length() - bitLength128 + 2):
-            f, Pxx_spec = signal.welch(self.samples,
-                                       self.fs,
-                                       nperseg=nperseg,
-                                       scaling='spectrum',
-                                       detrend=False)
-
+        def analysisFunc(x, nperseg):
+            f, Pxx_spec = signal.welch(self.samples, self.fs, nperseg=nperseg, scaling='spectrum', detrend=False)
             Pxx_spec = np.sqrt(Pxx_spec)
+            # it seems a 3dB adjustment is required to account for the change in nperseg
+            if x > 0:
+                Pxx_spec = Pxx_spec / (10**((3*x)/20))
             if toReference == 'ref_la':
                 Pxx_spec = relativeToLa(Pxx_spec)
             elif toReference == 'ref_db':
                 Pxx_spec = relativeToDb(Pxx_spec)
-            n = round(2 ** (x + bitLength128 - 1) / (self.fs / nperseg))
-            m = 0 if x == 0 else round(2 ** (x + bitLength128 - 2) / (self.fs / nperseg))
-            slices.append((f[m:n], Pxx_spec[m:n]))
-            nperseg /= 2
-        f = np.concatenate([n[0] for n in slices])
-        Pxx_spec = np.concatenate([n[1] for n in slices])
-        return f, Pxx_spec
+            return f, Pxx_spec
+
+        return self._fdw(analysisFunc)
 
     def peakSpectrum(self, toReference='ref_la'):
         """
@@ -149,33 +143,24 @@ class Signal(object):
             Pxx : ndarray
             linear spectrum max values.
         """
-        slices = []
-        initialNperSeg = self.getSegmentLength()
-        nperseg = initialNperSeg
-        # the no of slices is based on a requirement for approximately 1Hz resolution to 128Hz and then halving the
-        # resolution per octave. We calculate this as the
-        # bitlength(fs) - bitlength(128) + 2 (1 for the 1-128Hz range and 1 for 2**n-fs Hz range)
-        bitLength128 = int(128).bit_length()
-        for x in range(0, (self.fs - 1).bit_length() - bitLength128 + 2):
+        def analysisFunc(x, nperseg):
             freqs, _, Pxy = signal.spectrogram(self.samples,
                                                self.fs,
                                                window='hann',
-                                               nperseg=nperseg,
-                                               noverlap=nperseg // 2,
+                                               nperseg=int(nperseg),
+                                               noverlap=int(nperseg // 2),
                                                detrend=False,
                                                scaling='spectrum')
             Pxy_max = np.sqrt(Pxy.max(axis=-1).real)
+            if x > 0:
+                Pxy_max = Pxy_max / (10**((3*x)/20))
             if toReference == 'ref_la':
                 Pxy_max = relativeToLa(Pxy_max)
             elif toReference == 'ref_db':
                 Pxy_max = relativeToDb(Pxy_max)
-            n = round(2 ** (x + bitLength128 - 1) / (self.fs / nperseg))
-            m = 0 if x == 0 else round(2 ** (x + bitLength128 - 2) / (self.fs / nperseg))
-            slices.append((freqs[m:n], Pxy_max[m:n]))
-            nperseg = int(nperseg / 2)
-        freqs = np.concatenate([n[0] for n in slices])
-        Pxy_max = np.concatenate([n[1] for n in slices])
-        return freqs, Pxy_max
+            return freqs, Pxy_max
+
+        return self._fdw(analysisFunc)
 
     def spectrogram(self, toReference='ref_la'):
         """
@@ -292,7 +277,7 @@ def readWav(inputSignalFile, selectedChannel=1) -> Signal:
 
     try:
         if channelCount != 1:
-            raise ValueError('Unable to read ' + inputSignalFile + ' - ' + channelCount + ' channels is not supported')
+            raise ValueError('Unable to read ' + inputSignalFile + ' - ' + str(channelCount) + ' channels is not supported')
 
         rate, samples = wavfile.read(inputSignalFile)
         source = Signal(samples, rate)
