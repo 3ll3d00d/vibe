@@ -16,6 +16,7 @@ import FontAwesome from "react-fontawesome";
 import LineChart from "../../components/chart/LineChart";
 import PreciseIntNumericInput from "./PreciseIntNumericInput";
 import {NO_OPTION_SELECTED} from "../../constants";
+import {getAnalysisChartConfig} from "../../components/chart/ConfigGenerator";
 
 export default class ChartController extends Component {
 
@@ -45,38 +46,9 @@ export default class ChartController extends Component {
     }
 
     createChartConfig(state, range) {
-        const rawYRange = [this.chooseValue('minY', state, range), this.chooseValue('maxY', state, range)];
-        const yRange = Math.floor(rawYRange[1] - rawYRange[0]);
-        let yStep = 5;
-        if (yRange > 60) {
-            yStep = Math.floor(yRange / 10);
-        } else if (yRange < 1) {
-            yStep = 0.1;
-        } else if (yRange < 2) {
-            yStep = 0.2;
-        } else if (yRange < 5) {
-            yStep = 0.5;
-        } else if (yRange < 10) {
-            yStep = 1;
-        } else if (yRange < 20) {
-            yStep = 2;
-        }
-        const minY = yStep * Math.floor(rawYRange[0] / yStep);
-        const maxY = yStep * Math.ceil(rawYRange[1] / yStep);
-        return {
-            config: {
-                x: [Math.round(this.chooseValue('minX', state, range)), this.chooseValue('maxX', state, range)],
-                xLog: state.xLog,
-                xLabel: 'Frequency (Hz)',
-                xFormatter: (value, index, values) => Math.round(value),
-                xOverrideRange: true,
-                y: [minY, maxY],
-                yStep: yStep,
-                yLog: false,
-                yOverrideRange: true,
-                showDots: state.dots
-            }
-        };
+        const yRange = [this.chooseValue('minY', state, range), this.chooseValue('maxY', state, range)];
+        const xRange = [Math.round(this.chooseValue('minX', state, range)), this.chooseValue('maxX', state, range)];
+        return {config: getAnalysisChartConfig(xRange, yRange, state.xLog, state.dots)};
     }
 
     handleMinX = (valNum, valStr) => {

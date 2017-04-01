@@ -24,7 +24,7 @@ class Targets extends Component {
 
     convert(row, showFunc, clearFunc, selectedTarget, responses) {
         const deleteTarget = () => this.props.deleteFunc(row.name);
-        const fetchTimeSeries = () => showFunc(row.name);
+        const fetchTimeSeries = () => showFunc(row.name, row.type);
         return Object.assign(row, {
             deleteTarget: deleteTarget,
             deleteResponse: this.findResponse(row.name, responses),

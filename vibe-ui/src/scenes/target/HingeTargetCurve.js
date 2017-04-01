@@ -2,7 +2,7 @@ import React, {Component, PropTypes} from "react";
 import {Panel} from "react-bootstrap";
 import LineChart from "../../components/chart/LineChart";
 
-export default class TargetCurve extends Component {
+export default class HingeTargetCurve extends Component {
     static propTypes = {
         data: PropTypes.object.isRequired
     };

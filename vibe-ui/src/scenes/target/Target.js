@@ -4,7 +4,9 @@ import {Col, Grid, Panel, Row} from "react-bootstrap";
 import {connect} from "react-refetch";
 import Targets from "./Targets";
 import CreateTarget from "./CreateTarget";
-import TargetCurve from "./TargetCurve";
+import HingeTargetCurve from "./HingeTargetCurve";
+import WavTargetCurve from "./WavTargetCurve";
+import PathSeries from "../../components/path/PathSeries";
 
 class Target extends Component {
     static contextTypes = {
@@ -24,8 +26,11 @@ class Target extends Component {
         });
     };
 
-    showTimeSeries = (targetId) => {
+    showTimeSeries = (targetId, type) => {
         this.setState((previousState, props) => {
+            if (type === 'wav') {
+                this.props.loadAnalysis(targetId);
+            }
             return {selected: targetId};
         });
     };
@@ -46,13 +51,16 @@ class Target extends Component {
 
     renderTimeSeriesIfAny() {
         if (this.state.preview) {
-            return <TargetCurve data={this.state.preview}/>
+            return <HingeTargetCurve data={this.state.preview}/>
         } else {
             const target = this.findTimeSeriesData();
             if (target) {
-                const selected = this.props.targets.value.find(m => m.name === this.state.selected);
-                if (selected) {
-                    return <TargetCurve data={selected}/>
+                if (target.type === 'hinge') {
+                    return <HingeTargetCurve data={target}/>
+                } else if (target.type === 'wav') {
+                    if (this.props.analysis && this.props.analysis.fulfilled) {
+                        return <WavTargetCurve name={this.state.selected} data={this.props.analysis.value}/>
+                    }
                 }
             }
         }
@@ -107,5 +115,13 @@ class Target extends Component {
     }
 }
 export default connect((props, context) => ( {
-    targets: {url: `${context.apiPrefix}/targets`, refreshInterval: 5000}
+    targets: {url: `${context.apiPrefix}/targets`, refreshInterval: 1000},
+    loadAnalysis: target => ({
+        analysis: {
+            url: `${context.apiPrefix}/targets/${target}`,
+            then: analysis => ({
+                value: new PathSeries(analysis.name).acceptData(analysis.data).rendered.toJS()
+            })
+        }
+    })
 } ))(Target)
