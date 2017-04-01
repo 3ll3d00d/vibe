@@ -10,6 +10,18 @@ class Target(Resource):
     def __init__(self, **kwargs):
         self._targetController = kwargs['targetController']
 
+    def get(self, targetId):
+        """
+        Yields the analysed wav data.
+        :param targetId: 
+        :return: 
+        """
+        result = self._targetController.analyse(targetId)
+        if len(result) == 2:
+            return {'name': targetId, 'data': self._jsonify(result)}, 200
+        else:
+            return None, 404
+
     def put(self, targetId):
         """
         stores a new target.
@@ -27,6 +39,20 @@ class Target(Resource):
         else:
             return None, 400
 
+    def post(self, targetId):
+        """
+        stores a new wav target.
+        :param targetId: 
+        :return: 
+        """
+        if 'file' in request.files:
+            if self._targetController.save(targetId, request.files['file']):
+                return None, 200
+            else:
+                return None, 500
+        else:
+            return None, 400
+
     def delete(self, targetId):
         """
         deletes the specified target.
@@ -37,3 +63,6 @@ class Target(Resource):
             return None, 200
         else:
             return None, 500
+
+    def _jsonify(self, tup):
+        return {'freq': tup[0].tolist(), 'val': tup[1].tolist()}

@@ -17,6 +17,16 @@ def relativeToLa(val):
     return 20 * np.log10(val / LA_REFERENCE_ACCELERATION_IN_G)
 
 
+def relativeToDb(val):
+    """
+    Expresses the given value in relative dB terms where 0dB is ???
+    :param val: 
+    :return: 
+    """
+    # TODO determine what value to use for 0dB
+    return 20 * np.log10(val)
+
+
 class Signal(object):
     """ a source models some input to the analysis system, it provides the following attributes:
         :var samples: an ndarray that represents the signal itself
@@ -28,6 +38,15 @@ class Signal(object):
         self.fs = fs
 
     def getSegmentLength(self):
+        """
+        Calculates a segment length such that the frequency resolution of the resulting analysis is in the region of 
+        ~1Hz.
+        subject to a lower limit of the number of samples in the signal. 
+        For example, if we have a 10s signal with an fs is 500 then we convert fs-1 to the number of bits required to 
+        hold this number in binary (i.e. 111110011 so 9 bits) and then do 1 << 9 which gives us 100000000 aka 512. Thus
+        we have ~1Hz resolution.
+        :return: the segment length.
+        """
         return min(1 << (self.fs - 1).bit_length(), self.samples.shape[-1])
 
     def raw(self):
@@ -48,9 +67,10 @@ class Signal(object):
         """
         return self.lowPass().samples
 
-    def psd(self, toReference='ref'):
+    def psd(self, toReference='ref_db'):
         """
-        analyses the source and returns a PSD, segment is set to get sub 1Hz frequency resolution
+        analyses the source and returns a PSD, segment is set to get ~1Hz frequency resolution
+        :param toReference: supported value is ref_db which expresses the value in dB terms.
         :return:
             f : ndarray
             Array of sample frequencies.
@@ -58,15 +78,32 @@ class Signal(object):
             Power spectral density.
 
         """
-        highPass = self.highPass()
-        f, Pxx_den = signal.welch(highPass.samples, highPass.fs, nperseg=self.getSegmentLength(), detrend=False)
-        if toReference == 'ref':
-            Pxx_den = 20 * np.log10(Pxx_den)
+        slices = []
+        initialNperSeg = self.getSegmentLength()
+        nperseg = initialNperSeg
+        # the no of slices is based on a requirement for approximately 1Hz resolution to 128Hz and then halving the
+        # resolution per octave. We calculate this as the
+        # bitlength(fs) - bitlength(128) + 2 (1 for the 1-128Hz range and 1 for 2**n-fs Hz range)
+        bitLength128 = int(128).bit_length()
+        for x in range(0, (self.fs - 1).bit_length() - bitLength128 + 2):
+            f, Pxx_den = signal.welch(self.samples, self.fs, nperseg=nperseg, detrend=False)
+            if toReference == 'ref_la':
+                Pxx_den = relativeToLa(Pxx_den)
+            elif toReference == 'ref_db':
+                Pxx_den = relativeToDb(Pxx_den)
+            n = round(2 ** (x + bitLength128 - 1) / (self.fs / nperseg))
+            m = 0 if x == 0 else round(2 ** (x + bitLength128 - 2) / (self.fs / nperseg))
+            slices.append((f[m:n], Pxx_den[m:n]))
+            nperseg /= 2
+        f = np.concatenate([n[0] for n in slices])
+        Pxx_den = np.concatenate([n[1] for n in slices])
         return f, Pxx_den
 
-    def spectrum(self, toReference='ref'):
+    def spectrum(self, toReference='ref_la'):
         """
         analyses the source to generate the linear spectrum.
+        :param toReference: supported values are ref_db (which expresses the value in dB terms) and ref_la (which uses
+        reference acceleration as the relative dB value).
         :return:
             f : ndarray
             Array of sample frequencies.
@@ -74,40 +111,73 @@ class Signal(object):
             linear spectrum.
 
         """
-        lowPass = self.highPass()
-        f, Pxx_spec = signal.welch(lowPass.samples,
-                                   lowPass.fs,
-                                   nperseg=self.getSegmentLength(),
-                                   scaling='spectrum',
-                                   detrend=False)
-        Pxx_spec = np.sqrt(Pxx_spec)
-        if toReference == 'ref':
-            Pxx_spec = relativeToLa(Pxx_spec)
+        slices = []
+        initialNperSeg = self.getSegmentLength()
+        nperseg = initialNperSeg
+        # the no of slices is based on a requirement for approximately 1Hz resolution to 128Hz and then halving the
+        # resolution per octave. We calculate this as the
+        # bitlength(fs) - bitlength(128) + 2 (1 for the 1-128Hz range and 1 for 2**n-fs Hz range)
+        bitLength128 = int(128).bit_length()
+        for x in range(0, (self.fs - 1).bit_length() - bitLength128 + 2):
+            f, Pxx_spec = signal.welch(self.samples,
+                                       self.fs,
+                                       nperseg=nperseg,
+                                       scaling='spectrum',
+                                       detrend=False)
+
+            Pxx_spec = np.sqrt(Pxx_spec)
+            if toReference == 'ref_la':
+                Pxx_spec = relativeToLa(Pxx_spec)
+            elif toReference == 'ref_db':
+                Pxx_spec = relativeToDb(Pxx_spec)
+            n = round(2 ** (x + bitLength128 - 1) / (self.fs / nperseg))
+            m = 0 if x == 0 else round(2 ** (x + bitLength128 - 2) / (self.fs / nperseg))
+            slices.append((f[m:n], Pxx_spec[m:n]))
+            nperseg /= 2
+        f = np.concatenate([n[0] for n in slices])
+        Pxx_spec = np.concatenate([n[1] for n in slices])
         return f, Pxx_spec
 
-    def peakSpectrum(self, toReference='ref'):
+    def peakSpectrum(self, toReference='ref_la'):
         """
         analyses the source to generate the max values per bin per segment
+        :param toReference: supported values are ref_db (which expresses the value in dB terms) and ref_la (which uses
+        reference acceleration as the relative dB value).
         :return:
             f : ndarray
             Array of sample frequencies.
             Pxx : ndarray
             linear spectrum max values.
         """
-        highPass = self.highPass()
-        freqs, _, Pxy = signal.spectrogram(highPass.samples,
-                                           highPass.fs,
-                                           window='hann',
-                                           nperseg=self.getSegmentLength(),
-                                           noverlap=self.getSegmentLength() // 2,
-                                           detrend=False,
-                                           scaling='spectrum')
-        Pxy_max = np.sqrt(Pxy.max(axis=-1).real)
-        if toReference == 'ref':
-            Pxy_max = relativeToLa(Pxy_max)
+        slices = []
+        initialNperSeg = self.getSegmentLength()
+        nperseg = initialNperSeg
+        # the no of slices is based on a requirement for approximately 1Hz resolution to 128Hz and then halving the
+        # resolution per octave. We calculate this as the
+        # bitlength(fs) - bitlength(128) + 2 (1 for the 1-128Hz range and 1 for 2**n-fs Hz range)
+        bitLength128 = int(128).bit_length()
+        for x in range(0, (self.fs - 1).bit_length() - bitLength128 + 2):
+            freqs, _, Pxy = signal.spectrogram(self.samples,
+                                               self.fs,
+                                               window='hann',
+                                               nperseg=nperseg,
+                                               noverlap=nperseg // 2,
+                                               detrend=False,
+                                               scaling='spectrum')
+            Pxy_max = np.sqrt(Pxy.max(axis=-1).real)
+            if toReference == 'ref_la':
+                Pxy_max = relativeToLa(Pxy_max)
+            elif toReference == 'ref_db':
+                Pxy_max = relativeToDb(Pxy_max)
+            n = round(2 ** (x + bitLength128 - 1) / (self.fs / nperseg))
+            m = 0 if x == 0 else round(2 ** (x + bitLength128 - 2) / (self.fs / nperseg))
+            slices.append((freqs[m:n], Pxy_max[m:n]))
+            nperseg = int(nperseg / 2)
+        freqs = np.concatenate([n[0] for n in slices])
+        Pxy_max = np.concatenate([n[1] for n in slices])
         return freqs, Pxy_max
 
-    def spectrogram(self, toReference='ref'):
+    def spectrogram(self, toReference='ref_la'):
         """
         analyses the source to generate a spectrogram
         :return:
@@ -125,8 +195,10 @@ class Signal(object):
                                        detrend=False,
                                        scaling='spectrum')
         Sxx = np.sqrt(Sxx)
-        if toReference == 'ref':
+        if toReference == 'ref_la':
             Sxx = relativeToLa(Sxx)
+        elif toReference == 'ref_db':
+            Sxx = relativeToDb(Sxx)
         return t, f, Sxx
 
     def lowPass(self, *args):
@@ -253,7 +325,13 @@ class TriAxisSignal(object):
     """
 
     def __init__(self, x, y, z):
-        self.refCache = {
+        self.refLaCache = {
+            'x': {'data': x},
+            'y': {'data': y},
+            'z': {'data': z},
+            'sum': {}
+        }
+        self.refDbCache = {
             'x': {'data': x},
             'y': {'data': y},
             'z': {'data': z},
@@ -321,7 +399,7 @@ class TriAxisSignal(object):
         """
         return self._getAnalysis(axis, 'psd')
 
-    def _getAnalysis(self, axis, analysis, toReference='ref'):
+    def _getAnalysis(self, axis, analysis, toReference='ref_la'):
         """
         gets the named analysis on the given axis and caches the result (or reads from the cache if data is available 
         already)
@@ -329,7 +407,8 @@ class TriAxisSignal(object):
         :param analysis: the analysis name.
         :return: the analysis tuple.
         """
-        cache = self.refCache if toReference == 'ref' else self.rawCache
+        cache = self.refLaCache if toReference == 'ref_la' else self.refDbCache if toReference == 'ref_db' else \
+            self.rawCache
         if axis in cache:
             cachedAxis = cache.get(axis)
             data = cachedAxis.get('data')
@@ -341,7 +420,12 @@ class TriAxisSignal(object):
                         fz, Pxz = self._getAnalysis('z', analysis, toReference=None)
                         # calculate the sum of the squares with an additional weighting for x and y
                         Psum = (((Pxx * 2.2) ** 2) + ((Pxy * 2.4) ** 2) + (Pxz ** 2)) ** 0.5
-                        cachedAxis[analysis] = (fx, relativeToLa(Psum))
+                        if toReference == 'ref_la':
+                            cachedAxis[analysis] = (fx, relativeToLa(Psum))
+                        elif toReference == 'ref_db':
+                            cachedAxis[analysis] = (fx, relativeToDb(Psum))
+                        else:
+                            cachedAxis[analysis] = (fx, Psum)
                     else:
                         return None
                 else:
@@ -366,8 +450,8 @@ def loadTriAxisSignalFromFile(filename, timeColumnIdx=0, xIdx=1, yIdx=2, zIdx=3,
     """
     return TriAxisSignal(
         x=loadSignalFromDelimitedFile(filename, timeColumnIdx=timeColumnIdx, dataColumnIdx=xIdx,
-                                      delimiter=delimiter, skipHeader=skipHeader),
+                                      delimiter=delimiter, skipHeader=skipHeader).highPass(),
         y=loadSignalFromDelimitedFile(filename, timeColumnIdx=timeColumnIdx, dataColumnIdx=yIdx,
-                                      delimiter=delimiter, skipHeader=skipHeader),
+                                      delimiter=delimiter, skipHeader=skipHeader).highPass(),
         z=loadSignalFromDelimitedFile(filename, timeColumnIdx=timeColumnIdx, dataColumnIdx=zIdx,
-                                      delimiter=delimiter, skipHeader=skipHeader))
+                                      delimiter=delimiter, skipHeader=skipHeader).highPass())

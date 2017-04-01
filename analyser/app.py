@@ -3,6 +3,7 @@ import os
 
 from flask import Flask
 from flask_restful import Api
+from flask_uploads import UploadSet, configure_uploads
 
 from analyser.common.config import Config
 from analyser.common.devicecontroller import DeviceController
@@ -31,6 +32,10 @@ if hasattr(faulthandler, 'register'):
 app = Flask(__name__)
 api = Api(app)
 cfg = Config()
+app.config['UPLOADS_DEFAULT_DEST'] = cfg.dataDir
+targetUploadSet = UploadSet('targets', ('wav',))
+configure_uploads(app, (targetUploadSet))
+
 httpclient = RequestsBasedHttpClient()
 reactor = Reactor(name='analyser')
 targetStateProvider = TargetStateProvider(cfg.targetState)
@@ -38,7 +43,7 @@ targetStateController = TargetStateController(targetStateProvider, reactor, http
 deviceController = DeviceController(targetStateController, cfg.dataDir, httpclient)
 targetStateController.deviceController = deviceController
 measurementController = MeasurementController(targetStateProvider, cfg.dataDir, deviceController)
-targetController = TargetController(cfg.dataDir)
+targetController = TargetController(cfg.dataDir, targetUploadSet)
 resourceArgs = {
     'deviceController': deviceController,
     'targetStateController': targetStateController,

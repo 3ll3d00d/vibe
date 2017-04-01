@@ -14,16 +14,16 @@ class HandlerTestCase(object):
         # measurementPath = 'C:\\Users\\\Matt\\OneDrive\\Documents\\eot\\Edge of Tomorrow - Opening.wav'
         measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
         measurement = ms.loadSignalFromWav(measurementPath, bitDepth=16)
-        plt.xlim(0, 160)
-        plt.ylim(-60, 0)
+        plt.xlim(5, 24000)
+        plt.ylim(-120, 0)
         plt.grid()
         plt.xlabel('frequency [Hz]')
-        f, Pxx_den = measurement.psd()
-        plt.plot(f, 20 * np.log10(Pxx_den))
-        f, Pxx_spec = measurement.spectrum()
-        plt.plot(f, 20 * np.log10(Pxx_spec))
-        f, Pxx_spec = measurement.peakSpectrum()
-        plt.plot(f, 20 * np.log10(Pxx_spec))
+        f, Pxx_den = measurement.psd(toReference='ref_db')
+        plt.semilogx(f, Pxx_den)
+        f, Pxx_spec = measurement.spectrum(toReference='ref_db')
+        plt.semilogx(f, Pxx_spec)
+        f, Pxx_spec = measurement.peakSpectrum(toReference='ref_db')
+        plt.plot(f, Pxx_spec)
         plt.show()
 
     def showSpectro(self):
@@ -181,5 +181,5 @@ class HandlerTestCase(object):
 
 
 t = HandlerTestCase()
-t.deconvolve()
+t.showSpectrum()
 
