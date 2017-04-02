@@ -17,10 +17,13 @@ class Target(Resource):
         :return: 
         """
         result = self._targetController.analyse(targetId)
-        if len(result) == 2:
-            return {'name': targetId, 'data': self._jsonify(result)}, 200
+        if result:
+            if len(result) == 2:
+                return {'name': targetId, 'data': self._jsonify(result)}, 200
+            else:
+                return None, 404
         else:
-            return None, 404
+            return None, 500
 
     def put(self, targetId):
         """

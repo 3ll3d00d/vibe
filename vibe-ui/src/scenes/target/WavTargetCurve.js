@@ -11,7 +11,7 @@ export default class WavTargetCurve extends Component {
 
     render() {
         const {data, name} = this.props;
-        const xRange = [Math.max(5, Math.round(data.minX)), Math.min(Math.round(data.maxX), 1000)];
+        const xRange = [Math.max(5, Math.round(data.minX)), Math.round(data.maxX)];
         const config = getAnalysisChartConfig(xRange, [data.minY, data.maxY], true, false);
         const series = Object.assign(data, {
             id: name,

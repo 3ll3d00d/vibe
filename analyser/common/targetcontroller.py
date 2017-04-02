@@ -1,6 +1,8 @@
 import logging
 import os
 
+import librosa
+import numpy as np
 from flask import json
 
 from analyser.common.signal import loadSignalFromWav
@@ -43,13 +45,40 @@ class TargetController(object):
         :return: true if cached.
         """
         if name not in self._cache:
+            logger.info("Saving " + file.filename)
             filename = self._uploadSet.save(file)
-            cached = [{'name': name + '|' + n, 'type': 'wav', 'filename': filename} for n in analyses]
-            for cache in cached:
-                self._cache[cache['name']] = cache
-            self.writeCache()
-            return True
+            fullPath = os.path.join(self._dataDir, self._uploadSet.name, filename)
+            logger.info("Reading " + fullPath)
+            try:
+                signal = loadSignalFromWav(fullPath)
+                if signal.fs > 1024:
+                    self.resample(fullPath, signal, 1000)
+                cached = [{'name': name + '|' + n, 'type': 'wav', 'filename': filename} for n in analyses]
+                for cache in cached:
+                    self._cache[cache['name']] = cache
+                self.writeCache()
+                return True
+            except:
+                logger.exception("Unable to process file, deleting " + fullPath)
+                if os.path.exists(fullPath):
+                    os.remove(fullPath)
         return False
+
+    def resample(self, filename, signal, targetFs):
+        """
+        Resamples the signal to the targetFs and writes it to filename.
+        :param filename: the filename.
+        :param signal: the signal to resample.
+        :param targetFs: the target fs.
+        :return: None
+        """
+        logger.info("Resampling from " + str(signal.fs) + " to 1000")
+        y_1000 = librosa.resample(signal.samples, signal.fs, targetFs)
+        maxv = np.iinfo(np.int16).max
+        librosa.output.write_wav(filename, (y_1000 * maxv).astype(np.int16), targetFs)
+        # check we can read it
+        signal = loadSignalFromWav(filename)
+        logger.info("Resampling complete")
 
     def delete(self, name):
         """
@@ -60,6 +89,7 @@ class TargetController(object):
         if name in self._cache:
             del self._cache[name]
             self.writeCache()
+            # TODO clean files
             return True
         return False
 
@@ -91,7 +121,7 @@ class TargetController(object):
                     try:
                         analysis = target['name'].split('|')
                         if len(analysis) == 2:
-                            return getattr(loadSignalFromWav(path), analysis[1])(toReference='ref_db')
+                            return getattr(loadSignalFromWav(path), analysis[1])(ref=1.0)
                         else:
                             logger.error('Unknown cached file type ' + name)
                     except:
@@ -100,11 +130,10 @@ class TargetController(object):
                     logger.error('Target ' + name + ' does not exist at ' + path)
         return None
 
-
-def _valid(self, hingePoints):
-    """
-    Validates the hinge points.
-    :param hingePoints: the data.
-    :return: true if the data is valid.
-    """
-    return True
+    def _valid(self, hingePoints):
+        """
+        Validates the hinge points.
+        :param hingePoints: the data.
+        :return: true if the data is valid.
+        """
+        return True

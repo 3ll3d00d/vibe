@@ -1,30 +1,13 @@
+from typing import Tuple, Any
 from wave import open as openWav
 
+import librosa
 import numpy as np
 from scipy import signal
 from scipy.io import wavfile
 
 # 1 micro m/s2 in G
 LA_REFERENCE_ACCELERATION_IN_G = (10 ** -6) / 9.80665
-
-
-def relativeToLa(val):
-    """
-    Expresses the given value relative to reference acceleration (La) 
-    :param val: 
-    :return: 
-    """
-    return 20 * np.log10(val / LA_REFERENCE_ACCELERATION_IN_G)
-
-
-def relativeToDb(val):
-    """
-    Expresses the given value in relative dB terms where 0dB is ???
-    :param val: 
-    :return: 
-    """
-    # TODO determine what value to use for 0dB
-    return 20 * np.log10(val)
 
 
 class Signal(object):
@@ -67,9 +50,9 @@ class Signal(object):
         """
         return self.lowPass().samples
 
-    def _fdw(self, analysisFunc):
+    def _cq(self, analysisFunc, segmentLengthMultipler=1):
         slices = []
-        initialNperSeg = self.getSegmentLength()
+        initialNperSeg = self.getSegmentLength() * segmentLengthMultipler
         nperseg = initialNperSeg
         # the no of slices is based on a requirement for approximately 1Hz resolution to 128Hz and then halving the
         # resolution per octave. We calculate this as the
@@ -85,10 +68,12 @@ class Signal(object):
         p = np.concatenate([n[1] for n in slices])
         return f, p
 
-    def psd(self, toReference='ref_db'):
+    def psd(self, ref=None, segmentLengthMultiplier=1, mode=None):
         """
         analyses the source and returns a PSD, segment is set to get ~1Hz frequency resolution
-        :param toReference: supported value is ref_db which expresses the value in dB terms.
+        :param ref: the reference value for dB purposes.
+        :param segmentLengthMultiplier: allow for increased resolution.
+        :param mode: cq or none.
         :return:
             f : ndarray
             Array of sample frequencies.
@@ -96,21 +81,22 @@ class Signal(object):
             Power spectral density.
 
         """
-        def func(x, nperseg):
+        def analysisFunc(x, nperseg):
             f, Pxx_den = signal.welch(self.samples, self.fs, nperseg=nperseg, detrend=False)
-            if toReference == 'ref_la':
-                Pxx_den = relativeToLa(Pxx_den)
-            elif toReference == 'ref_db':
-                Pxx_den = relativeToDb(Pxx_den)
+            if ref is not None:
+                Pxx_den = librosa.amplitude_to_db(Pxx_den, ref)
             return f, Pxx_den
+        if mode == 'cq':
+            return self._cq(analysisFunc, segmentLengthMultiplier)
+        else:
+            return analysisFunc(0, self.getSegmentLength() * segmentLengthMultiplier)
 
-        return self._fdw(func)
-
-    def spectrum(self, toReference='ref_la'):
+    def spectrum(self, ref=None, segmentLengthMultiplier=1, mode=None):
         """
         analyses the source to generate the linear spectrum.
-        :param toReference: supported values are ref_db (which expresses the value in dB terms) and ref_la (which uses
-        reference acceleration as the relative dB value).
+        :param ref: the reference value for dB purposes.
+        :param segmentLengthMultiplier: allow for increased resolution.
+        :param mode: cq or none.
         :return:
             f : ndarray
             Array of sample frequencies.
@@ -124,19 +110,21 @@ class Signal(object):
             # it seems a 3dB adjustment is required to account for the change in nperseg
             if x > 0:
                 Pxx_spec = Pxx_spec / (10**((3*x)/20))
-            if toReference == 'ref_la':
-                Pxx_spec = relativeToLa(Pxx_spec)
-            elif toReference == 'ref_db':
-                Pxx_spec = relativeToDb(Pxx_spec)
+            if ref is not None:
+                Pxx_spec = librosa.amplitude_to_db(Pxx_spec, ref)
             return f, Pxx_spec
 
-        return self._fdw(analysisFunc)
+        if mode == 'cq':
+            return self._cq(analysisFunc, segmentLengthMultiplier)
+        else:
+            return analysisFunc(0, self.getSegmentLength() * segmentLengthMultiplier)
 
-    def peakSpectrum(self, toReference='ref_la'):
+    def peakSpectrum(self, ref=None, segmentLengthMultiplier=1, mode=None):
         """
         analyses the source to generate the max values per bin per segment
-        :param toReference: supported values are ref_db (which expresses the value in dB terms) and ref_la (which uses
-        reference acceleration as the relative dB value).
+        :param ref: the reference value for dB purposes.
+        :param segmentLengthMultiplier: allow for increased resolution.
+        :param mode: cq or none.
         :return:
             f : ndarray
             Array of sample frequencies.
@@ -154,17 +142,20 @@ class Signal(object):
             Pxy_max = np.sqrt(Pxy.max(axis=-1).real)
             if x > 0:
                 Pxy_max = Pxy_max / (10**((3*x)/20))
-            if toReference == 'ref_la':
-                Pxy_max = relativeToLa(Pxy_max)
-            elif toReference == 'ref_db':
-                Pxy_max = relativeToDb(Pxy_max)
+            if ref is not None:
+                Pxy_max = librosa.amplitude_to_db(Pxy_max, ref=ref)
             return freqs, Pxy_max
 
-        return self._fdw(analysisFunc)
+        if mode == 'cq':
+            return self._cq(analysisFunc, segmentLengthMultiplier)
+        else:
+            return analysisFunc(0, self.getSegmentLength() * segmentLengthMultiplier)
 
-    def spectrogram(self, toReference='ref_la'):
+    def spectrogram(self, ref=None, segmentLengthMultiplier=1):
         """
         analyses the source to generate a spectrogram
+        :param ref: the reference value for dB purposes.
+        :param segmentLengthMultiplier: allow for increased resolution.
         :return:
             t : ndarray
             Array of time slices.
@@ -176,14 +167,12 @@ class Signal(object):
         t, f, Sxx = signal.spectrogram(self.samples,
                                        self.fs,
                                        window='hann',
-                                       nperseg=self.getSegmentLength(),
+                                       nperseg=self.getSegmentLength() * segmentLengthMultiplier,
                                        detrend=False,
                                        scaling='spectrum')
         Sxx = np.sqrt(Sxx)
-        if toReference == 'ref_la':
-            Sxx = relativeToLa(Sxx)
-        elif toReference == 'ref_db':
-            Sxx = relativeToDb(Sxx)
+        if ref is not None:
+            Sxx = librosa.amplitude_to_db(Sxx, ref)
         return t, f, Sxx
 
     def lowPass(self, *args):
@@ -240,8 +229,7 @@ def loadSignalFromDelimitedFile(filename, timeColumnIdx=0, dataColumnIdx=1, deli
     return source
 
 
-def loadSignalFromWav(inputSignalFile, calibrationRealWorldValue=None, calibrationSignalFile=None,
-                      bitDepth=None) -> Signal:
+def loadSignalFromWav(inputSignalFile, calibrationRealWorldValue=None, calibrationSignalFile=None) -> Signal:
     """ reads a wav file into a Signal and scales the input so that the sample are expressed in real world values
     (as defined by the calibration signal).
     :param inputSignalFile: a path to the input signal file
@@ -250,58 +238,58 @@ def loadSignalFromWav(inputSignalFile, calibrationRealWorldValue=None, calibrati
     :param bitDepth: the bit depth of the input signal, used to rescale the value to a range of +1 to -1
     :returns: a Signal
     """
-    inputSignal = readWav(inputSignalFile)
+    inputSignal, bitDepth = readWav(inputSignalFile)
     if calibrationSignalFile is None:
         if bitDepth is not None:
             scalingFactor = 1 / (2. ** (bitDepth - 1))
         else:
             scalingFactor = 1
     else:
-        calibrationSignal = readWav(calibrationSignalFile)
+        calibrationSignal, _ = readWav(calibrationSignalFile)
         scalingFactor = calibrationRealWorldValue / np.max(calibrationSignal.samples)
     return Signal(inputSignal.samples * scalingFactor, inputSignal.fs)
 
 
-def readWav(inputSignalFile, selectedChannel=1) -> Signal:
+def readWav(inputSignalFile, selectedChannel=1) -> Tuple[Signal, Any]:
     """ reads a wav file into a Signal.
     :param inputSignalFile: a path to the input signal file
     :param bitDepth: supply a bit depth if the measurement should be rescaled to a range of -1 to +1
-    :returns: a Signal
+    :returns: Signal and the datatype for subsequent scaling.
     """
     # verify the wav can be read
-    fp = openWav(inputSignalFile, 'r')
-    channelCount = fp.getnchannels()
-    if channelCount < selectedChannel:
-        raise ValueError('Unable to read channel ' + str(selectedChannel) + ' from ' + inputSignalFile +
-                         ', has ' + channelCount + ' channels')
-
-    try:
-        if channelCount != 1:
-            raise ValueError('Unable to read ' + inputSignalFile + ' - ' + str(channelCount) + ' channels is not supported')
-
-        rate, samples = wavfile.read(inputSignalFile)
-        source = Signal(samples, rate)
-    except ValueError:
-        # code adapted from http://greenteapress.com/wp/think-dsp/ thinkdsp.py read_wave
-        frameCount = fp.getnframes()
+    with openWav(inputSignalFile, 'r') as fp:
+        channelCount = fp.getnchannels()
         sampleWidth = fp.getsampwidth()
-        frameRate = fp.getframerate()
-        framesAsString = fp.readframes(frameCount)
-
         dataTypes = {1: np.int8, 2: np.int16, 3: 'special', 4: np.int32}
-        if sampleWidth not in dataTypes:
-            raise ValueError('sampleWidth %d unknown' % sampleWidth)
+        bitDepth = {1: 8, 2: 16, 3: 24, 4: 32}
+        if channelCount < selectedChannel:
+            raise ValueError('Unable to read channel ' + str(selectedChannel) + ' from ' + inputSignalFile +
+                             ', has ' + channelCount + ' channels')
 
-        if sampleWidth == 3:
-            xs = np.fromstring(framesAsString, dtype=np.int8).astype(np.int32)
-            ys = (xs[2::3] * 256 + xs[1::3]) * 256 + xs[0::3]
-        else:
-            ys = np.fromstring(framesAsString, dtype=dataTypes[sampleWidth])
+        try:
+            if sampleWidth not in dataTypes:
+                raise ValueError('sampleWidth %d unknown' % sampleWidth)
+            if channelCount != 1:
+                raise ValueError('Unable to read ' + inputSignalFile + ' - ' + str(channelCount) + ' channels is not supported')
+            rate, samples = wavfile.read(inputSignalFile)
+            source = Signal(samples, rate)
+        except ValueError:
+            # code adapted from http://greenteapress.com/wp/think-dsp/ thinkdsp.py read_wave
+            frameCount = fp.getnframes()
+            sampleWidth = fp.getsampwidth()
+            frameRate = fp.getframerate()
+            framesAsString = fp.readframes(frameCount)
 
-        source = Signal(ys[::selectedChannel], frameRate)
+            if sampleWidth not in dataTypes:
+                raise ValueError('sampleWidth %d unknown' % sampleWidth)
+            if sampleWidth == 3:
+                xs = np.fromstring(framesAsString, dtype=np.int8).astype(np.int32)
+                ys = (xs[2::3] * 256 + xs[1::3]) * 256 + xs[0::3]
+            else:
+                ys = np.fromstring(framesAsString, dtype=dataTypes[sampleWidth])
 
-    fp.close()
-    return source
+            source = Signal(ys[::selectedChannel], frameRate)
+        return source, bitDepth[sampleWidth]
 
 
 class TriAxisSignal(object):
@@ -310,22 +298,12 @@ class TriAxisSignal(object):
     """
 
     def __init__(self, x, y, z):
-        self.refLaCache = {
-            'x': {'data': x},
-            'y': {'data': y},
-            'z': {'data': z},
-            'sum': {}
-        }
-        self.refDbCache = {
-            'x': {'data': x},
-            'y': {'data': y},
-            'z': {'data': z},
-            'sum': {}
-        }
-        self.rawCache = {
-            'x': {'data': x},
-            'y': {'data': y},
-            'z': {'data': z},
+        self.cache = {
+            'raw': {
+                'x': x,
+                'y': y,
+                'z': z,
+            }
         }
 
     def _canSum(self, analysis):
@@ -353,7 +331,7 @@ class TriAxisSignal(object):
         return self._getRaw(axis, 'tilt')
 
     def _getRaw(self, axis, analysis):
-        cache = self.rawCache
+        cache = self.cache['raw']
         if axis in cache:
             cachedAxis = cache.get(axis)
             data = cachedAxis.get('data')
@@ -368,23 +346,23 @@ class TriAxisSignal(object):
         :param axis: the axis 
         :return: the spectrum for the given axis. 
         """
-        return self._getAnalysis(axis, 'spectrum')
+        return self._getAnalysis(axis, 'spectrum', ref=LA_REFERENCE_ACCELERATION_IN_G)
 
     def peakSpectrum(self, axis):
         """
         :param axis: the axis 
         :return: the peak spectrum for the given axis. 
         """
-        return self._getAnalysis(axis, 'peakSpectrum')
+        return self._getAnalysis(axis, 'peakSpectrum', ref=LA_REFERENCE_ACCELERATION_IN_G)
 
     def psd(self, axis):
         """
         :param axis: the axis 
         :return: the psd for the given axis. 
         """
-        return self._getAnalysis(axis, 'psd')
+        return self._getAnalysis(axis, 'psd', ref=LA_REFERENCE_ACCELERATION_IN_G)
 
-    def _getAnalysis(self, axis, analysis, toReference='ref_la'):
+    def _getAnalysis(self, axis, analysis, ref=None):
         """
         gets the named analysis on the given axis and caches the result (or reads from the cache if data is available 
         already)
@@ -392,29 +370,28 @@ class TriAxisSignal(object):
         :param analysis: the analysis name.
         :return: the analysis tuple.
         """
-        cache = self.refLaCache if toReference == 'ref_la' else self.refDbCache if toReference == 'ref_db' else \
-            self.rawCache
+        cache = self.cache.get(str(ref))
+        if cache is None:
+            cache = {'x': {}, 'y': {}, 'z': {}, 'sum': {}}
+            self.cache[str(ref)] = cache
         if axis in cache:
+            data = self.cache['raw'].get(axis, None)
             cachedAxis = cache.get(axis)
-            data = cachedAxis.get('data')
             if cachedAxis.get(analysis) is None:
                 if axis == 'sum':
                     if self._canSum(analysis):
-                        fx, Pxx = self._getAnalysis('x', analysis, toReference=None)
-                        fy, Pxy = self._getAnalysis('y', analysis, toReference=None)
-                        fz, Pxz = self._getAnalysis('z', analysis, toReference=None)
+                        fx, Pxx = self._getAnalysis('x', analysis)
+                        fy, Pxy = self._getAnalysis('y', analysis)
+                        fz, Pxz = self._getAnalysis('z', analysis)
                         # calculate the sum of the squares with an additional weighting for x and y
                         Psum = (((Pxx * 2.2) ** 2) + ((Pxy * 2.4) ** 2) + (Pxz ** 2)) ** 0.5
-                        if toReference == 'ref_la':
-                            cachedAxis[analysis] = (fx, relativeToLa(Psum))
-                        elif toReference == 'ref_db':
-                            cachedAxis[analysis] = (fx, relativeToDb(Psum))
-                        else:
-                            cachedAxis[analysis] = (fx, Psum)
+                        if ref is not None:
+                            Psum = librosa.amplitude_to_db(Psum, ref)
+                        cachedAxis[analysis] = (fx, Psum)
                     else:
                         return None
                 else:
-                    cachedAxis[analysis] = getattr(data, analysis)(toReference=toReference)
+                    cachedAxis[analysis] = getattr(data, analysis)(ref=ref)
             return cachedAxis[analysis]
         else:
             return None

@@ -43,7 +43,8 @@ setup(name='vibe-analyser',
           'pyyaml',
           'requests',
           'scipy',
-          'twisted'
+          'twisted',
+          'librosa'
       ],
       setup_requires=[
           'pytest-runner',
