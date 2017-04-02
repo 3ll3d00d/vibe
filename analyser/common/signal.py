@@ -84,7 +84,7 @@ class Signal(object):
         def analysisFunc(x, nperseg):
             f, Pxx_den = signal.welch(self.samples, self.fs, nperseg=nperseg, detrend=False)
             if ref is not None:
-                Pxx_den = librosa.amplitude_to_db(Pxx_den, ref)
+                Pxx_den = librosa.power_to_db(Pxx_den, ref)
             return f, Pxx_den
         if mode == 'cq':
             return self._cq(analysisFunc, segmentLengthMultiplier)
@@ -360,7 +360,7 @@ class TriAxisSignal(object):
         :param axis: the axis 
         :return: the psd for the given axis. 
         """
-        return self._getAnalysis(axis, 'psd', ref=LA_REFERENCE_ACCELERATION_IN_G)
+        return self._getAnalysis(axis, 'psd', ref=0.001)
 
     def _getAnalysis(self, axis, analysis, ref=None):
         """
