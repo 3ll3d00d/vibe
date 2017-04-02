@@ -1,35 +1,113 @@
+import math
 import os
 
+import librosa
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import mlab
-from scipy import signal
 
 from analyser.common import signal as ms
 from analyser.common.signal import Signal
 
 
 class HandlerTestCase(object):
+    def resam(self):
+        measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'white.wav')
+        measurement = ms.loadSignalFromWav(measurementPath)
+        y_1000 = librosa.resample(measurement.samples, measurement.fs, 1000)
+        measurementPath_1000 = os.path.join(os.path.dirname(__file__), '../test/data', 'white_1000.wav')
+        maxv = np.iinfo(np.int16).max
+        librosa.output.write_wav(measurementPath_1000, (y_1000 * maxv).astype(np.int16), 1000)
+        # librosa.output.write_wav(measurementPath_1000, y_1000, 1000)
+        measurement_1000 = ms.loadSignalFromWav(measurementPath_1000)
+        y_1000 = Signal(y_1000, 1000)
+        f, Pxx = measurement_1000.spectrum(ref=1.0)
+        plt.semilogx(f, Pxx)
+        f, Pxx = y_1000.spectrum(ref=1.0)
+        plt.semilogx(f, Pxx)
+        plt.show()
+
+    def librosaSpectrum(self):
+        import librosa.display
+        measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
+        # measurement = ms.loadSignalFromWav(measurementPath)
+        y, sr = librosa.load(measurementPath, sr=500)
+        # no of octaves in the CQT (have to divide SR by 8 because we remove 1 octave for nyquist and another to fit
+        # the filter inside nyquist (I think)
+        bins_per_octave = 24
+        n_bins = math.floor(bins_per_octave * math.log2(sr / 8)) - 1
+        fmin = 4.0
+        cqt_freq = librosa.cqt_frequencies(n_bins, fmin, bins_per_octave=bins_per_octave)
+        C = librosa.core.cqt(y, sr, hop_length=2 ** 12, fmin=4.0, bins_per_octave=bins_per_octave, n_bins=n_bins,
+                             filter_scale=2)
+        spectrum = np.sqrt(np.mean(np.abs(C) ** 2, axis=-1))
+        peak = np.sqrt(np.max(np.abs(C) ** 2, axis=-1))
+        plt.figure()
+        plt.xlim(4, 250)
+        plt.semilogx(cqt_freq, librosa.amplitude_to_db(spectrum, ref=np.max(peak)))
+        # plt.semilogx(cqt_freq, librosa.amplitude_to_db(peak, ref=np.max(peak)))
+
+        measurement = Signal(y, fs=500)
+        f, Pxx = measurement.peakSpectrum()
+        # plt.semilogx(f, librosa.amplitude_to_db(Pxx, ref=np.max(Pxx)))
+        f, Pxx_spec = measurement.spectrum()
+        plt.semilogx(f, librosa.amplitude_to_db(Pxx_spec, ref=np.max(Pxx)))
+
+        f, Pxx = measurement.peakSpectrum()
+        f, Pxx_spec = measurement.spectrum()
+        plt.semilogx(f, librosa.amplitude_to_db(Pxx_spec, ref=np.max(Pxx)))
+
+        plt.tight_layout()
+        plt.show()
+
+    def librosaResample(self):
+        import librosa.display
+
+        measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
+        plt.figure()
+        plt.xlim(5, 1000)
+
+        y, sr = librosa.load(measurementPath, sr=None)
+        measurement = Signal(y, fs=sr)
+        f, Pxx = measurement.peakSpectrum(ref=1.0)
+        plt.semilogx(f, Pxx)
+
+        f, Pxx = measurement.peakSpectrum(segmentLengthMultiplier=2)
+        plt.semilogx(f, librosa.amplitude_to_db(Pxx))
+
+        y, sr = librosa.load(measurementPath, sr=1000)
+        measurement = Signal(y, fs=sr)
+        f, Pxx = measurement.peakSpectrum()
+        plt.semilogx(f, librosa.amplitude_to_db(Pxx))
+
+        y, sr = librosa.load(measurementPath, sr=1000)
+        measurement = Signal(y, fs=sr)
+        f, Pxx = measurement.peakSpectrum(segmentLengthMultiplier=2)
+        plt.semilogx(f, librosa.amplitude_to_db(Pxx))
+
+        plt.tight_layout()
+        plt.show()
+
     def showSpectrum(self):
         # measurementPath = 'C:\\Users\\\Matt\\OneDrive\\Documents\\eot\\Edge of Tomorrow - Opening.wav'
         measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
-        measurement = ms.loadSignalFromWav(measurementPath, bitDepth=16)
+        measurement = ms.loadSignalFromWav(measurementPath)
         plt.xlim(5, 24000)
         plt.ylim(-120, 0)
         plt.grid()
         plt.xlabel('frequency [Hz]')
-        f, Pxx_den = measurement.psd(toReference='ref_db')
+        f, Pxx_den = measurement.psd(ref=1.0)
         plt.semilogx(f, Pxx_den)
-        f, Pxx_spec = measurement.spectrum(toReference='ref_db')
+        f, Pxx_spec = measurement.spectrum(ref=1.0)
         plt.semilogx(f, Pxx_spec)
-        f, Pxx_spec = measurement.peakSpectrum(toReference='ref_db')
+        f, Pxx_spec = measurement.peakSpectrum(ref=1.0)
         plt.plot(f, Pxx_spec)
         plt.show()
 
     def showSpectro(self):
         # measurementPath = 'C:\\Users\\\Matt\\OneDrive\\Documents\\eot\\Edge of Tomorrow - Opening.wav'
         measurementPath = os.path.join(os.path.dirname(__file__), 'data', 'eot.wav')
-        measurement = ms.loadSignalFromWav(measurementPath, bitDepth=16)
+        measurement = ms.loadSignalFromWav(measurementPath)
 
         # t, f, Sxx_spec = measurement.spectrogram()
         # plt.pcolormesh(f, t, Sxx_spec)
@@ -182,4 +260,3 @@ class HandlerTestCase(object):
 
 t = HandlerTestCase()
 t.showSpectrum()
-
