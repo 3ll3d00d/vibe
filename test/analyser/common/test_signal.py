@@ -83,12 +83,12 @@ def test_whenTriAxisTxtIsInDefaultFormat_IsReadCorrectly():
     measurementPath = os.path.join(str(Path(__file__).resolve().parents[2]), 'tri_axis_sine_default.txt')
     measurement = ms.loadTriAxisSignalFromFile(measurementPath)
     assert measurement is not None
-    assert measurement.rawCache['x']['data'].fs == 48000
-    assert measurement.rawCache['y']['data'].fs == 48000
-    assert measurement.rawCache['z']['data'].fs == 48000
-    assert np.max(measurement.rawCache['x']['data'].samples) == pytest.approx(1.0)
-    assert np.max(measurement.rawCache['y']['data'].samples) == pytest.approx(1.0)
-    assert np.max(measurement.rawCache['z']['data'].samples) == pytest.approx(1.0)
+    assert measurement.cache['raw']['x'].fs == 48000
+    assert measurement.cache['raw']['y'].fs == 48000
+    assert measurement.cache['raw']['z'].fs == 48000
+    assert np.max(measurement.cache['raw']['x'].samples) == pytest.approx(1.0)
+    assert np.max(measurement.cache['raw']['y'].samples) == pytest.approx(1.0)
+    assert np.max(measurement.cache['raw']['z'].samples) == pytest.approx(1.0)
     assert measurement.spectrum('x') is not None
     assert measurement.spectrum('y') is not None
     assert measurement.spectrum('z') is not None

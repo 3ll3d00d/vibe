@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from "react";
-import {connect} from "react-refetch";
+import {connect, PromiseState} from "react-refetch";
 import {Panel} from "react-bootstrap";
 import AnalysisNavigator from "./AnalysisNavigator";
 import Message from "../../components/Message";
@@ -186,11 +186,12 @@ class Analyse extends Component {
     }
 
     render() {
-        if (this.props.measurementMeta.pending) {
+        const all = PromiseState.all([this.props.measurementMeta, this.props.targets]);
+        if (all.pending) {
             return this.renderLoading();
-        } else if (this.props.measurementMeta.rejected) {
+        } else if (all.rejected) {
             return this.renderRejected();
-        } else if (this.props.measurementMeta.fulfilled) {
+        } else if (all.fulfilled) {
             return this.renderLoaded();
         }
     }
@@ -209,6 +210,12 @@ export default connect((props, context) => ({
                         devices: Object.keys(m.recordingDevices)
                     };
                 })
+        })
+    },
+    targets: {
+        url: `${context.apiPrefix}/targets`,
+        then: (targets) => ({
+            value: targets.map(t => t.name)
         })
     },
     fetchData: (measurementId) => ({

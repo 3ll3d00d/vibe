@@ -333,11 +333,7 @@ class TriAxisSignal(object):
     def _getRaw(self, axis, analysis):
         cache = self.cache['raw']
         if axis in cache:
-            cachedAxis = cache.get(axis)
-            data = cachedAxis.get('data')
-            if cachedAxis.get(analysis) is None:
-                cachedAxis[analysis] = getattr(data, analysis)()
-            return cachedAxis[analysis]
+            return getattr(cache.get(axis), analysis)()
         else:
             return None
 
@@ -391,7 +387,7 @@ class TriAxisSignal(object):
                     else:
                         return None
                 else:
-                    cachedAxis[analysis] = getattr(data, analysis)(ref=ref)
+                    cachedAxis[analysis] = getattr(data.highPass(), analysis)(ref=ref)
             return cachedAxis[analysis]
         else:
             return None
@@ -412,8 +408,8 @@ def loadTriAxisSignalFromFile(filename, timeColumnIdx=0, xIdx=1, yIdx=2, zIdx=3,
     """
     return TriAxisSignal(
         x=loadSignalFromDelimitedFile(filename, timeColumnIdx=timeColumnIdx, dataColumnIdx=xIdx,
-                                      delimiter=delimiter, skipHeader=skipHeader).highPass(),
+                                      delimiter=delimiter, skipHeader=skipHeader),
         y=loadSignalFromDelimitedFile(filename, timeColumnIdx=timeColumnIdx, dataColumnIdx=yIdx,
-                                      delimiter=delimiter, skipHeader=skipHeader).highPass(),
+                                      delimiter=delimiter, skipHeader=skipHeader),
         z=loadSignalFromDelimitedFile(filename, timeColumnIdx=timeColumnIdx, dataColumnIdx=zIdx,
-                                      delimiter=delimiter, skipHeader=skipHeader).highPass())
+                                      delimiter=delimiter, skipHeader=skipHeader))
