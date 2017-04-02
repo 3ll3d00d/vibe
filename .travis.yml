@@ -39,7 +39,7 @@ install:
   - conda info -a
   - conda create -q -n test python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib pytest pytest-cov coverage
   - source activate test
-  - pip install -q -U codecov smbus2 unittest-data-provider flask flask-restful pyyaml requests
+  - pip install -q -U codecov smbus2 unittest-data-provider flask flask-restful pyyaml requests typing librosa
   - python setup_travis.py install
 # Install node 6 (current LTS as of January 2017)
   - rm -rf ~/.nvm && git clone https://github.com/creationix/nvm.git ~/.nvm && (cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`) && source ~/.nvm/nvm.sh && nvm install 6

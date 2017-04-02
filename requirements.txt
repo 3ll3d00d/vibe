@@ -13,6 +13,7 @@ sphinx-rtd-theme~=0.2.0
 Twisted~=17.1.0
 flask-uploads~=0.2.1
 librosa~=0.5.0
+typing~=3.6.1
 # to use librosa - http://stackoverflow.com/questions/39574639/importerror-cannot-import-name-qtcore
 # conda install -c conda-forge librosa (0.5)
 # conda install pyqt=4.11.4
