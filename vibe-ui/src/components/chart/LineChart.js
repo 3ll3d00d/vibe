@@ -2,7 +2,7 @@ import React, {PropTypes, PureComponent} from "react";
 import {Line} from "./ChartJS";
 import {hexToRGBA, SERIES_COLOURS} from "../../constants";
 
-export default class Chart extends PureComponent {
+export default class LineChart extends PureComponent {
     static propTypes = {
         series: PropTypes.array.isRequired,
         config: PropTypes.object.isRequired,
