@@ -17,7 +17,7 @@ class Measure extends Component {
 
     showTimeSeries = (measurementId) => {
         this.setState((previousState, props) => {
-            props.fetchData(measurementId);
+            props.fetchMeasurementData(measurementId);
             return {selected: measurementId};
         });
     };
@@ -107,7 +107,7 @@ export default connect((props, context) => ( {
         then: (states) => ({value: states.map(ds => ds.state.status)})
     },
     measurements: {url: `${context.apiPrefix}/measurements`, refreshInterval: 1000},
-    fetchData: (measurementId) => ({
+    fetchMeasurementData: (measurementId) => ({
         [`fetchedData_${measurementId}`]: `${context.apiPrefix}/measurements/${measurementId}/timeseries`
     })
 } ))(Measure)

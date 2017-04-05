@@ -145,7 +145,7 @@ class PathStore {
      * @returns {PathStore} the store.
      */
     updateData(namedPromises) {
-        this.paths = this.paths.map((path) => path.acceptData(namedPromises.find(p => p.name === path.measurementId)));
+        this.paths = this.paths.map(p => p.acceptData(namedPromises));
         // make sure we propagate the reference whenever data is loaded to make sure all series have the right data loaded
         this.propagateReferenceSeries();
         return this;
@@ -231,11 +231,11 @@ class PathStore {
     load(pathId, dataPromises) {
         const pathIdx = this.paths.findIndex(p => p.id === pathId);
         if (pathIdx !== -1) {
-            const path = this.paths.get(pathIdx);
-            const promise = dataPromises.find(promise => promise.name === path.measurementId);
-            this.paths = this.paths.update(pathIdx, p => p.acceptData(promise));
-            // TODO move into the bridge?
-            return [...new Set(this.paths.filter(path => !(path.data && path.data.fulfilled)).map(path => path.measurementId))];
+            this.paths = this.paths.update(pathIdx, p => p.acceptData(dataPromises));
+            // TODO handle loading targets
+            const toLoad = this.paths.filter(bridge => !(bridge.data && bridge.data.fulfilled) && bridge.path.measurementId)
+                                     .map(bridge => bridge.path.measurementId);
+            return [...new Set(toLoad)];
         }
         return [];
     }

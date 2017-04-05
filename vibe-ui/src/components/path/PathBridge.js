@@ -9,8 +9,7 @@ export default class PathBridge extends Record({
     id: null,
     type: 'measure',
     meta: null,
-    path: null,
-    loaded: true
+    path: null
 }) {
     constructor(id, meta) {
         super({id: id, meta: meta});
@@ -26,7 +25,10 @@ export default class PathBridge extends Record({
      * @returns {MeasurementPath}
      */
     unload() {
-        return this.set('loaded', false);
+        if (this.path) {
+            return this.set('path', this.path.unload());
+        } 
+        return this;
     }
 
     /**
@@ -115,9 +117,13 @@ export default class PathBridge extends Record({
         return this;
     }
 
-    acceptData(dataPromise) {
+    acceptData(dataPromises) {
         if (this.path) {
-            return this.set('path', this.path.acceptData(dataPromise));
+            if (dataPromises) {
+                return this.set('path', this.path.acceptData(dataPromises.filter(p => p.type === this.type)));
+            } else {
+                return this.set('path', this.path.acceptData([]));
+            }
         }
         return this;
     }
