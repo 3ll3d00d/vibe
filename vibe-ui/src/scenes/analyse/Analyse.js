@@ -14,11 +14,6 @@ class Analyse extends Component {
 
     constructor(props, context) {
         super(props, context);
-        this.navigate.bind(this);
-        this.addPath.bind(this);
-        this.removePath.bind(this);
-        this.triggerAnalysis.bind(this);
-        this.handleReferenceSeries.bind(this);
         this.state = {pathStore: pathStore.fromRouterPath(props.params)};
     }
 
@@ -54,9 +49,9 @@ class Analyse extends Component {
     /**
      * Triggers an analysis from the available paths.
      */
-    triggerAnalysis = (pathId) => {
+    triggerAnalysis = (id) => {
         this.setState((previousState, props) => {
-            previousState.pathStore.load(pathId, this.extractDataPromises(props)).forEach(m => {
+            previousState.pathStore.load(id, this.extractDataPromises(props)).forEach(m => {
                 this.props.fetchData(m)
             });
             return {pathStore: previousState.pathStore};
@@ -156,12 +151,14 @@ class Analyse extends Component {
             const isNotFirstAndOnly = i !== 0 || (pathCount > 1 && i === 0);
             const pathAtIdx = this.state.pathStore.getPathAtIdx(i);
             return <AnalysisNavigator key={pathAtIdx.id}
+                                      type={pathAtIdx.type}
                                       measurementMeta={this.props.measurementMeta.value}
-                                      path={pathAtIdx}
+                                      targetMeta={this.props.targetMeta.value}
+                                      path={pathAtIdx.path}
                                       addHandler={this.addPath}
-                                      removeHandler={this.removePath}
-                                      unloadHandler={this.unloadPath}
-                                      analysisHandler={this.triggerAnalysis}
+                                      removeHandler={() => this.removePath(pathAtIdx.id)}
+                                      unloadHandler={() => this.unloadPath(pathAtIdx.id)}
+                                      analysisHandler={() => this.triggerAnalysis(pathAtIdx.id)}
                                       isLastPath={isLast}
                                       isNotFirstAndOnlyPath={isNotFirstAndOnly}
                                       navigator={this.navigate(pathAtIdx.id)}/>;
@@ -186,7 +183,7 @@ class Analyse extends Component {
     }
 
     render() {
-        const all = PromiseState.all([this.props.measurementMeta, this.props.targets]);
+        const all = PromiseState.all([this.props.measurementMeta, this.props.targetMeta]);
         if (all.pending) {
             return this.renderLoading();
         } else if (all.rejected) {
@@ -212,7 +209,7 @@ export default connect((props, context) => ({
                 })
         })
     },
-    targets: {
+    targetMeta: {
         url: `${context.apiPrefix}/targets`,
         then: (targets) => ({
             value: targets.map(t => t.name)

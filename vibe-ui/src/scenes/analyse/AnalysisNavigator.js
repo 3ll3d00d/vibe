@@ -6,20 +6,54 @@ import "react-bootstrap-multiselect/css/bootstrap-multiselect.css";
 
 export default class AnalysisNavigator extends Component {
 
-    constructor(props) {
-        super(props);
-        this.navigate.bind(this);
-    }
-
     navigate = (params) => {
         this.props.navigator(params);
     };
 
+    createTypeLinks() { {}
+        let namedType;
+        let style;
+        if (this.props.type) {
+            namedType = this.props.type === 'measure' ? 'Measurement' : 'Target';
+            style = 'success';
+        } else {
+            namedType = 'Select a data source';
+            style = 'warning';
+        }
+        return (
+            <DropdownButton key="typeSelector" bsStyle={style} title={namedType} id="typeSelector">
+                <MenuItem eventKey={1} onClick={() => this.navigate({type: 'measure'})}>Measurement</MenuItem>
+                <MenuItem eventKey={2} onClick={() => this.navigate({type: 'target'})}>Target</MenuItem>
+            </DropdownButton>
+        );
+    }
+
+    createTargetLinks() {
+        const targetOptions = this.props.targetMeta.map((t) => {
+            let navFunc = () => this.navigate({type: this.props.type, measurementId: t});
+            return <MenuItem key={t} eventKey={t} onClick={navFunc}>{t}</MenuItem>;
+        });
+        let title = null;
+        let style = null;
+        if (this.props.path && this.props.path.targetName) {
+            title = `Target: ${this.props.path.targetName}`;
+            style = "success";
+        } else {
+            style = "warning";
+            title = "Select a target";
+        }
+        return (
+            <DropdownButton key="targetSelector" bsStyle={style} title={title} id="targetSelector">
+                {targetOptions}
+            </DropdownButton>
+        );
+    }
+
     createMeasurementLinks() {
         const measurementOptions = this.props.measurementMeta.map((m) => {
-            let navFunc = () => this.navigate({measurementId: m.id});
+            let navFunc = () => this.navigate({type: this.props.type, measurementId: m.id});
             if (m.devices && m.devices.length === 1) {
-                navFunc = () => this.navigate({measurementId: m.id, deviceId: m.devices[0]});
+                navFunc = () => this.navigate({type: this.props.type, measurementId: m.id, deviceId: m.devices[0]});
             }
             return <MenuItem key={m.id} eventKey={m.id} onClick={navFunc}>{m.id}</MenuItem>;
         });
@@ -50,7 +84,7 @@ export default class AnalysisNavigator extends Component {
                 const measurement = this.props.measurementMeta.find(m => m.id === measurementId);
                 if (measurement) {
                     deviceOptions = measurement.devices.map((d) => {
-                        const navigateFunc = () => this.navigate({measurementId: measurementId, deviceId: d});
+                        const navigateFunc = () => this.navigate({type: this.props.type, measurementId: measurementId, deviceId: d});
                         return <MenuItem key={d} eventKey={d} onClick={navigateFunc}>{d}</MenuItem>;
                     });
                     if (deviceId) {
@@ -96,6 +130,7 @@ export default class AnalysisNavigator extends Component {
                             seriesLink = series.split('-').filter(s => measurement.analysis[a].includes(s)).join('-');
                         }
                         const navigateFunc = () => this.navigate({
+                            type: this.props.type,
                             measurementId: measurementId,
                             deviceId: deviceId,
                             analyserId: a,
@@ -140,6 +175,7 @@ export default class AnalysisNavigator extends Component {
             }
         }
         const navigateFunc = (selected) => this.navigate({
+            type: this.props.type,
             measurementId: measurementId,
             deviceId: deviceId,
             analyserId: analyserId,
@@ -155,7 +191,12 @@ export default class AnalysisNavigator extends Component {
      * @returns {*|null} true if this path is complete (i.e. has a value for every aspect)
      */
     pathIsComplete() {
-        return this.props.path && this.props.path.measurementId && this.props.path.deviceId && this.props.path.analyserId;
+        if (this.props.type === 'measure') {
+            return this.props.path && this.props.path.measurementId && this.props.path.deviceId && this.props.path.analyserId;
+        } else if (this.props.type === 'target') {
+            return this.props.path && this.props.path.targetName;
+        }
+        return false;
     }
 
     /**
@@ -177,7 +218,7 @@ export default class AnalysisNavigator extends Component {
                     <Button key="loading" bsStyle="success">Loading... <FontAwesome name="spinner" spin/></Button>
                 );
             } else if (path.data.rejected) {
-                const tooltip = <Tooltip id={this.props.measurementId}>{path.data.reason.toString()}</Tooltip>;
+                const tooltip = <Tooltip id={path.getExternalId()}>{path.data.reason.toString()}</Tooltip>;
                 actionButtons.push(
                     <OverlayTrigger placement="top" overlay={tooltip}>
                         <Button bsStyle="danger">Failed<FontAwesome name="exclamation-triangle"/></Button>
@@ -197,7 +238,7 @@ export default class AnalysisNavigator extends Component {
         }
         if (this.props.isNotFirstAndOnlyPath) {
             actionButtons.push(
-                <Button key="minus" onClick={() => this.props.removeHandler(this.props.path.id)}>
+                <Button key="minus" onClick={() => this.props.removeHandler()}>
                     <FontAwesome name="minus"/>
                 </Button>
             );
@@ -207,20 +248,20 @@ export default class AnalysisNavigator extends Component {
                 if (this.props.path.hasSelectedSeries()) {
                     if (this.props.path.loaded) {
                         actionButtons.push(
-                            <Button key="unload" onClick={() => this.props.unloadHandler(this.props.path.id)}>
+                            <Button key="unload" onClick={() => this.props.unloadHandler()}>
                                 <FontAwesome name="eject"/>
                             </Button>
                         );
                     } else {
                         actionButtons.push(
-                            <Button key="analyse" onClick={() => this.props.analysisHandler(this.props.path.id)}>
+                            <Button key="analyse" onClick={() => this.props.analysisHandler()}>
                                 <FontAwesome name="play"/>
                             </Button>
                         );
                     }
                 } else {
                     actionButtons.push(
-                        <Button disabled key="analyse" onClick={() => this.props.analysisHandler(this.props.path.id)}>
+                        <Button disabled key="analyse" onClick={() => this.props.analysisHandler()}>
                             <FontAwesome name="play"/>
                         </Button>
                     );
@@ -228,13 +269,13 @@ export default class AnalysisNavigator extends Component {
             } else {
                 if (this.props.path.hasSelectedSeries()) {
                     actionButtons.push(
-                        <Button key="analyse" onClick={() => this.props.analysisHandler(this.props.path.id)}>
+                        <Button key="analyse" onClick={() => this.props.analysisHandler()}>
                             <FontAwesome name="play"/>
                         </Button>
                     );
                 } else {
                     actionButtons.push(
-                        <Button disabled key="analyse" onClick={() => this.props.analysisHandler(this.props.path.id)}>
+                        <Button disabled key="analyse" onClick={() => this.props.analysisHandler()}>
                             <FontAwesome name="play"/>
                         </Button>
                     );
@@ -245,25 +286,54 @@ export default class AnalysisNavigator extends Component {
     }
 
     render() {
-        return (
-            <ButtonToolbar>
-                <ButtonGroup>
-                    {this.createMeasurementLinks()}
-                </ButtonGroup>
-                <ButtonGroup>
-                    {this.createDeviceLinks()}
-                </ButtonGroup>
-                <ButtonGroup>
-                    {this.createAnalysisLinks()}
-                </ButtonGroup>
-                <ButtonGroup>
-                    {this.createSeriesLinks()}
-                </ButtonGroup>
-                <ButtonGroup>
-                    {this.createActionButtons()}
-                </ButtonGroup>
-            </ButtonToolbar>
-        );
+        const {path, type = 'measure'} = this.props;
+        if (!path) {
+            return (
+                <ButtonToolbar>
+                    <ButtonGroup>
+                        {this.createTypeLinks()}
+                    </ButtonGroup>
+                </ButtonToolbar>
+            );
+        } else {
+            if (type === 'measure') {
+                return (
+                    <ButtonToolbar>
+                        <ButtonGroup>
+                            {this.createTypeLinks()}
+                        </ButtonGroup>
+                        <ButtonGroup>
+                            {this.createMeasurementLinks()}
+                        </ButtonGroup>
+                        <ButtonGroup>
+                            {this.createDeviceLinks()}
+                        </ButtonGroup>
+                        <ButtonGroup>
+                            {this.createAnalysisLinks()}
+                        </ButtonGroup>
+                        <ButtonGroup>
+                            {this.createSeriesLinks()}
+                        </ButtonGroup>
+                        <ButtonGroup>
+                            {this.createActionButtons()}
+                        </ButtonGroup>
+                    </ButtonToolbar>
+                );
+            } else {
+                return (
+                    <ButtonToolbar>
+                        <ButtonGroup>
+                            {this.createTypeLinks()}
+                        </ButtonGroup>
+                        <ButtonGroup>
+                            {this.createTargetLinks()}
+                        </ButtonGroup>
+                        <ButtonGroup>
+                            {this.createActionButtons()}
+                        </ButtonGroup>
+                    </ButtonToolbar>
+                );
+            }
+        }
     }
-    ;
 }

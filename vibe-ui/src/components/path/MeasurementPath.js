@@ -3,21 +3,18 @@ import {List, Record} from "immutable";
 import PathSeries from "./PathSeries";
 
 /**
- * Models the state associated with a data path.
+ * Models the state associated with a measurement path.
  */
-export default class Path extends Record({
-    id: null,
+export default class MeasurementPath extends Record({
     measurementId: null,
     deviceId: null,
     analyserId: null,
     series: new List(),
     data: null,
-    measurementMeta: null,
-    loaded: true
+    measurementMeta: null
 }) {
-
-    constructor(id, meta) {
-        super({id: id, measurementMeta: meta});
+    constructor(meta) {
+        super({measurementMeta: meta});
     }
 
     /** @returns String a string key value. */
@@ -50,7 +47,7 @@ export default class Path extends Record({
 
     /**
      * marks all series as invisible.
-     * @returns {Path}
+     * @returns {MeasurementPath}
      */
     unload() {
         return this.set('loaded', false);
