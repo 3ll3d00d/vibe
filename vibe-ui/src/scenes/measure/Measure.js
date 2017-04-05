@@ -11,11 +11,9 @@ class Measure extends Component {
         apiPrefix: PropTypes.string.isRequired
     };
 
-    constructor(props) {
-        super(props);
-        this.showTimeSeries.bind(this);
-        this.state = {selectedMeasurement: null};
-    }
+    state = {
+        selectedMeasurement: null
+    };
 
     showTimeSeries = (measurementId) => {
         this.setState((previousState, props) => {

@@ -1,7 +1,7 @@
 /**
  * a container for paths.
  */
-import Path from "./Path";
+import PathBridge from "./PathBridge";
 import {NO_OPTION_SELECTED} from "../../constants";
 import {List} from "immutable";
 
@@ -26,7 +26,7 @@ class PathStore {
     }
 
     _makePath() {
-        return new Path(this.idProvider(), this.meta);
+        return new PathBridge(this.idProvider(), this.meta);
     }
 
     /**
@@ -234,6 +234,7 @@ class PathStore {
             const path = this.paths.get(pathIdx);
             const promise = dataPromises.find(promise => promise.name === path.measurementId);
             this.paths = this.paths.update(pathIdx, p => p.acceptData(promise));
+            // TODO move into the bridge?
             return [...new Set(this.paths.filter(path => !(path.data && path.data.fulfilled)).map(path => path.measurementId))];
         }
         return [];

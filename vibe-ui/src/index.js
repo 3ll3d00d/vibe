@@ -27,11 +27,13 @@ ReactDOM.render(
                     <Route path="/target" component={Target}/>
                     <Route path="/measure" component={Measure}/>
                     <Route path="/analyse" component={Analyse}>
-                        <Route path="/analyse/:measurementId" component={Analyse}>
-                            <Route path="/analyse/:measurementId/:deviceId" component={Analyse}>
-                                <Route path="/analyse/:measurementId/:deviceId/:analyserId" component={Analyse}>
-                                    <Route path="/analyse/:measurementId/:deviceId/:analyserId/:series(/**)"
-                                           component={Analyse}/>
+                        <Route path="/analyse/:type" component={Analyse}>
+                            <Route path="/analyse/:type/:measurementId" component={Analyse}>
+                                <Route path="/analyse/:type/:measurementId/:deviceId" component={Analyse}>
+                                    <Route path="/analyse/:type/:measurementId/:deviceId/:analyserId" component={Analyse}>
+                                        <Route path="/analyse/:type/:measurementId/:deviceId/:analyserId/:series(/**)"
+                                               component={Analyse}/>
+                                    </Route>
                                 </Route>
                             </Route>
                         </Route>
