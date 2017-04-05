@@ -51,8 +51,9 @@ class Analyse extends Component {
      */
     triggerAnalysis = (id) => {
         this.setState((previousState, props) => {
-            previousState.pathStore.load(id, this.extractDataPromises(props)).forEach(m => {
-                this.props.fetchData(m)
+            const toLoad = previousState.pathStore.load(id, this.extractDataPromises(props));
+            toLoad.forEach(m => {
+                this.props.fetchMeasurementData(m)
             });
             return {pathStore: previousState.pathStore};
         });
@@ -87,12 +88,21 @@ class Analyse extends Component {
      * @returns {Array} the objects that wrap the data props.
      */
     extractDataPromises(props) {
-        return Object.keys(props).filter(p => p.startsWith("fetchedData_")).map(p => {
+        const md = Object.keys(props).filter(p => p.startsWith("fetchedMeasurementData_")).map(p => {
             return {
-                name: p.substring("fetchedData_".length),
+                name: p.substring(p.indexOf('_') + 1),
+                type: 'measure',
                 data: props[p]
             }
         });
+        const td = Object.keys(props).filter(p => p.startsWith("fetchedTargetData_")).map(p => {
+            return {
+                name: p.substring(p.indexOf('_') + 1),
+                type: 'target',
+                data: props[p]
+            }
+        });
+        return [...md, ...td];
     }
 
     /**
@@ -215,7 +225,10 @@ export default connect((props, context) => ({
             value: targets.map(t => t.name)
         })
     },
-    fetchData: (measurementId) => ({
-        [`fetchedData_${measurementId}`]: `${context.apiPrefix}/measurements/${measurementId}/analyse`
+    fetchMeasurementData: (measurementId) => ({
+        [`fetchedMeasurementData_${measurementId}`]: `${context.apiPrefix}/measurements/${measurementId}/analyse`
+    }),
+    fetchTargetData: (targetName) => ({
+        [`fetchedTargetData_${targetName}`]: `${context.apiPrefix}/targets/${targetName}`
     })
 }))(Analyse)

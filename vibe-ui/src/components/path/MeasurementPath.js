@@ -11,7 +11,8 @@ export default class MeasurementPath extends Record({
     analyserId: null,
     series: new List(),
     data: null,
-    measurementMeta: null
+    measurementMeta: null,
+    loaded: true
 }) {
     constructor(meta) {
         super({measurementMeta: meta});
@@ -196,7 +197,8 @@ export default class MeasurementPath extends Record({
     /**
      * Accepts the promise for data into the path, rendering to chart format if required.
      */
-    acceptData(dataPromise) {
+    acceptData(dataPromises) {
+        const dataPromise = dataPromises.find(p => p.name === this.measurementId);
         if (dataPromise) {
             const withData = this.set('data', dataPromise.data).set('loaded', true);
             if (dataPromise.data.fulfilled) {

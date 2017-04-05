@@ -63,7 +63,7 @@ export default class TargetPath extends Record({
      * @returns {string} the url fragment.
      */
     encode() {
-        return this.targetName ? this.targetName : "";
+        return this.targetName ? `/${this.targetName}` : "";
     }
 
     convertToChartData(idx, referenceSeriesId) {
@@ -80,11 +80,25 @@ export default class TargetPath extends Record({
         return this.data && this.data.fulfilled;
     }
 
-    acceptData(dataPromise) {
-        return this;
+    acceptData(dataPromises) {
+        const dataPromise = dataPromises.find(p => p.name === this.targetName);
+        if (dataPromise) {
+            const withData = this.set('data', dataPromise.data).set('loaded', true);
+            if (dataPromise.data.fulfilled) {
+                return withData.addMissingRenderedData(dataPromise.data.value);
+            }
+            return withData;
+        } else {
+            return this.delete('data');
+        }
     }
 
     hasSelectedSeries() {
         return this.targetName;
+    }
+
+    addMissingRenderedData(data) {
+        // return this.set('series', this.series.map(s => s.acceptData(data[this.deviceId][this.analyserId][s.seriesName])));
+        return this;
     }
 }
