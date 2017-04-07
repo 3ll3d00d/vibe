@@ -1,13 +1,19 @@
 import React, {Component} from "react";
-import {Button, ButtonGroup, ButtonToolbar, DropdownButton, MenuItem, OverlayTrigger, Tooltip} from "react-bootstrap";
+import {Button, ButtonGroup, ButtonToolbar, DropdownButton, FormControl, MenuItem, OverlayTrigger, Tooltip} from "react-bootstrap";
 import NavigatorMultiSelect from "./NavigatorMultiSelect";
 import FontAwesome from "react-fontawesome";
 import "react-bootstrap-multiselect/css/bootstrap-multiselect.css";
+import PreciseIntNumericInput from "./PreciseIntNumericInput";
 
 export default class AnalysisNavigator extends Component {
 
     navigate = (params) => {
         this.props.navigator(params);
+    };
+
+    handleOffset = (targetName) => (valNum, valStr) => {
+        this.setState((previousState, props) => { return {offset: valNum}; });
+        this.navigate({type: 'target', measurementId: targetName, deviceId: valNum})
     };
 
     createTypeLinks() { {}
@@ -46,6 +52,13 @@ export default class AnalysisNavigator extends Component {
             <DropdownButton key="targetSelector" bsStyle={style} title={title} id="targetSelector">
                 {targetOptions}
             </DropdownButton>
+        );
+    }
+
+    createTargetOffsetLinks() {
+        return (
+            <PreciseIntNumericInput value={this.props.path.offset}
+                                    handler={this.handleOffset(this.props.path.targetName)}/>
         );
     }
 
@@ -320,6 +333,12 @@ export default class AnalysisNavigator extends Component {
                     </ButtonToolbar>
                 );
             } else {
+                const targetOffset = (
+                    <ButtonGroup>
+                        {this.createTargetOffsetLinks()}
+                    </ButtonGroup>
+                );
+                const offset = this.props.path.targetName ? targetOffset : null;
                 return (
                     <ButtonToolbar>
                         <ButtonGroup>
@@ -328,6 +347,7 @@ export default class AnalysisNavigator extends Component {
                         <ButtonGroup>
                             {this.createTargetLinks()}
                         </ButtonGroup>
+                        {offset}
                         <ButtonGroup>
                             {this.createActionButtons()}
                         </ButtonGroup>

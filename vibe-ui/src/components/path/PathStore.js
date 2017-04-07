@@ -132,7 +132,6 @@ class PathStore {
             const referencePath = this.paths.find(p => p.ownsReference(this.referenceSeriesId));
             if (referencePath) {
                 const referenceData = referencePath.getReferenceData(this.referenceSeriesId);
-                console.dir(referenceData.toJS());
                 this.paths = this.paths.map(p => p.normalise(this.referenceSeriesId, referenceData));
             } else {
                 this.referenceSeriesId = NO_OPTION_SELECTED;
