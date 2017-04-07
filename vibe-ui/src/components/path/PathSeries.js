@@ -14,6 +14,14 @@ export default class PathSeries extends Record({
         super({seriesName: seriesName});
     }
 
+    /** @returns number rms value of this series. */
+    rms() {
+        if (this.rendered) {
+            return this.rendered.rms();
+        }
+        return 0.0;
+    }
+
     /**
      * Converts the input data to chart format.
      * @param data the raw data.

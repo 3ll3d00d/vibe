@@ -8,23 +8,13 @@ class ScheduleMeasurement extends Component {
         apiPrefix: PropTypes.string.isRequired
     };
 
-    constructor(props, context) {
-        super(props, context);
-        this.state = {
-            name: null,
-            description: null,
-            duration: null,
-            delay: null,
-            showModal: false
-        };
-        this.handleName = this.handleName.bind(this);
-        this.handleDescription = this.handleDescription.bind(this);
-        this.handleDuration = this.handleDuration.bind(this);
-        this.handleDelay = this.handleDelay.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
-        this.closeModal = this.closeModal.bind(this);
-        this.openModal = this.openModal.bind(this);
-    }
+    state = {
+        name: null,
+        description: null,
+        duration: null,
+        delay: null,
+        showModal: false
+    };
 
     closeModal = () => {
         this.setState({showModal: false});

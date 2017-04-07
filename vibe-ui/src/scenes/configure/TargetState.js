@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from "react";
-import {Row, Col, Panel, Button, ControlLabel, FormGroup, FormControl} from "react-bootstrap";
+import {Button, Col, ControlLabel, FormControl, FormGroup, Panel, Row} from "react-bootstrap";
 import {connect} from "react-refetch";
 
 class TargetState extends Component {
@@ -7,22 +7,14 @@ class TargetState extends Component {
         apiPrefix: PropTypes.string.isRequired
     };
 
-    constructor(props, context) {
-        super(props, context);
-        this.state = {
-            fs: null,
-            samplesPerBatch: null,
-            accelerometerEnabled: null,
-            accelerometerSens: null,
-            gyroEnabled: null,
-            gyroSens: null
-        };
-        this.handleFs = this.handleFs.bind(this);
-        this.handleSamplesPerBatch = this.handleSamplesPerBatch.bind(this);
-        this.handleAccelerometerSens = this.handleAccelerometerSens.bind(this);
-        this.handleGyroSens = this.handleGyroSens.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
-    }
+    state = {
+        fs: null,
+        samplesPerBatch: null,
+        accelerometerEnabled: null,
+        accelerometerSens: null,
+        gyroEnabled: null,
+        gyroSens: null
+    };
 
     // handlers that put the form values into component state
     handleFs = (event) => {

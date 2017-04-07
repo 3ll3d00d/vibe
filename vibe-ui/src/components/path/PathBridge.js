@@ -62,15 +62,15 @@ export default class PathBridge extends Record({
         const splatArgs = splat.slice(1);
         if (splat[0] === 'measure') {
             if (this.path instanceof MeasurementPath) {
-                return this.set('path', this.path.decodeSplat(splatArgs));
+                return this.set('path', this.path.decodeSplat(splatArgs)).set('type', splat[0]);
             } else {
-                return this.set('path', new MeasurementPath(this.meta).decodeSplat(splatArgs))
+                return this.set('path', new MeasurementPath(this.meta).decodeSplat(splatArgs)).set('type', splat[0]);
             }
         } else if (splat[0] === 'target') {
             if (this.path instanceof TargetPath) {
-                return this.set('path', this.path.decodeSplat(splatArgs));
+                return this.set('path', this.path.decodeSplat(splatArgs)).set('type', splat[0]);
             } else {
-                return this.set('path', new TargetPath().decodeSplat(splatArgs))
+                return this.set('path', new TargetPath().decodeSplat(splatArgs)).set('type', splat[0]);
             }
         }
         return this;

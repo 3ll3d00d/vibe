@@ -1,7 +1,7 @@
 /**
  * Models the state associated with a target data path.
  */
-import {Record} from "immutable";
+import {List, Record} from "immutable";
 import PathSeries from "./PathSeries";
 import {NO_OPTION_SELECTED} from "../../constants";
 
@@ -38,7 +38,7 @@ export default class TargetPath extends Record({
      * @param splat the splat param.
      */
     decodeSplat(splat) {
-        return this._decode(splat[1]);
+        return this._decode(splat[0]);
     }
 
     _decode(targetName) {
@@ -47,13 +47,24 @@ export default class TargetPath extends Record({
                 return this.withMutations(p => {
                     p.set('targetName', targetName);
                     p.delete('data');
+                    p.delete('series');
                     return p;
                 });
+            } else if (targetName === NO_OPTION_SELECTED) {
+                return this.withMutations(p => {
+                    p.delete('targetName');
+                    p.delete('data');
+                    p.delete('series');
+                    return p;
+                });
+            } else {
+                return this;
             }
         } else {
             return this.withMutations(p => {
                 p.delete('targetName');
                 p.delete('data');
+                p.delete('series');
                 return p;
             });
         }
@@ -64,27 +75,29 @@ export default class TargetPath extends Record({
      * @returns {string} the url fragment.
      */
     encode() {
-        return this.targetName ? `/${this.targetName}` : "";
+        const first = this.targetName ? `/${this.targetName}` : `/${NO_OPTION_SELECTED}`;
+        return `${first}/${NO_OPTION_SELECTED}/${NO_OPTION_SELECTED}/${NO_OPTION_SELECTED}`;
     }
 
     convertToChartData(idx, referenceSeriesId) {
         const chartData = this.getChartData(referenceSeriesId);
         if (chartData) {
-            return Object.assign({
+            return new List().push(Object.assign({
                 id: this.getExternalId(),
                 series: chartData.name,
                 seriesIdx: idx
-            }, chartData.data.toJS());
+            }, chartData.data.toJS()));
         }
+        return new List();
     }
 
     getChartData(referenceSeriesId) {
         const s = this.series;
         if (this.loaded && s && s.visible && s.rendered) {
             if (referenceSeriesId !== NO_OPTION_SELECTED && s.normalisedData.get(referenceSeriesId)) {
-                return {name: s.seriesName, data: s.normalisedData.get(referenceSeriesId)};
+                return {name: s.seriesName, data: s.normalisedData.get(referenceSeriesId), rms: s.rms()};
             } else {
-                return {name: s.seriesName, data: s.rendered}
+                return {name: s.seriesName, data: s.rendered, rms: s.rms()}
             }
         }
         return null;
@@ -133,5 +146,10 @@ export default class TargetPath extends Record({
         if (!(this.data && this.data.fulfilled)) {
             dataProvider(this.targetName);
         }
+    }
+
+    /** @returns boolean if this path owns the given reference series id. */
+    ownsReference(referenceSeriesId) {
+        return referenceSeriesId === this.getExternalId();
     }
 }

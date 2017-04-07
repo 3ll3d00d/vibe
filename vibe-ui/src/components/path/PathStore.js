@@ -86,8 +86,8 @@ class PathStore {
         if (routerPath.splat) {
             const splitSplat = routerPath.splat.split("/");
             while (splitSplat.length > 0) {
-                const nextPath = splitSplat.splice(0, 4);
-                while (nextPath.length < 4) {
+                const nextPath = splitSplat.splice(0, 5);
+                while (nextPath.length < 5) {
                     nextPath.push(null);
                 }
                 paths.push(this._makePath().decodeSplat(nextPath));

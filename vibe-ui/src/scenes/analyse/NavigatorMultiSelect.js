@@ -3,10 +3,6 @@ import MultiSelect from "react-bootstrap-multiselect";
 import {NO_OPTION_SELECTED} from "../../constants";
 
 export default class NavigatorMultiSelect extends Component {
-    constructor(props) {
-        super(props);
-        this.handleChange.bind(this);
-    }
 
     makeValues() {
         return this.props.available.sort().map((s) => {

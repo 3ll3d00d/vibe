@@ -1,7 +1,15 @@
 import {List, Record} from "immutable";
 
+const calcRMS = xyz => Math.sqrt(xyz.reduce((a, x) => (a.y + x.y * x.y), 0) / xyz.count());
+
 class DataPoint extends Record({x: 0, y: 0, z: 0}) {}
-export default class RenderedData extends Record({xyz: new List(), minX: 0, maxX: 0, minY: 0, maxY: 0}) {}
+export default class RenderedData extends Record({xyz: new List(), minX: 0, maxX: 0, minY: 0, maxY: 0}) {
+    /** @returns number rms value of this series. */
+    rms() {
+        return calcRMS(this.xyz);
+    }
+}
+
 
 /**
  * Calculates the rendered dataset for this series.
