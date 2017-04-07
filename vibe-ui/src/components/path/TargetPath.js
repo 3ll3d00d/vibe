@@ -7,6 +7,7 @@ import {NO_OPTION_SELECTED} from "../../constants";
 
 export default class TargetPath extends Record({
     targetName: null,
+    offset: 0,
     data: null,
     loaded: true,
     series: null
@@ -30,7 +31,7 @@ export default class TargetPath extends Record({
      * @param routerPath the routerPath.
      */
     decodeParams(routerPath) {
-        return this._decode(routerPath.measurementId);
+        return this._decode(routerPath.measurementId, routerPath.deviceId);
     }
 
     /**
@@ -38,14 +39,23 @@ export default class TargetPath extends Record({
      * @param splat the splat param.
      */
     decodeSplat(splat) {
-        return this._decode(splat[0]);
+        return this._decode(splat[0], splat[1]);
     }
 
-    _decode(targetName) {
+    decodeOffset(offset) {
+        if (offset) {
+            return offset;
+        } else {
+            return 0;
+        }
+    }
+
+    _decode(targetName, offset) {
         if (targetName) {
             if (targetName !== this.targetName) {
                 return this.withMutations(p => {
                     p.set('targetName', targetName);
+                    p.set('offset', this.decodeOffset(offset));
                     p.delete('data');
                     p.delete('series');
                     return p;
@@ -53,16 +63,18 @@ export default class TargetPath extends Record({
             } else if (targetName === NO_OPTION_SELECTED) {
                 return this.withMutations(p => {
                     p.delete('targetName');
+                    p.delete('offset');
                     p.delete('data');
                     p.delete('series');
                     return p;
                 });
             } else {
-                return this;
+                return this.set('offset', this.decodeOffset(offset));
             }
         } else {
             return this.withMutations(p => {
                 p.delete('targetName');
+                p.delete('offset');
                 p.delete('data');
                 p.delete('series');
                 return p;
@@ -76,7 +88,7 @@ export default class TargetPath extends Record({
      */
     encode() {
         const first = this.targetName ? `/${this.targetName}` : `/${NO_OPTION_SELECTED}`;
-        return `${first}/${NO_OPTION_SELECTED}/${NO_OPTION_SELECTED}/${NO_OPTION_SELECTED}`;
+        return `${first}/${this.offset}/${NO_OPTION_SELECTED}/${NO_OPTION_SELECTED}`;
     }
 
     convertToChartData(idx, referenceSeriesId) {
@@ -95,9 +107,9 @@ export default class TargetPath extends Record({
         const s = this.series;
         if (this.loaded && s && s.visible && s.rendered) {
             if (referenceSeriesId !== NO_OPTION_SELECTED && s.normalisedData.get(referenceSeriesId)) {
-                return {name: s.seriesName, data: s.normalisedData.get(referenceSeriesId), rms: s.rms()};
+                return {name: s.seriesName, data: s.normalisedData.get(referenceSeriesId).applyOffset(this.offset), rms: s.rms()};
             } else {
-                return {name: s.seriesName, data: s.rendered, rms: s.rms()}
+                return {name: s.seriesName, data: s.rendered.applyOffset(this.offset), rms: s.rms()};
             }
         }
         return null;

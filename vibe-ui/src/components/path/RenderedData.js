@@ -8,6 +8,18 @@ export default class RenderedData extends Record({xyz: new List(), minX: 0, maxX
     rms() {
         return calcRMS(this.xyz);
     }
+
+    applyOffset(offset) {
+        if (offset !== 0) {
+            return this.withMutations(m => {
+                m.set('xyz', this.xyz.map(v => v.set('y', v.y + offset)));
+                m.set('minY', this.minY + offset);
+                m.set('maxY', this.maxY + offset);
+            });
+        } else {
+            return this;
+        }
+    }
 }
 
 
