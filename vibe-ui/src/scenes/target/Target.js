@@ -13,12 +13,7 @@ class Target extends Component {
         apiPrefix: PropTypes.string.isRequired
     };
 
-    constructor(props) {
-        super(props);
-        this.showTimeSeries.bind(this);
-        this.handlePreview.bind(this);
-        this.state = {selected: null, preview: null};
-    }
+    state = {selected: null, preview: null};
 
     handlePreview = (hingePoints) => {
         this.setState((previousState, props) => {

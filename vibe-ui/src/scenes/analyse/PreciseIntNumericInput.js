@@ -3,11 +3,6 @@ import React, {Component} from "react";
 
 export default class PreciseIntNumericInput extends Component {
 
-    constructor(props) {
-        super(props);
-        this.round = this.round.bind(this);
-    }
-
     round = (number) => {
         return Math.round(number);
     };

@@ -15,11 +15,7 @@ export default class TimeSeries extends Component {
         "3": "tilt"
     };
 
-    constructor(props) {
-        super(props);
-        this.selectChart.bind(this);
-        this.state = {selected: "2"}
-    }
+    state = {selected: "2"};
 
     /**
      * Controls which graph to display.

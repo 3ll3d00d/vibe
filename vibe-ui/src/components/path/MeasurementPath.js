@@ -226,9 +226,9 @@ export default class MeasurementPath extends Record({
     convertToChartData(idx, referenceSeriesId) {
         return this.series.filter(s => s.visible && this.loaded && s.rendered).map(s => {
             if (referenceSeriesId !== NO_OPTION_SELECTED && s.normalisedData.get(referenceSeriesId)) {
-                return {name: s.seriesName, data: s.normalisedData.get(referenceSeriesId)};
+                return {name: s.seriesName, data: s.normalisedData.get(referenceSeriesId), rms: s.rms()};
             } else {
-                return {name: s.seriesName, data: s.rendered}
+                return {name: s.seriesName, data: s.rendered, rms: s.rms()}
             }
         }).map(d => Object.assign({id: this.getExternalId(), series: d.name, seriesIdx: idx}, d.data.toJS()));
     }

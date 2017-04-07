@@ -23,14 +23,6 @@ export default class ChartController extends Component {
     constructor(props) {
         super(props);
         this.state = this.createInitialState(props);
-        this.handleMinX.bind(this);
-        this.handleMaxX.bind(this);
-        this.handleMinY.bind(this);
-        this.handleMaxY.bind(this);
-        this.handleLinLogChange.bind(this);
-        this.handleDotsChange.bind(this);
-        this.renderChart.bind(this);
-        this.resetChart.bind(this);
     }
 
     createInitialState(props) {

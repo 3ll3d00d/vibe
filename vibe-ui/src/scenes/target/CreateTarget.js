@@ -14,12 +14,7 @@ class CreateTarget extends Component {
         apiPrefix: PropTypes.string.isRequired
     };
 
-    constructor(props) {
-        super(props);
-        this.state = {active: 'hinge'};
-        this.selectHinge.bind(this);
-        this.selectWav.bind(this);
-    }
+    state = {active: 'hinge'};
 
     selectHinge = () => {
         this.setState((previousState, props) => {
@@ -57,11 +52,8 @@ class CreateTarget extends Component {
 }
 
 class WavSelector extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {name: ''};
-        this.handleName.bind(this);
-    }
+
+    state = {name: ''};
 
     handleName = (event) => {
         const value = event.target.value;
@@ -96,13 +88,8 @@ class WavSelector extends Component {
 }
 
 class HingeSelector extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {name: '', hinge: ''};
-        this.handleSubmit.bind(this);
-        this.handleHinge.bind(this);
-        this.handleName.bind(this);
-    }
+
+    state = {name: '', hinge: ''};
 
     handleSubmit = (event) => {
         this.props.previewFunc(null);
