@@ -44,15 +44,19 @@ export function normaliseData(renderedData, referenceData) {
     let normedData = new List();
     let minY = Number.MAX_VALUE;
     let maxY = Number.MIN_VALUE;
+    const renderedDataCount = renderedData.xyz.count();
     referenceData.xyz.forEach((val, idx) => {
-        const normedVal = renderedData.xyz.get(idx).y - val.y;
-        normedData = normedData.push(new DataPoint({
-            x: renderedData.xyz.get(idx).x,
-            y: normedVal,
-            z: renderedData.xyz.get(idx).z
-        }));
-        minY = Math.min(minY, normedVal);
-        maxY = Math.max(maxY, normedVal);
+        // the datasets might be a different size
+        if (idx < renderedDataCount) {
+            const normedVal = renderedData.xyz.get(idx).y - val.y;
+            normedData = normedData.push(new DataPoint({
+                x: renderedData.xyz.get(idx).x,
+                y: normedVal,
+                z: renderedData.xyz.get(idx).z
+            }));
+            minY = Math.min(minY, normedVal);
+            maxY = Math.max(maxY, normedVal);
+        }
     });
     return new RenderedData({
         xyz: normedData,

@@ -150,6 +150,24 @@ export default class TargetPath extends Record({
 
     /** @returns boolean if this path owns the given reference series id. */
     ownsReference(referenceSeriesId) {
-        return referenceSeriesId === this.getExternalId();
+        // TODO fix that crufty trailing slash
+        return `${this.getExternalId()}/` === referenceSeriesId;
+    }
+
+    /**
+     * Normalises the series against the given reference.
+     * @param referenceSeriesId
+     * @param referenceData
+     */
+    normalise(referenceSeriesId, referenceData) {
+        return this.set('series', this.series.normalise(referenceSeriesId, referenceData));
+    }
+
+    /** @returns the rendered data for the reference series id. */
+    getReferenceData(referenceSeriesId) {
+        if (this.ownsReference(referenceSeriesId) && this.series && this.series.rendered) {
+            return this.series.rendered;
+        }
+        return null;
     }
 }
