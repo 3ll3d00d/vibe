@@ -51,10 +51,8 @@ class Analyse extends Component {
      */
     triggerAnalysis = (id) => {
         this.setState((previousState, props) => {
-            const toLoad = previousState.pathStore.load(id, this.extractDataPromises(props));
-            toLoad.forEach(m => {
-                this.props.fetchMeasurementData(m)
-            });
+            previousState.pathStore.load(id, this.extractDataPromises(props),
+                                         this.props.fetchMeasurementData, this.props.fetchTargetData);
             return {pathStore: previousState.pathStore};
         });
     };
@@ -222,7 +220,7 @@ export default connect((props, context) => ({
     targetMeta: {
         url: `${context.apiPrefix}/targets`,
         then: (targets) => ({
-            value: targets.map(t => t.name)
+            value: targets.map(t => t.name).sort()
         })
     },
     fetchMeasurementData: (measurementId) => ({

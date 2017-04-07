@@ -266,4 +266,15 @@ export default class MeasurementPath extends Record({
     normalise(referenceSeriesId, referenceData) {
         return this.set('series', this.series.map(s => s.normalise(referenceSeriesId, referenceData)));
     }
+
+    /**
+     * If this path needs data, calls the func to fetch it.
+     * @param dataProvider
+     * @returns {MeasurementPath}
+     */
+    triggerLoadIfRequired(dataProvider) {
+        if (!(this.data && this.data.fulfilled)) {
+            dataProvider(this.measurementId);
+        }
+    }
 }

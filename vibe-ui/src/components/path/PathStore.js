@@ -226,18 +226,16 @@ class PathStore {
      * yielding the measurementIds for the paths which do not currently have data.
      * @param pathId the path id to load.
      * @param dataPromises the data promises.
+     * @param fetchMeasurement function to fetch the measurement data.
+     * @param fetchTarget function to fetch the target data.
      * @returns {[*]} a list of measurement ids that do not have data available.
      */
-    load(pathId, dataPromises) {
+    load(pathId, dataPromises, fetchMeasurement, fetchTarget) {
         const pathIdx = this.paths.findIndex(p => p.id === pathId);
         if (pathIdx !== -1) {
-            this.paths = this.paths.update(pathIdx, p => p.acceptData(dataPromises));
-            // TODO handle loading targets
-            const toLoad = this.paths.filter(bridge => !(bridge.data && bridge.data.fulfilled) && bridge.path.measurementId)
-                                     .map(bridge => bridge.path.measurementId);
-            return [...new Set(toLoad)];
+            this.paths = this.paths.update(pathIdx, p => p.acceptData(dataPromises))
+                                   .map(p => p.triggerLoadIfRequired(fetchMeasurement, fetchTarget));
         }
-        return [];
     }
 
     /**
