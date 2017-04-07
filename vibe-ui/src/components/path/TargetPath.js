@@ -1,14 +1,15 @@
-import {List, Record} from "immutable";
-// import PathSeries from "./PathSeries";
-
 /**
  * Models the state associated with a target data path.
  */
+import {Record} from "immutable";
+import PathSeries from "./PathSeries";
+import {NO_OPTION_SELECTED} from "../../constants";
+
 export default class TargetPath extends Record({
     targetName: null,
-    series: new List(),
     data: null,
-    loaded: true
+    loaded: true,
+    series: null
 }) {
 
     /** @returns String a string key value. */
@@ -67,7 +68,26 @@ export default class TargetPath extends Record({
     }
 
     convertToChartData(idx, referenceSeriesId) {
-        // TODO impl
+        const chartData = this.getChartData(referenceSeriesId);
+        if (chartData) {
+            return Object.assign({
+                id: this.getExternalId(),
+                series: chartData.name,
+                seriesIdx: idx
+            }, chartData.data.toJS());
+        }
+    }
+
+    getChartData(referenceSeriesId) {
+        const s = this.series;
+        if (this.loaded && s && s.visible && s.rendered) {
+            if (referenceSeriesId !== NO_OPTION_SELECTED && s.normalisedData.get(referenceSeriesId)) {
+                return {name: s.seriesName, data: s.normalisedData.get(referenceSeriesId)};
+            } else {
+                return {name: s.seriesName, data: s.rendered}
+            }
+        }
+        return null;
     }
 
     acceptMeta(measurementMeta) {
@@ -97,8 +117,21 @@ export default class TargetPath extends Record({
         return this.targetName;
     }
 
-    addMissingRenderedData(data) {
-        // return this.set('series', this.series.map(s => s.acceptData(data[this.deviceId][this.analyserId][s.seriesName])));
+    addMissingRenderedData(namedData) {
+        if (!this.series) {
+            return this.set('series', new PathSeries('').acceptData(namedData.data));
+        }
         return this;
+    }
+
+    /**
+     * If this path needs data, calls the func to fetch it.
+     * @param dataProvider
+     * @returns {MeasurementPath}
+     */
+    triggerLoadIfRequired(dataProvider) {
+        if (!(this.data && this.data.fulfilled)) {
+            dataProvider(this.targetName);
+        }
     }
 }

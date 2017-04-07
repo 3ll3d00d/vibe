@@ -141,4 +141,15 @@ export default class PathBridge extends Record({
         }
         return false;
     }
+
+    triggerLoadIfRequired(fetchMeasurement, fetchTarget) {
+        if (this.path) {
+            if (this.type === 'measure') {
+                this.path.triggerLoadIfRequired(fetchMeasurement);
+            } else if (this.type === 'target') {
+                this.path.triggerLoadIfRequired(fetchTarget);
+            }
+        }
+        return this;
+    }
 }
