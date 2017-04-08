@@ -41,15 +41,7 @@ class ScheduleMeasurement extends Component {
         this.setState({delay: parseInt(event.target.value, 10)});
     };
 
-    hasDescription() {
-        return this.state && this.state.description;
-    }
-
-    hasDelay() {
-        return this.state && this.state.delay;
-    }
-
-    handleSubmit(event) {
+    handleSubmit = (event) => {
         let create = {
             name: this.state.name,
             duration: this.state.duration
@@ -62,6 +54,14 @@ class ScheduleMeasurement extends Component {
         }
         this.props.createMeasurement(create);
         event.preventDefault();
+    };
+
+    hasDescription() {
+        return this.state && this.state.description;
+    }
+
+    hasDelay() {
+        return this.state && this.state.delay;
     }
 
     render() {

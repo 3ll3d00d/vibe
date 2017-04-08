@@ -80,7 +80,7 @@ class Config(BaseConfig):
                 io = smbus_io(busId)
             else:
                 raise ValueError(ioCfg['type'] + " is not a supported io provider")
-
+            self.logger.warning("Loading mpu6050 " + name + "/" + str(fs))
             return mpu6050(io, name=name, fs=fs) if name is not None else mpu6050(io, fs=fs)
         else:
             raise ValueError(type + " is not a supported device")
