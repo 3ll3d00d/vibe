@@ -109,7 +109,7 @@ class TargetState extends Component {
         }
     }
 
-    handleSubmit(event) {
+    handleSubmit = (event) => {
         let targetState = {};
         if (this.hasFs()) targetState.fs = this.getFs();
         if (this.hasSamplesPerBatch()) targetState.samplesPerBatch = this.getSamplesPerBatch();
@@ -133,7 +133,7 @@ class TargetState extends Component {
         }
         this.props.postTargetState(targetState);
         event.preventDefault();
-    }
+    };
 
     render() {
         let accelOptions = [2, 4, 8, 16];
