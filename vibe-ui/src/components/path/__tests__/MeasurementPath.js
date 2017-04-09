@@ -1,6 +1,6 @@
-import PathBridge from "../PathBridge";
+import MeasurementPath from "../MeasurementPath";
 
-const testData = {
+const testData = [{
     name: "test_measurement_1",
     data: {
         fulfilled: true,
@@ -21,44 +21,44 @@ const testData = {
             }
         }
     }
-};
+}];
 
 test('has an external id', () => {
-    const path = new PathBridge(1, null)._decode('woot', 'boot', 'toot', null);
+    const path = new MeasurementPath(null)._decode('woot', 'boot', 'toot', null);
     expect(path.getExternalId()).toBe('woot/boot/toot');
 });
 
 test('does not own reference for another measurement', () => {
-    const path = new PathBridge(1, null)._decode('woot', 'boot', 'toot', 'a-b-c');
+    const path = new MeasurementPath(null)._decode('woot', 'boot', 'toot', 'a-b-c');
     expect(path.getExternalId()).toBe('woot/boot/toot');
     expect(path.ownsReference('testtest')).toBeFalsy();
 });
 
 test('does not own reference for another series', () => {
-    const path = new PathBridge(1, null)._decode('woot', 'boot', 'toot', 'a-b-c');
+    const path = new MeasurementPath(null)._decode('woot', 'boot', 'toot', 'a-b-c');
     expect(path.getExternalId()).toBe('woot/boot/toot');
     expect(path.ownsReference('woot/boot/toot/d')).toBeFalsy();
 });
 
 test('does own reference', () => {
-    const path = new PathBridge(1, null)._decode('woot', 'boot', 'toot', 'a-b-c');
+    const path = new MeasurementPath(null)._decode('woot', 'boot', 'toot', 'a-b-c');
     expect(path.getExternalId()).toBe('woot/boot/toot');
     expect(path.ownsReference('woot/boot/toot/a')).toBeTruthy();
 });
 
 test('has selected series', () => {
-    const path = new PathBridge(1, null)._decode('woot', 'boot', 'toot', 'a-b-c');
+    const path = new MeasurementPath(null)._decode('woot', 'boot', 'toot', 'a-b-c');
     expect(path.hasSelectedSeries()).toBeTruthy();
 });
 
 test('has no selected series', () => {
     // note that this (passing an unknown series to the 2nd _decode) is a hack
-    const path = new PathBridge(1, null)._decode('woot', 'boot', 'toot', 'a-b-c')._decode('woot', 'boot', 'toot', 'd');
+    const path = new MeasurementPath(null)._decode('woot', 'boot', 'toot', 'a-b-c')._decode('woot', 'boot', 'toot', 'd');
     expect(path.hasSelectedSeries()).toBeFalsy();
 });
 
 test('changing analyser when data is loaded, propagates data to the series', () => {
-    let path = new PathBridge(1, null)._decode('test_measurement_1', 'test_device_1', 'test_analysis_1', 'a');
+    let path = new MeasurementPath(null)._decode('test_measurement_1', 'test_device_1', 'test_analysis_1', 'a');
     path = path.acceptData(testData);
     expect(path.loaded).toBeTruthy();
     expect(path.data).not.toBeNull();
