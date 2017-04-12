@@ -122,34 +122,51 @@ Build
 Test Plan
 ---------
 
+Configure
+^^^^^^^^^
 1) check the recorder and analyser startup
 2) check recorder is shown in configure screen
 3) check recorder responds to each target state change
-4) schedule a measurement
+
+Target
+^^^^^^
+1) create a hinge target curve
+2) upload a wav file
+3) show chart for each type
+4) delete each target
+
+Measure
+^^^^^^^
+1) schedule a measurement
 - verify measure screen updates as the measurement completes
-- verify analysis link is shown
-- verify analysis link takes you to analysis screen with populated 1st dropdown
-5) analyse a measurement
-- check graph is displayed
-- check each dropdown responds (series shown or not)
-- check graph can be ejected
-- check graph can be shown again
-- use x-y axis ranges, check graph updates
-- check numeric input responds up and down in log step
-- click reset, check graph responds
-6) schedule another measurement
+- verify chart link is shown
+- verify chart link shows the time series chart
+- check each tab shows data
+- check series can be turned on and off
+2) schedule another measurement
 - verify it completes
-7) analyse multiple measurements
+3) delete a measurement
+- verify measurement is deleted
+- refresh page, check measurement is no longer present
+4) schedule a measurement that fails
+- verify measurement ends up showing in red
+- check analysis button not shown
+
+Analyse
+^^^^^^^
+1) analyse multiple measurements
 - go straight to analyse tab
 - add multiple (more than 2) measurement paths
 - check they all show up
 - eject a single path, check graph axes are reset
 - reinject a single path, check graph updates and axes reset
-8) delete a measurement
-- verify measurement is deleted
-- refresh page, check measurement is no longer present
-9) schedule a measurement that fails
-- verify measurement ends up showing in red
-- check analysis button not shown
+2) add a target curve
+- check it displays
+- move the target up and down
+3) remove a path from the 1st/2nd/last positions
+4) set a reference curve
+- check the references update
+5) remove the path containing the reference
+- check the reference is reset
 
 .. _Create a venv: https://conda.io/docs/using/envs.html
