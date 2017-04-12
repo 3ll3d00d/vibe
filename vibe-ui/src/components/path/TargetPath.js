@@ -172,12 +172,19 @@ export default class TargetPath extends Record({
      * @param referenceData
      */
     normalise(referenceSeriesId, referenceData) {
-        return this.set('series', this.series.normalise(referenceSeriesId, referenceData));
+        if (this.hasSeries()) {
+            return this.set('series', this.series.normalise(referenceSeriesId, referenceData));
+        }
+        return this;
+    }
+
+    hasSeries() {
+        return this.series && this.series.rendered;
     }
 
     /** @returns the rendered data for the reference series id. */
     getReferenceData(referenceSeriesId) {
-        if (this.ownsReference(referenceSeriesId) && this.series && this.series.rendered) {
+        if (this.ownsReference(referenceSeriesId) && this.hasSeries()) {
             return this.series.rendered;
         }
         return null;

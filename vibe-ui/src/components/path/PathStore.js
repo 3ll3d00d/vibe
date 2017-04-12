@@ -38,6 +38,12 @@ class PathStore {
         const index = this.paths.findIndex(p => p.id === pathId);
         if (index !== -1) {
             this.paths = this.paths.delete(index);
+            // reset the reference path if required
+            if (this.referenceSeriesId !== NO_OPTION_SELECTED) {
+                if (!this.paths.find(p => p.ownsReference(this.referenceSeriesId))) {
+                    this.setReferenceSeriesId(NO_OPTION_SELECTED);
+                }
+            }
         }
         return this;
     }
