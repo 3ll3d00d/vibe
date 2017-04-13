@@ -74,33 +74,55 @@ Prerequisites
 ~~~~~~~~~~~~~
 
 1) You must be on a windows box with anaconda installed
-2) check the python 3.6 specific files are removed from the local jinja2 package (as per https://github.com/pallets/jinja/issues/655)
-- these files will be in `<CONDA-ENV-DIR>\Lib\site-packages\jinja2`
-3) `Create a venv`_ in conda and activate it::
+2) `Create a venv`_ in conda and activate it::
 
-4) Install dependencies that aren't in conda::
+    conda create --name pyinst35 python=3.5
+    activate pyinst35
 
-    pip.exe install aniso8601 pefile flask-restful smbus2 versioneer unittest-data-provider sphinx-rtd-theme
+3) Install dependencies that aren't in conda::
 
-5) Install dependencies that are in conda::
+    pip.exe install aniso8601 pefile flask-restful smbus2 versioneer unittest-data-provider sphinx-rtd-theme flask-uploads
+
+4) Install dependencies that are in conda::
 
     conda install flask numpy scipy python-dateutil requests Sphinx Twisted pyyaml
+    conda install -c conda-forge librosa
+    conda install pyqt=4.11.4
 
-4) install pyinstaller::
+5) install pyinstaller::
 
     conda install -c acellera pyinstaller=3.2.3
 
+6) fix pyinstaller incompatibilities
+- remove the python 3.6 specific files from `<CONDA-ENV-DIR>\Lib\site-packages\jinja2` (as per https://github.com/pallets/jinja/issues/655)
+- move the `import pkg_resources` statement in `<CONDA-ENV-DIR>\Lib\site-packages\librosa\util\files.py` into the function that uses it
+- update `setup\resampy_pyinst` from `<CONDA-ENV-DIR>\Lib\site-packages\resampy\data` if necessary
+- replace the implementation of `load_filter` in `resampy\filters.py` with::
+
+    # hack in pyinstaller support
+    if getattr(sys, 'frozen', False):
+        data = np.load(os.path.join(sys._MEIPASS, 'resampy_filters', os.path.extsep.join([filter_name, 'npz'])))
+    else:
+        fname = os.path.join('data',
+                             os.path.extsep.join([filter_name, 'npz']))
+        import pkg_resources
+        data = np.load(pkg_resources.resource_filename(__name__, fname))
+
+    return data['half_window'], data['precision'], data['rolloff']
+
+TODO: replace this with a runtime hook https://pythonhosted.org/PyInstaller/when-things-go-wrong.html#changing-runtime-behavior
 
 Build
 ^^^^^
 
 1) Generate a spec::
 
-    pyi-makespec -F -n vibe-analyser --exclude-module pkg_resources --exclude-module matplotlib analyser\app.py
+    pyi-makespec -F -n vibe-analyser --exclude-module pkg_resources --hidden-import=cython --additional-hooks-dir=.\setup\hooks analyser\app.py
 
 2) manually add the following after a.binaries in exe = EXE::
 
     Tree('vibe-ui\\build', prefix='ui'),
+    Tree('setup\\resampy_pyinst', prefix='resampy_filters'),
 
 3) build the UI::
 
@@ -109,7 +131,7 @@ Build
 
 4) build the exe::
 
-    pyinstaller --clean vibe-analyser.spec
+    pyinstaller --clean --log-level=DEBUG vibe-analyser.spec > log.txt 2>&1
 
 5) check it starts up::
 
