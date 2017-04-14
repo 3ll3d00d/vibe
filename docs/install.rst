@@ -72,9 +72,9 @@ be used as your main reference. This doc will just highlight the specific points
   * choose option 2 to change your password
   * choose option 7 and enable both ssh (so you can login remotely) and i2c (so it can talk to your MPU6050)
 
-6) if you have more than 1 rpi then oonsider `renaming your pi`_
+6) if you have more than 1 rpi then consider `renaming your pi`_
 7) (Optional) Configure your rpi for `passwordless ssh access`_
-8) Connect to your `wireless network`_, the instructions below should work for an rpi3 user (TBD whether this is how an rpi zero w works)
+8) Connect to your `wireless network`_, the instructions below are tested on the rpi3
 
   * open `/etc/network/interfaces`, it should contain::
 
@@ -146,10 +146,10 @@ Wiring up the MPU6050
 Installing vibe-recorder
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Now it's time to install vibe recorder so ssh into your rpi and::
+ssh into your rpi and::
 
     $ ssh pi@myrpi
-    $ sudo apt install python3 python3-venv python3-pip
+    $ sudo apt install python3 python3-venv python3-pip libyaml-dev
     $ mkdir python
     $ cd python
     $ python3 -m venv recorder
@@ -165,7 +165,7 @@ If all has gone well then you should now be able to do the following and see
     Loading smbus 1
     Reactor reactor is starting
 
-Now open a browser and enter the IP or hostname of your rpi and port 10002, e.g. http://192.168.1.1:10002/api/1/devices, you should see some
+Open a browser and enter the IP or hostname of your rpi and port 10002, e.g. http://192.168.1.1:10002/api/1/devices, you should see some
 plain text output like::
 
   [{"gyroSens": 500, "gyroEnabled": false, "name": "mpu6050", "failureCode": null, "accelerometerSens": 2, "accelerometerEnabled": true, "samplesPerBatch": 125, "status": "INITIALISED", "fs": 500}]
@@ -197,7 +197,7 @@ Configuring vibe-recorder
 3) refer to the :ref:`configuration guide <config-recorder>` for full details of the contents
 4) edit the `target:` line and provide the IP address of the computer you intend to run the analyser on
 5) edit the `host:` field and provide an IP address or hostname which resolves to this device
-6) (optional) edit the name field under accelerometers
+6) (optional if using a single rpi, mandatory if using more than 1) edit the name field under accelerometers
 7) repeat the recorder startup test from the last section to verify the application still starts as expected
 
 (Optional) Starting vibe-recorder on bootup
@@ -208,7 +208,35 @@ sure it restarts automatically if it ever crashes.
 
 We will achieve this by creating and enabling a `systemd`_ service.
 
-TODO add details on how to do this.
+1) Create a file vibe-recorder.service in the appropriate location for your distro (e.g. `/etc/systemd/system/` for debian)::
+
+    [Unit]
+    Description=vibe recorder
+    After=network.target
+
+    [Service]
+    Type=simple
+    User=myuser
+    WorkingDirectory=/home/myuser
+    ExecStart=/home/myuser/python/recorder/bin/recorder
+    Restart=always
+    RestartSec=1
+
+    [Install]
+    WantedBy=multi-user.target
+
+2) enable the service and start it up::
+
+    $ sudo systemctl enable vibe-recorder.service
+    $ sudo service vibe-recorder start
+    $ sudo journalctl -u vibe-recorder.service
+
+    -- Logs begin at Sat 2017-04-01 15:05:26 BST, end at Thu 2017-04-13 17:58:23 BST. --
+    Apr 13 17:54:44 mypi systemd[1]: Started vibe recorder.
+    Apr 13 17:54:45 mypi recorder[21414]: Loading config from /home/myuser/.vibe/recorder.yml
+    Apr 13 17:54:45 mypi recorder[21414]: Reactor analyser is starting
+
+3) reboot and repeat step 2 to verify the recorder has automatically started
 
 Installing the Analyser
 -----------------------
@@ -219,12 +247,15 @@ Running on Linux
 Login to your linux box and::
 
     $ ssh pi@myrpi
-    $ sudo apt install python3 python3-venv python3-pip
+    $ sudo apt install python3 python3-venv python3-pip libyaml-dev
     $ mkdir python
     $ cd python
     $ python3 -m venv analyser
     $ cd analyser
     $ . bin/activate
+    # pip doesn't order dependencies properly so you have to install these two manually first
+    $ pip install wheel
+    $ pip install numpy
     $ pip install vibe-analyser
 
 If you are installing this on the rpi then expect this to take a pretty long time (i.e. leave it going overnight).
@@ -236,12 +267,50 @@ Now start it up::
 
 and open your browser and visit http://youranalyserhost:8080, you should see
 
+.. image:: _static/landingpage.png
+    :alt: landing page
+
+**Note that you will need to add the rpi hostnames into the analyser ``/etc/hosts`` if you specified a hostname (rather than an IP) in the recorder.yml config and you have no local DNS which will resolve the hostnames**
+
+(Optional) Starting vibe-analyser on bootup
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1) Create a file vibe-analyser.service in the appropriate location for your distro (e.g. ``/etc/systemd/system/`` for debian)::
+
+    [Unit]
+    Description=vibe analyser
+    After=network.target
+
+    [Service]
+    Type=simple
+    User=myuser
+    WorkingDirectory=/home/myuser
+    ExecStart=/home/myuser/python/analyser/bin/analyser
+    Restart=always
+    RestartSec=1
+
+    [Install]
+    WantedBy=multi-user.target
+
+2) enable the service and start it up::
+
+    $ sudo systemctl enable vibe-analyser.service
+    $ sudo service vibe-analyser start
+    $ sudo journalctl -u vibe-analyser.service
+
+    -- Logs begin at Sat 2017-04-01 15:05:26 BST, end at Thu 2017-04-13 17:58:23 BST. --
+    Apr 13 17:54:44 myhost systemd[1]: Started vibe analyser.
+    Apr 13 17:54:45 myhost analyser[21414]: Loading config from /home/myuser/.vibe/analyser.yml
+    Apr 13 17:54:45 myhost analyser[21414]: Reactor analyser is starting
+    Apr 13 17:54:45 myhost analyser[21414]: 2017-04-13 17:54:45,491 - analyser.twisted - ERROR - __init__ - Se
+
+3) Reboot and verify the website is accessible
+
 Running on Windows
 ^^^^^^^^^^^^^^^^^^
 
-1) Install anaconda
-Coming soon!
-
+1) Download the exe from https://github.com/3ll3d00d/vibe/releases/download/0.3.1/vibe-analyser.exe
+2) Run it!
 
 
 .. _pi3: https://shop.pimoroni.com/collections/raspberry-pi/products/raspberry-pi-3
