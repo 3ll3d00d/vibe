@@ -162,6 +162,7 @@ Measure
 ^^^^^^^
 
 1) schedule a measurement
+
 * verify measure screen updates as the measurement completes
 * verify chart link is shown
 * verify chart link shows the time series chart
@@ -169,13 +170,16 @@ Measure
 * check series can be turned on and off
 
 2) schedule another measurement
+
 * verify it completes
 
 3) delete a measurement
+
 * verify measurement is deleted
 * refresh page, check measurement is no longer present
 
 4) schedule a measurement that fails
+
 * verify measurement ends up showing in red
 * check analysis button not shown
 
@@ -183,6 +187,7 @@ Analyse
 ^^^^^^^
 
 1) analyse multiple measurements
+
 * go straight to analyse tab
 * add multiple (more than 2) measurement paths
 * check they all show up
@@ -190,15 +195,18 @@ Analyse
 * reinject a single path, check graph updates and axes reset
 
 2) add a target curve
+
 * check it displays
 * move the target up and down
 
 3) remove a path from the 1st/2nd/last positions
 
 4) set a reference curve
+
 * check the references update
 
 5) remove the path containing the reference
+
 * check the reference is reset
 
 .. _Create a venv: https://conda.io/docs/using/envs.html

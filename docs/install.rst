@@ -157,7 +157,7 @@ ssh into your rpi and::
     $ . bin/activate
     $ pip install vibe-recorder
 
-If all has gone well then you should now be able to do the following and see
+If all has gone well then you should now be able to do the following and see::
 
     $ ./bin/recorder
     Loading config from /home/pi/.vibe/recorder.yml
@@ -195,8 +195,8 @@ Configuring vibe-recorder
     $ nano recorder.yml
 
 3) refer to the :ref:`configuration guide <config-recorder>` for full details of the contents
-4) edit the `target:` line and provide the IP address of the computer you intend to run the analyser on
-5) edit the `host:` field and provide an IP address or hostname which resolves to this device
+4) edit the ``target:`` line and provide the IP address of the computer you intend to run the analyser on
+5) edit the ``host:`` field and provide an IP address or hostname which resolves to this device
 6) (optional if using a single rpi, mandatory if using more than 1) edit the name field under accelerometers
 7) repeat the recorder startup test from the last section to verify the application still starts as expected
 
@@ -208,7 +208,7 @@ sure it restarts automatically if it ever crashes.
 
 We will achieve this by creating and enabling a `systemd`_ service.
 
-1) Create a file vibe-recorder.service in the appropriate location for your distro (e.g. `/etc/systemd/system/` for debian)::
+1) Create a file vibe-recorder.service in the appropriate location for your distro (e.g. ``/etc/systemd/system/`` for debian)::
 
     [Unit]
     Description=vibe recorder
@@ -270,7 +270,7 @@ and open your browser and visit http://youranalyserhost:8080, you should see
 .. image:: _static/landingpage.png
     :alt: landing page
 
-**Note that you will need to add the rpi hostnames into the analyser ``/etc/hosts`` if you specified a hostname (rather than an IP) in the recorder.yml config and you have no local DNS which will resolve the hostnames**
+.. warning:: If you have specified a hostname in the recorder.yml config, and don't have a local domain name resolution service, you will need to add the rpi hostnames into ``/etc/hosts``  on the analyser server
 
 (Optional) Starting vibe-analyser on bootup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

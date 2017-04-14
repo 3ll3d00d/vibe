@@ -1,13 +1,10 @@
 User Guide
 ==========
 
-User Interface
---------------
-
 The UI has 4 screens. A video demo is available on `youtube`_
 
 Configure
-^^^^^^^^^
+---------
 
 The configure screen is split into 2 sections.
 
@@ -21,7 +18,7 @@ The green checkboxes in the **Measurement Devices** panel indicate that the sens
     :alt: configure
 
 Target
-^^^^^^
+------
 
 The target screen allows the user to define target responses using 2 methods
 
@@ -31,7 +28,7 @@ The target screen allows the user to define target responses using 2 methods
 Curves can be viewed and deleted using the buttons in each row.
 
 Hinge Points
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 
 1) Enter a name and at least 2 hinge points in dB<space>frequency format
 2) click preview to examine the curve
@@ -41,7 +38,7 @@ Hinge Points
     :alt: hinge
 
 WAV Upload
-~~~~~~~~~~
+^^^^^^^^^^
 
 1) Click the WAV button
 2) Enter a name
@@ -56,7 +53,7 @@ WAV Upload
     :alt: wav_complete
 
 Measure
-^^^^^^^
+-------
 
 1) Click the **Schedule Measurement** button
 2) Enter details in the dialog
@@ -83,7 +80,7 @@ can click the series names in the chart to show or hide the selected series. The
 6) The measurement can be deleted using the dustbin icon
 
 Handling Failed Measurements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If the measurement fails for any reason, the status turns red. Tap the devices cell to bring up a table showing the reported reason for fail. There may not be a reason shown however, in which case you have to log onto the rpi and review the log files.
 
@@ -94,7 +91,7 @@ A common reason for failure is an overflow. This means the rpi was not able to r
 This means you either need to reduce the sample rate or increase the rpi i2c bus speed.
 
 Analyse
-^^^^^^^
+-------
 
 1) Select measurements and target curves via the dropdowns at the top of the screen
 2) Click the play button to load data into the graph
