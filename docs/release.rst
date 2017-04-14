@@ -7,8 +7,6 @@ Building for Local Testing
 Linux
 ^^^^^
 
-WARNING: Untested instructions!
-
 1) execute the release script with the current branch::
 
     $ ./release.sh master
@@ -46,7 +44,7 @@ WARNING: Untested instructions!
     fi
     EOF
 
-4) install the analyser to the test server and start it up
+4) install the analyser to the test server and start it up::
 
     scp /tmp/output/vibe-analyser-*tar.gz pi@rpi:/tmp/
     ssh foo@server <<EOF
@@ -73,7 +71,7 @@ Windows
 Prerequisites
 ~~~~~~~~~~~~~
 
-1) You must be on a windows box with anaconda installed
+1) You must be on a windows box with anaconda installed and you must use python 3.5
 2) `Create a venv`_ in conda and activate it::
 
     conda create --name pyinst35 python=3.5
@@ -94,10 +92,11 @@ Prerequisites
     conda install -c acellera pyinstaller=3.2.3
 
 6) fix pyinstaller incompatibilities
-- remove the python 3.6 specific files from `<CONDA-ENV-DIR>\Lib\site-packages\jinja2` (as per https://github.com/pallets/jinja/issues/655)
-- move the `import pkg_resources` statement in `<CONDA-ENV-DIR>\Lib\site-packages\librosa\util\files.py` into the function that uses it
-- update `setup\resampy_pyinst` from `<CONDA-ENV-DIR>\Lib\site-packages\resampy\data` if necessary
-- replace the implementation of `load_filter` in `resampy\filters.py` with::
+
+* remove the python 3.6 specific files from ``<CONDA-ENV-DIR>\Lib\site-packages\jinja2`` (as per https://github.com/pallets/jinja/issues/655)
+* move the ``import pkg_resources`` statement in ``<CONDA-ENV-DIR>\Lib\site-packages\librosa\util\files.py`` into the function that uses it
+* update ``setup\resampy_pyinst`` from ``<CONDA-ENV-DIR>\Lib\site-packages\resampy\data`` if necessary
+* replace the implementation of ``load_filter`` in ``resampy\filters.py`` with::
 
     # hack in pyinstaller support
     if getattr(sys, 'frozen', False):
@@ -110,7 +109,7 @@ Prerequisites
 
     return data['half_window'], data['precision'], data['rolloff']
 
-TODO: replace this with a runtime hook https://pythonhosted.org/PyInstaller/when-things-go-wrong.html#changing-runtime-behavior
+TODO: replace this hack with a `pyinstaller runtime hook`_
 
 Build
 ^^^^^
@@ -146,12 +145,14 @@ Test Plan
 
 Configure
 ^^^^^^^^^
+
 1) check the recorder and analyser startup
 2) check recorder is shown in configure screen
 3) check recorder responds to each target state change
 
 Target
 ^^^^^^
+
 1) create a hinge target curve
 2) upload a wav file
 3) show chart for each type
@@ -159,36 +160,54 @@ Target
 
 Measure
 ^^^^^^^
+
 1) schedule a measurement
-- verify measure screen updates as the measurement completes
-- verify chart link is shown
-- verify chart link shows the time series chart
-- check each tab shows data
-- check series can be turned on and off
+
+* verify measure screen updates as the measurement completes
+* verify chart link is shown
+* verify chart link shows the time series chart
+* check each tab shows data
+* check series can be turned on and off
+
 2) schedule another measurement
-- verify it completes
+
+* verify it completes
+
 3) delete a measurement
-- verify measurement is deleted
-- refresh page, check measurement is no longer present
+
+* verify measurement is deleted
+* refresh page, check measurement is no longer present
+
 4) schedule a measurement that fails
-- verify measurement ends up showing in red
-- check analysis button not shown
+
+* verify measurement ends up showing in red
+* check analysis button not shown
 
 Analyse
 ^^^^^^^
+
 1) analyse multiple measurements
-- go straight to analyse tab
-- add multiple (more than 2) measurement paths
-- check they all show up
-- eject a single path, check graph axes are reset
-- reinject a single path, check graph updates and axes reset
+
+* go straight to analyse tab
+* add multiple (more than 2) measurement paths
+* check they all show up
+* eject a single path, check graph axes are reset
+* reinject a single path, check graph updates and axes reset
+
 2) add a target curve
-- check it displays
-- move the target up and down
+
+* check it displays
+* move the target up and down
+
 3) remove a path from the 1st/2nd/last positions
+
 4) set a reference curve
-- check the references update
+
+* check the references update
+
 5) remove the path containing the reference
-- check the reference is reset
+
+* check the reference is reset
 
 .. _Create a venv: https://conda.io/docs/using/envs.html
+.. _pyinstaller runtime hook: https://pythonhosted.org/PyInstaller/when-things-go-wrong.html#changing-runtime-behavior

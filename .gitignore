@@ -98,3 +98,4 @@ recorder/fcntl.py
 *.xlsx
 /setup.py
 /MANIFEST.in
+/docs/_static/Thumbs.db

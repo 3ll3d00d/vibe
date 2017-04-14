@@ -1,7 +1,7 @@
 Configuration
 =============
 
-Each application is configured by a single file which is located in the configuration directory, this defaults to `${HOME}/.vibe` but can be overridden by setting the `VIBE_CONFIG_HOME` environment variable before startup.
+Each application is configured by a single file which is located in the configuration directory, this defaults to ``${HOME}/.vibe`` but can be overridden by setting the ``VIBE_CONFIG_HOME`` environment variable before startup.
 
 .. _config-recorder:
 
@@ -32,10 +32,10 @@ The configuration file is generated with sensible default values at startup.
 
 All options are overrideable but only the following options make any sense to change;
 
-* accelerometers/name - this is the name of the device shown in the UI, it must be unique across all connected devices
-* handlers/target - set to the IP:port of your analyser process
-* host - set to an ip or hostname that will resolve to this device
-* debugLogging - write more detailed logging to the log file, useful if investigating odd behaviour under direction of a developer
+* ``accelerometers/name`` - this is the name of the device shown in the UI, it must be unique across all connected devices
+* ``handlers/target`` - set to the IP:port of your analyser process
+* ``host`` - set to an ip or hostname that will resolve to this device, if using a hostname then remember to add the IP of this device to the analyser service
+* ``debugLogging`` - write more detailed logging to the log file, useful if investigating odd behaviour under direction of a developer
 
 Analyser
 --------
@@ -60,7 +60,7 @@ The configuration file is generated with sensible default values at startup.
 
 All options are overrideable but only the following options make any sense to change;
 
-* dataDir - set to the directory you want measurements to be recorded to, by default this goes in the config dir
-* all options under targetState - these control the default state of the measurement system, this is only relevant until https://github.com/3ll3d00d/vibe/issues/9 is fixed
-* host and port - the port the analyser listens on, must agree with the value entered in the recorder `handlers/target` option
-* debugLogging - write more detailed logging to the log file, useful if investigating odd behaviour under direction of a developer
+* ``dataDir`` - set to the directory you want measurements to be recorded to, by default this goes in the config dir
+* all options under ``targetState`` - these control the default state of the measurement system, this is only relevant until https://github.com/3ll3d00d/vibe/issues/9 is fixed
+* ``host`` and ``port`` - the port the analyser listens on, must agree with the value entered in the recorder ``handlers/target`` option
+* ``debugLogging`` - write more detailed logging to the log file, useful if investigating odd behaviour under direction of a developer

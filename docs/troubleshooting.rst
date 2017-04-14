@@ -39,8 +39,10 @@ correctly, then the recorder will fail to start with a message that looks like::
 Go back to the :ref:`installation guide <install-mpu6050-wiring>` and check configuration and wiring.
 
 Measurements fail due to overflows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-i2c bus speed?
-sample rate?
-sensors?
+This means the rpi is unable to read data from the sensor via i2c as fast as the device is logging it. This means you need to either
+
+1) reduce the amount of data collected (reduce sample rate, turn off a sensor)
+2) increase the i2c bus speed
+
