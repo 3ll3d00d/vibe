@@ -6,6 +6,7 @@ import numpy as np
 from flask import json
 
 from analyser.common.signal import loadSignalFromWav
+from scipy.interpolate import interp1d
 
 logger = logging.getLogger('analyser.targetstate')
 analyses = ['spectrum', 'peakSpectrum', 'psd']
@@ -128,6 +129,27 @@ class TargetController(object):
                         logger.exception('Unable to analyse ' + name)
                 else:
                     logger.error('Target ' + name + ' does not exist at ' + path)
+            elif target['type'] == 'hinge':
+                hingePoints = np.array(target['hinge']).astype(np.float64)
+                x = hingePoints[:, 1]
+                y = hingePoints[:, 0]
+                # extend as straight line from 0 to 500
+                if x[0] != 0:
+                    x = np.insert(x, 0, 0.0000001)
+                    y = np.insert(y, 0, y[0])
+                if x[-1] != 500:
+                    x = np.insert(x, len(x), 500.0)
+                    y = np.insert(y, len(y), y[-1])
+                # convert the y axis dB values into a linear value
+                y = 10**(y/10)
+                # perform a logspace interpolation
+                f = self.log_interp1d(x, y)
+                # remap to 0-500
+                xnew = np.linspace(x[0], x[-1], num=500, endpoint=False)
+                # and convert back to dB
+                return xnew, 10*np.log10(f(xnew))
+            else:
+                logger.error('Unknown target type with name ' + name)
         return None
 
     def _valid(self, hingePoints):
@@ -137,3 +159,17 @@ class TargetController(object):
         :return: true if the data is valid.
         """
         return True
+
+    def log_interp1d(self, xx, yy, kind='linear'):
+        """
+        Performs a log space 1d interpolation.
+        :param xx: the x values.
+        :param yy: the y values.
+        :param kind: the type of interpolation to apply (as per scipy interp1d)
+        :return: the interpolation function.
+        """
+        logx = np.log10(xx)
+        logy = np.log10(yy)
+        lin_interp = interp1d(logx, logy, kind=kind)
+        log_interp = lambda zz: np.power(10.0, lin_interp(np.log10(zz)))
+        return log_interp

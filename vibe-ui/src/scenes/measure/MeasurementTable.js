@@ -45,9 +45,9 @@ const nameCell = ({row}) => {
 class ProgressCell extends Component {
     calculateProgress() {
         const samplesExpected = this.props.row.measurementParameters.fs * this.props.row.duration;
-        const samplesSoFar = Math.max([...Object.keys(this.props.row.recordingDevices).map(key => {
-            return this.props.row.recordingDevices[key].count;
-        })]);
+        const progressValues = Object.keys(this.props.row.recordingDevices)
+                                     .map(key => this.props.row.recordingDevices[key].count);
+        const samplesSoFar = Math.max(...progressValues);
         return Math.ceil(samplesSoFar / samplesExpected * 100);
     }
 
