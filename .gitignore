@@ -90,12 +90,11 @@ ENV/
 
 # recorder specific
 external
-.idea
-test/data/*
-recorder/fcntl.py
-*.out
-*.csv
-*.xlsx
+backend/test/data/*
+backend/src/recorder/fcntl.py
 /setup.py
 /MANIFEST.in
 /docs/_static/Thumbs.db
+
+.idea
+*.iml
