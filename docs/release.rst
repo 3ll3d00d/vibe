@@ -95,7 +95,7 @@ Prerequisites
 
 * remove the python 3.6 specific files from ``<CONDA-ENV-DIR>\Lib\site-packages\jinja2`` (as per https://github.com/pallets/jinja/issues/655)
 * move the ``import pkg_resources`` statement in ``<CONDA-ENV-DIR>\Lib\site-packages\librosa\util\files.py`` into the function that uses it
-* update ``setup\resampy_pyinst`` from ``<CONDA-ENV-DIR>\Lib\site-packages\resampy\data`` if necessary
+* update ``release\resampy_pyinst`` from ``<CONDA-ENV-DIR>\Lib\site-packages\resampy\data`` if necessary
 * replace the implementation of ``load_filter`` in ``resampy\filters.py`` with::
 
     # hack in pyinstaller support
@@ -116,12 +116,12 @@ Build
 
 1) Generate a spec::
 
-    pyi-makespec -F -n vibe-analyser --exclude-module pkg_resources --hidden-import=cython --additional-hooks-dir=.\setup\hooks analyser\app.py
+    pyi-makespec -F -n vibe-analyser --exclude-module pkg_resources --hidden-import=cython --additional-hooks-dir=.\release\hooks analyser\app.py
 
 2) manually add the following after a.binaries in exe = EXE::
 
     Tree('vibe-ui\\build', prefix='ui'),
-    Tree('setup\\resampy_pyinst', prefix='resampy_filters'),
+    Tree('release\\resampy_pyinst', prefix='resampy_filters'),
 
 3) build the UI::
 

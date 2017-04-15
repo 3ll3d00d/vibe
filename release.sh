@@ -18,10 +18,10 @@ function link_setup() {
     log_it "Linking ${1}"
     [[ -e setup.py ]] && rm setup.py
     [[ -e MANIFEST.in ]] && rm MANIFEST.in
-    if [ -d setup/${1} ]
+    if [ -d release/${1} ]
     then
-        cp setup/${1}/setup.py setup.py
-        cp setup/${1}/MANIFEST.in MANIFEST.in
+        cp release/${1}/setup.py setup.py
+        cp release/${1}/MANIFEST.in MANIFEST.in
     else
         fail_hard "Unable to link setup for ${1}"
     fi
@@ -92,7 +92,7 @@ function prepare_ui() {
     [[ $? -ne 0 ]] && fail_hard "yarn build failed"
     popd
     [[ -d analyser/ui ]] && rm -Rf analyser/ui
-    mv vibe-ui/build analyser/ui
+    mv vibe-ui/build backend/src/analyser/ui
     [[ $? -ne 0 ]] && fail_hard "failed to move prod ui build"
     # can't end on the previous test as it provides the return value of the function (i.e. 1 and hence exit with -e)
     return 0
