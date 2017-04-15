@@ -111,17 +111,22 @@ class HingeSelector extends Component {
         this.setState({hinge: value});
     };
 
-    isNotNumeric(hingePoint) {
+    isInvalidNumericData(hingePoint) {
         const h1 = hingePoint[0].trim();
         const h2 = hingePoint[1].trim();
-        // TODO this doesn't really work
-        return (h1.length === 0 || h2.length === 0) || (Number.isNaN(h1) || Number.isNaN(h2))
+        // TODO this is a bit of a hack
+        return ((h1.length === 0 || h2.length === 0) || (Number.isNaN(h1) || Number.isNaN(h2))) || h2 <= 0 || h2 >= 500;
     }
 
     isValidHinge(hingePoints) {
         if (hingePoints.length > 1) {
-            const invalidHingePoints = hingePoints.filter(p => (p.length !== 2 || this.isNotNumeric(p)));
-            return invalidHingePoints && invalidHingePoints.length === 0;
+            const invalidHingePoints = hingePoints.filter(p => (p.length !== 2 || this.isInvalidNumericData(p)));
+            if (invalidHingePoints && invalidHingePoints.length === 0) {
+                const freqs = hingePoints.map(h => h[1]);
+                const sortedFreqs = freqs.slice();
+                sortedFreqs.sort((a,b) => a - b);
+                return sortedFreqs.every((element, index, array) => freqs[index] === element);
+            }
         }
         return false;
     }
@@ -177,7 +182,8 @@ class HingeSelector extends Component {
                         <FormControl componentClass="textarea"
                                      value={this.state.hinge}
                                      onChange={this.handleHinge}
-                                     placeholder="Enter a set of hinge points&#10;Use dB<space>frequency format such as&#10;0 20&#10;5 40&#10;5 80&#10;4 120"/>
+                                     style={{ height: 130 }}
+                                     placeholder="Enter a set of hinge points in dB<space>frequency format &#10;where 0 &lt; freq &lt; 500 e.g.&#10;4 1&#10;1 4&#10;1 8&#10;6 80"/>
                     </FormGroup>
                 </FormGroup>
                 {this.getSubmitButtons(validationState)}
