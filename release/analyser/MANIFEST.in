@@ -1,4 +1,5 @@
 include README.rst
-graft analyser/ui
+graft backend/src
+graft backend/src/analyser/ui
 include versioneer.py
 include _version.py
