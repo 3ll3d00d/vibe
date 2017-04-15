@@ -1,12 +1,13 @@
 [run]
 branch = True
 source =
-    analyser/*
-    core/*
-    recorder/*
+    backend/src/analyser/*
+    backend/src/core/*
+    backend/src/recorder/*
 omit =
-    test/*
-    scratch/*
+    backend/test/*
+    backend/scratch/*
+    backend/setup/*
 
 [report]
 exclude_lines =
@@ -16,4 +17,4 @@ exclude_lines =
     if __name__ == .__main__.:
 ignore_errors = True
 omit =
-    test/*
+    backend/test/*
