@@ -30,6 +30,7 @@ setup(name='vibe-recorder',
           'recorder.resources',
           'core'
       ],
+      package_dir={'': 'backend/src'},
       entry_points={
           'console_scripts': [
               'recorder = recorder.app:main',

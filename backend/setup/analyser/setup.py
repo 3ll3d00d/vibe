@@ -30,6 +30,7 @@ setup(name='vibe-analyser',
           'analyser.resources',
           'core'
       ],
+      package_dir={'': 'backend/src'},
       entry_points={
           'console_scripts': [
               'analyser = analyser.app:main',

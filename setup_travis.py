@@ -23,6 +23,7 @@ setup(name='vibe',
       author_email='mattkhan+vibe@gmail.com',
       license='MIT',
       packages=['analyser', 'core', 'recorder'],
+      package_dir={'': 'backend/src'},
       setup_requires=[
           'pytest-runner'
       ],

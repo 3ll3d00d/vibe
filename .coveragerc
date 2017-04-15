@@ -1,12 +1,13 @@
 [run]
 branch = True
 source =
-    backend/analyser/*
-    backend/core/*
-    backend/recorder/*
+    backend/src/analyser/*
+    backend/src/core/*
+    backend/src/recorder/*
 omit =
     backend/test/*
     backend/scratch/*
+    backend/setup/*
 
 [report]
 exclude_lines =
