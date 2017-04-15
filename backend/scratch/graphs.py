@@ -258,5 +258,36 @@ class HandlerTestCase(object):
         return y
 
 
-t = HandlerTestCase()
-t.showSpectrum()
+# t = HandlerTestCase()
+# t.showSpectrum()
+def log_interp1d(xx, yy, kind='linear'):
+    logx = np.log10(xx)
+    logy = np.log10(yy)
+    lin_interp = interp1d(logx, logy, kind=kind)
+    log_interp = lambda zz: np.power(10.0, lin_interp(np.log10(zz)))
+    return log_interp
+
+data = [['4', '1'], ['1', '4'], ['1', '8'], ['6', '80']]
+arr = np.array(data).astype(np.float64)
+from scipy.interpolate import interp1d
+
+x = arr[:, 1]
+y = arr[:, 0]
+# extend as straight line from 0 to 500
+if x[0] != 0:
+    x = np.insert(x, 0, 0.0000001)
+    y = np.insert(y, 0, y[0])
+if x[-1] != 500:
+    x = np.insert(x, len(x), 500.0)
+    y = np.insert(y, len(y), y[-1])
+
+y = 10**(y/10)
+f = log_interp1d(x, y)
+xnew = np.linspace(x[0], x[-1], num=500, endpoint=True)
+import matplotlib.pyplot as plt
+ynew = f(xnew)
+ydB = 10*np.log10(ynew)
+x_final = xnew
+y_final = ydB
+plt.semilogx(x_final, y_final, '-')
+plt.show()

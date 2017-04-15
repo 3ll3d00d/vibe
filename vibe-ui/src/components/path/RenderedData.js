@@ -35,7 +35,7 @@ export function renderData(data) {
     let maxX = Number.MIN_VALUE;
     let maxY = Number.MIN_VALUE;
     for (let [idx, value] of data.freq.entries()) {
-        if (value > 0) {
+        if (value > 0.01) {
             xyz = xyz.push(new DataPoint({x: value, y: data.val[idx], z: 1}));
             if (value < minX) minX = value;
             if (value > maxX) maxX = value;
