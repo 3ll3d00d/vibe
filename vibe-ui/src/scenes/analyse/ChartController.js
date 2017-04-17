@@ -170,8 +170,8 @@ export default class ChartController extends Component {
             <div>
                 <Well bsSize="small">
                     <Row>
-                        <Col md={2} xs={4}>{xRange}</Col>
-                        <Col md={1} xs={2}>
+                        <Col md={2} sm={4}>{xRange}</Col>
+                        <Col md={1} sm={2}>
                             <ToggleButton activeLabel="x log"
                                           inactiveLabel="x lin"
                                           value={this.state.xLog}
@@ -181,16 +181,16 @@ export default class ChartController extends Component {
                                           value={this.state.dots}
                                           onToggle={this.handleDotsChange}/>
                         </Col>
-                        <Col md={2} xs={4}>{yRange}</Col>
-                        <Col md={1} xsHidden={true}>
+                        <Col md={2} sm={4}>{yRange}</Col>
+                        <Col md={1} smHidden={true} xsHidden={true}>
                             {updateButton}{resetButton}
                         </Col>
-                        <Col md={6} xs={8}>
+                        <Col md={6} sm={8}>
                             {this.makeReferenceSeriesSelector()}
                         </Col>
                     </Row>
                     <Row>
-                        <Col lgHidden={true} mdHidden={true} xs={6}>
+                        <Col mdHidden={true} xs={6}>
                             {updateButton}{resetButton}
                         </Col>
                     </Row>
