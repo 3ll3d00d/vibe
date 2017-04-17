@@ -33,6 +33,16 @@ export default class MeasurementPath extends Record({
         return false;
     }
 
+    /** @returns boolean true if this path owns the given reference series and it is currently visible. */
+    isReferenceVisible(referenceSeriesId) {
+        const externalId = this.getExternalId();
+        if (referenceSeriesId.startsWith(externalId)) {
+            const referenceSeries = referenceSeriesId.substring(externalId.length + 1);
+            return this.series.filter(s => s.visible).map(s => s.seriesName).includes(referenceSeries);
+        }
+        return false;
+    }
+
     /** @returns the rendered data for the reference series id. */
     getReferenceData(referenceSeriesId) {
         const externalId = this.getExternalId();

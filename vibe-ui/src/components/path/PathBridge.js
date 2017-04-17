@@ -103,6 +103,10 @@ export default class PathBridge extends Record({
         return this.path && this.path.ownsReference(referenceSeriesId);
     }
 
+    isReferenceVisible(referenceSeriesId) {
+        return this.path && this.path.isReferenceVisible(referenceSeriesId);
+    }
+
     getReferenceData(referenceSeriesId) {
         if (this.path) {
             return this.path.getReferenceData(referenceSeriesId);
