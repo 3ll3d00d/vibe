@@ -277,4 +277,11 @@ export default class MeasurementPath extends Record({
             dataProvider(this.measurementId);
         }
     }
+
+    /**
+     * @returns the number of series in this path.
+     */
+    getSeriesCount() {
+        return this.series.count();
+    }
 }
