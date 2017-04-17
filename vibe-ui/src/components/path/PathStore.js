@@ -140,7 +140,7 @@ class PathStore {
 
     propagateReferenceSeries() {
         if (this.referenceSeriesId !== NO_OPTION_SELECTED) {
-            const referencePath = this.paths.find(p => p.ownsReference(this.referenceSeriesId));
+            const referencePath = this.paths.find(p => p.isReferenceVisible(this.referenceSeriesId));
             if (referencePath) {
                 const referenceData = referencePath.getReferenceData(this.referenceSeriesId);
                 this.paths = this.paths.map(p => p.normalise(this.referenceSeriesId, referenceData));

@@ -166,6 +166,11 @@ export default class TargetPath extends Record({
         return `${this.getExternalId()}/` === referenceSeriesId;
     }
 
+    /** @returns boolean delegates to ownsReference. */
+    isReferenceVisible(referenceSeriesId) {
+        return this.ownsReference(referenceSeriesId);
+    }
+
     /**
      * Normalises the series against the given reference.
      * @param referenceSeriesId
