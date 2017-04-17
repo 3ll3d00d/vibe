@@ -152,4 +152,12 @@ export default class PathBridge extends Record({
         }
         return this;
     }
+
+    /** @returns the number of series in this path (or 0 if no path is set). */
+    getSeriesCount() {
+        if (this.path) {
+            return this.path.getSeriesCount();
+        }
+        return 0;
+    }
 }

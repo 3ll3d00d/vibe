@@ -32,6 +32,7 @@ class Analyse extends Component {
         this.setState((previousState, props) => {
             const pathStore = previousState.pathStore.removePath(id);
             this.context.router.push(pathStore.toRouterPath());
+            if (pathStore)
             return {pathStore: pathStore};
         });
     };

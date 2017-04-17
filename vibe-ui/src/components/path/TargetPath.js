@@ -189,4 +189,9 @@ export default class TargetPath extends Record({
         }
         return null;
     }
+
+    /** @returns 1 if this path has a series. */
+    getSeriesCount() {
+        return this.series ? 1 : 0;
+    }
 }
