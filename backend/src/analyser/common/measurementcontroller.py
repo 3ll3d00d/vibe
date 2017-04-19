@@ -1,11 +1,12 @@
 import datetime
+import glob
 import logging
-import os
 import shutil
 import threading
 import time
 from enum import Enum
 
+import os
 from flask import json
 from flask_restful import fields
 from flask_restful import marshal
@@ -41,6 +42,7 @@ DEFAULT_ANALYSIS_SERIES = {
     'peakSpectrum': ['x', 'y', 'z', 'sum'],
     'psd': ['x', 'y', 'z']
 }
+
 
 class MeasurementStatus(Enum):
     """
@@ -167,6 +169,11 @@ class CompleteMeasurement(object):
         self.idAsPath = self.id.replace('_', '/')
         self.dataDir = dataDir
         self.data = {}
+
+    def updateName(self, newName):
+        self.name = newName
+        self.id = getMeasurementId(self.startTime, self.name)
+        self.idAsPath = self.id.replace('_', '/')
 
     def inflate(self):
         """
@@ -534,4 +541,96 @@ class MeasurementController(object):
     def _getPathToMeasurementMetaFile(self, measurementId):
         return os.path.join(self.dataDir, measurementId, 'metadata.json')
 
-        # TODO allow remote reset of the recorder
+    def editMeasurement(self, measurementId, data):
+        """
+        Edits the specified measurement with the provided data.
+        :param measurementId: the measurement id.
+        :param data: the data to update.  
+        :return: true if the measurement was edited
+        """
+        oldMeasurement = self.getMeasurement(measurementId, measurementStatus=MeasurementStatus.COMPLETE)
+        if oldMeasurement:
+            import copy
+            newMeasurement = copy.deepcopy(oldMeasurement)
+            deleteOld = False
+            createdFilteredCopy = False
+            newName = data.get('name', None)
+            newDesc = data.get('description', None)
+            newStart = float(data.get('start', 0))
+            newEnd = float(data.get('end', oldMeasurement.duration))
+            newDuration = newEnd - newStart
+            newDevices = data.get('devices', None)
+            if newName:
+                logger.info('Updating name from ' + oldMeasurement.name + ' to ' + newName)
+                newMeasurement.updateName(newName)
+                deleteOld = True
+            if newDesc:
+                logger.info('Updating description from ' + str(oldMeasurement.description) + ' to ' + str(newDesc))
+                newMeasurement.description = newDesc
+            if newDuration != oldMeasurement.duration:
+                logger.info('Copying measurement to allow support new duration ' + str(newDuration))
+                if oldMeasurement.name == newMeasurement.name:
+                    newMeasurement.updateName(newMeasurement.name + '-' + str(int(time.time())))
+                newMeasurement.duration = newDuration
+                createdFilteredCopy = True
+            if createdFilteredCopy:
+                newMeasurementPath = self._getPathToMeasurementMetaDir(newMeasurement.idAsPath)
+                dataSearchPattern = self._getPathToMeasurementMetaDir(oldMeasurement.idAsPath) + '/**/data.out'
+                newDataCountsByDevice = [self._filterCopy(dataFile, newStart, newEnd, newMeasurementPath)
+                                         for dataFile in glob.glob(dataSearchPattern)]
+                for device, count in newDataCountsByDevice:
+                    newMeasurement.recordingDevices.get(device)['count'] = count
+            self.store(newMeasurement)
+            if newDevices:
+                for renames in newDevices:
+                    logger.info('Updating device name from ' + str(renames[0]) + ' to ' + str(renames[1]))
+                    deviceState = newMeasurement.recordingDevices.get(renames[0])
+                    newMeasurement.recordingDevices[renames[1]] = deviceState
+                    del newMeasurement.recordingDevices[renames[0]]
+                    os.rename(os.path.join(self._getPathToMeasurementMetaDir(newMeasurement.idAsPath), renames[0]),
+                              os.path.join(self._getPathToMeasurementMetaDir(newMeasurement.idAsPath), renames[1]))
+                self.store(newMeasurement)
+            if deleteOld or createdFilteredCopy or newDevices:
+                self.completeMeasurements.append(newMeasurement)
+            if deleteOld:
+                self.delete(oldMeasurement.id)
+                self.completeMeasurements.remove(oldMeasurement)
+            return True
+        else:
+            return False
+
+    def _filterCopy(self, dataFile, newStart, newEnd, newDataDir):
+        """
+        Copies the data file to a new file in the tmp dir, filtering it according to newStart and newEnd and adjusting 
+        the times as appropriate so it starts from 0.
+        :param dataFile: the input file.
+        :param newStart: the new start time.
+        :param newEnd: the new end time.
+        :param newDataDir: the tmp dir to write to.
+        :return: the device name & no of rows in the data.
+        """
+        import csv
+        pathToData = os.path.split(dataFile)
+        dataFileName = pathToData[1]
+        dataDeviceName = os.path.split(pathToData[0])[1]
+        os.makedirs(os.path.join(newDataDir, dataDeviceName), exist_ok=True)
+        outputFile = os.path.join(newDataDir, dataDeviceName, dataFileName)
+        dataCount = 0
+        rowNum = 0
+        with open(dataFile, 'r') as dataIn, open(outputFile, 'w') as dataOut:
+            writer = csv.writer(dataOut, delimiter=',')
+            for row in csv.reader(dataIn, delimiter=','):
+                if len(row) > 0:
+                    time = float(row[0])
+                    if newStart <= time <= newEnd:
+                        newRow = row[:]
+                        if newStart > 0:
+                            newRow[0] = "{0:.3f}".format(time - newStart)
+                        writer.writerow(newRow)
+                        dataCount += 1
+                else:
+                    logger.warning('Ignoring empty row ' + str(rowNum) + ' in ' + str(dataFile))
+                rowNum += 1
+        return dataDeviceName, dataCount
+
+    # TODO allow remote reset of the recorder

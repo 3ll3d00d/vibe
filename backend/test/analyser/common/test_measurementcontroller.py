@@ -504,3 +504,31 @@ def test_scheduledMeasurement_FailsDuringMeasurement_IsStoredAsFailed(measuremen
         assert metadata['recordingDevices'].get('d1') != None
         assert metadata['recordingDevices']['d1'].get('state') == MeasurementStatus.FAILED.name
         assert metadata['recordingDevices']['d1'].get('reason') == 'oh noes'
+
+# TODO
+# check device counts are updated
+# check files are copied
+# check old is left in place
+# confirm get measurements yields correct data
+
+def rename_measurement_deletes_old(measurementController):
+    pass
+
+def edit_description_is_an_inplace_edit(measurementController):
+    pass
+
+def trim_left_is_a_copy(measurementController):
+    pass
+
+def trim_right_is_a_copy(measurementController):
+    pass
+
+def trim_both_is_a_copy(measurementController):
+    pass
+
+def trim_and_rename_deletes_old(measurementController):
+    pass
+
+def rename_device_is_an_inplace_edit(measurementController):
+    pass
+
