@@ -65,9 +65,9 @@ class ScheduleMeasurement extends Component {
     }
 
     render() {
-        let openButton = <Button className="pull-right" bsStyle="danger" disabled>No Devices Available&nbsp;<FontAwesome name="exclamation"/></Button>;
+        let openButton = <Button className="pull-right" bsStyle="danger" disabled>No Devices<br/>Available&nbsp;<FontAwesome name="exclamation"/></Button>;
         if (this.props.deviceStatuses.some((status) => status === 'INITIALISED' || status === 'RECORDING')) {
-            openButton = <Button className="pull-right" bsStyle="success" onClick={this.openModal}>Schedule Measurement</Button>;
+            openButton = <Button className="pull-right" bsStyle="success" onClick={this.openModal}>Schedule<br/>Measurement</Button>;
         }
         return (
             <div>
@@ -151,7 +151,7 @@ class ScheduleMeasurement extends Component {
         } else {
             return (
                 <Button type="submit" bsStyle="danger" disabled>
-                    <FontAwesome name="exclamation"/>&nbsp;No Devices Available!
+                    <FontAwesome name="exclamation"/>&nbsp;No Devices<br/>Available!
                 </Button>
             );
         }

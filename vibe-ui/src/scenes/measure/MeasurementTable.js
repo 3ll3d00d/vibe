@@ -146,9 +146,29 @@ class DeviceCell extends Component {
 }
 
 class ActionCell extends Component {
+    getEditButton(measurement) {
+        if (measurement.status === 'COMPLETE') {
+            if (measurement.isSelectedEdit) {
+                return (
+                    <Button bsStyle="success"
+                            onClick={() => measurement.clearEdit()} bsSize="xsmall">
+                        <FontAwesome name="eject"/>
+                    </Button>
+                );
+            } else {
+                return (
+                    <Button bsStyle="primary" onClick={() => measurement.showEdit()} bsSize="xsmall">
+                        <FontAwesome name="pencil"/>
+                    </Button>
+                );
+            }
+        }
+        return null;
+    }
+
     getAnalyseButton(measurement) {
         if (measurement.status === 'COMPLETE') {
-            if (measurement.isSelected) {
+            if (measurement.isSelectedChart) {
                 return (
                     <Button bsStyle="success"
                             onClick={() => measurement.clearTimeSeries()} bsSize="xsmall">
@@ -205,9 +225,10 @@ class ActionCell extends Component {
     }
 
     render() {
+        const editButton = this.getEditButton(this.props.row);
         const analyseButton = this.getAnalyseButton(this.props.row);
         const deleteButton = this.getDeleteButton(this.props.row);
-        return <ButtonToolbar>{analyseButton}{deleteButton}</ButtonToolbar>;
+        return <ButtonToolbar>{editButton}{analyseButton}{deleteButton}</ButtonToolbar>;
     }
 }
 
