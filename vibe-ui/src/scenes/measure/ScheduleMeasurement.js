@@ -1,4 +1,5 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {Button, Col, ControlLabel, Form, FormControl, FormGroup, Modal, Row, Well} from "react-bootstrap";
 import {connect} from "react-refetch";
 import FontAwesome from "react-fontawesome";

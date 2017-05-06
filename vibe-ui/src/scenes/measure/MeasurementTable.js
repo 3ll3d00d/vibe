@@ -1,4 +1,5 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {Button, ButtonToolbar, Label, OverlayTrigger, Table as RBTable, Tooltip} from "react-bootstrap";
 import {Line} from "rc-progress";
 import FontAwesome from "react-fontawesome";
