@@ -1,4 +1,5 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {connect, PromiseState} from "react-refetch";
 import {Panel} from "react-bootstrap";
 import AnalysisNavigator from "./AnalysisNavigator";
