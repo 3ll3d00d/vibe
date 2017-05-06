@@ -90,18 +90,17 @@ class HandlerTestCase(object):
 
     def showSpectrum(self):
         # measurementPath = 'C:\\Users\\\Matt\\OneDrive\\Documents\\eot\\Edge of Tomorrow - Opening.wav'
-        measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
-        measurement = ms.loadSignalFromWav(measurementPath)
-        plt.xlim(5, 24000)
+        # measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
+        measurement1 = ms.loadSignalFromWav('C:\\Users\\Matt\\.vibe\\upload\\fast.wav')
+        measurement2 = ms.loadSignalFromWav('C:\\Users\\Matt\\.vibe\\upload\\best.wav')
+        plt.xlim(5, 1000)
         plt.ylim(-120, 0)
         plt.grid()
         plt.xlabel('frequency [Hz]')
-        f, Pxx_den = measurement.psd(ref=1.0)
-        plt.semilogx(f, Pxx_den)
-        f, Pxx_spec = measurement.spectrum(ref=1.0)
+        f, Pxx_spec = measurement1.spectrum(ref=1.0)
         plt.semilogx(f, Pxx_spec)
-        f, Pxx_spec = measurement.peakSpectrum(ref=1.0)
-        plt.plot(f, Pxx_spec)
+        f, Pxx_spec = measurement2.spectrum(ref=1.0)
+        plt.semilogx(f, Pxx_spec)
         plt.show()
 
     def showSpectro(self):
@@ -258,36 +257,5 @@ class HandlerTestCase(object):
         return y
 
 
-# t = HandlerTestCase()
-# t.showSpectrum()
-def log_interp1d(xx, yy, kind='linear'):
-    logx = np.log10(xx)
-    logy = np.log10(yy)
-    lin_interp = interp1d(logx, logy, kind=kind)
-    log_interp = lambda zz: np.power(10.0, lin_interp(np.log10(zz)))
-    return log_interp
-
-data = [['4', '1'], ['1', '4'], ['1', '8'], ['6', '80']]
-arr = np.array(data).astype(np.float64)
-from scipy.interpolate import interp1d
-
-x = arr[:, 1]
-y = arr[:, 0]
-# extend as straight line from 0 to 500
-if x[0] != 0:
-    x = np.insert(x, 0, 0.0000001)
-    y = np.insert(y, 0, y[0])
-if x[-1] != 500:
-    x = np.insert(x, len(x), 500.0)
-    y = np.insert(y, len(y), y[-1])
-
-y = 10**(y/10)
-f = log_interp1d(x, y)
-xnew = np.linspace(x[0], x[-1], num=500, endpoint=True)
-import matplotlib.pyplot as plt
-ynew = f(xnew)
-ydB = 10*np.log10(ynew)
-x_final = xnew
-y_final = ydB
-plt.semilogx(x_final, y_final, '-')
-plt.show()
+t = HandlerTestCase()
+t.showSpectrum()

@@ -175,7 +175,7 @@ export default class ChartController extends Component {
                             <ToggleButton activeLabel="x log"
                                           inactiveLabel="x lin"
                                           value={this.state.xLog}
-                                          onToggle={() => this.handleLinLogChange}/>
+                                          onToggle={this.handleLinLogChange}/>
                             <ToggleButton activeLabel="dots"
                                           inactiveLabel="dots"
                                           value={this.state.dots}

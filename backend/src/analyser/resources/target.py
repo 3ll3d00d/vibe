@@ -42,19 +42,37 @@ class Target(Resource):
         else:
             return None, 400
 
-    def post(self, targetId):
+    def post(self, targetId, chunkIdx, totalChunks):
         """
         stores a new wav target.
         :param targetId: 
         :return: 
         """
-        if 'file' in request.files:
-            if self._targetController.save(targetId, request.files['file']):
-                return None, 200
+        from flask import request
+        saveAs = targetId + "." + str(chunkIdx) + ".wav"
+        logger.info('handling ' + saveAs)
+        import io
+        more = True
+        yo = open("C:\\Users\\Matt\\AppData\\Local\\Temp\\" + saveAs, 'xb')
+        logger.info("start receiving file ... filename => " + str(yo.name))
+        count = 0
+        while more:
+            chunk = request.stream.read(io.DEFAULT_BUFFER_SIZE)
+            chunkLen = len(chunk)
+            count += chunkLen
+            if chunkLen == 0:
+                more = False
             else:
-                return None, 500
-        else:
-            return None, 400
+                yo.write(chunk)
+        return str(count), 200
+
+    # if 'file' in request.files:
+    #         if self._targetController.save(targetId, request.files['file']):
+    #             return None, 200
+    #         else:
+    #             return None, 500
+    #     else:
+    #         return None, 400
 
     def delete(self, targetId):
         """
