@@ -3,16 +3,17 @@ import os
 
 from flask import Flask
 from flask_restful import Api
-from flask_uploads import UploadSet, configure_uploads
 
 from analyser.common.config import Config
 from analyser.common.devicecontroller import DeviceController
 from analyser.common.measurementcontroller import MeasurementController
 from analyser.common.targetcontroller import TargetController
 from analyser.common.targetstatecontroller import TargetStateProvider, TargetStateController
+from analyser.common.uploadcontroller import UploadController
 from analyser.resources.analyse import Analyse
 from analyser.resources.target import Target
 from analyser.resources.targets import Targets
+from analyser.resources.upload import Upload, CompleteUpload, Uploads
 from analyser.resources.timeseries import TimeSeries
 from analyser.resources.measurement import InitialiseMeasurement, RecordData, CompleteMeasurement, Measurement, \
     FailMeasurement
@@ -32,9 +33,6 @@ if hasattr(faulthandler, 'register'):
 app = Flask(__name__)
 api = Api(app)
 cfg = Config()
-app.config['UPLOADS_DEFAULT_DEST'] = cfg.dataDir
-targetUploadSet = UploadSet('targets', ('wav',))
-configure_uploads(app, (targetUploadSet))
 
 httpclient = RequestsBasedHttpClient()
 reactor = Reactor(name='analyser')
@@ -43,12 +41,14 @@ targetStateController = TargetStateController(targetStateProvider, reactor, http
 deviceController = DeviceController(targetStateController, cfg.dataDir, httpclient)
 targetStateController.deviceController = deviceController
 measurementController = MeasurementController(targetStateProvider, cfg.dataDir, deviceController)
-targetController = TargetController(cfg.dataDir, targetUploadSet)
+targetController = TargetController(cfg.dataDir)
+uploadController = UploadController(cfg.upload)
 resourceArgs = {
     'deviceController': deviceController,
     'targetStateController': targetStateController,
     'measurementController': measurementController,
-    'targetController': targetController
+    'targetController': targetController,
+    'uploadController': uploadController
 }
 
 # GET: gets the current target state
@@ -88,13 +88,25 @@ api.add_resource(FailMeasurement, API_PREFIX + '/measurements/<measurementId>/<d
 api.add_resource(Analyse, API_PREFIX + '/measurements/<measurementId>/analyse', resource_class_kwargs=resourceArgs)
 
 # PUT: get time series data for the measurement
-api.add_resource(TimeSeries, API_PREFIX + '/measurements/<measurementId>/timeseries', resource_class_kwargs=resourceArgs)
+api.add_resource(TimeSeries, API_PREFIX + '/measurements/<measurementId>/timeseries',
+                 resource_class_kwargs=resourceArgs)
 
 # GET: get targets
 api.add_resource(Targets, API_PREFIX + '/targets', resource_class_kwargs=resourceArgs)
 
 # PUT, DELETE: store targets
 api.add_resource(Target, API_PREFIX + '/targets/<targetId>', resource_class_kwargs=resourceArgs)
+
+# POST: upload file
+api.add_resource(Upload, API_PREFIX + '/upload/<filename>/<chunkIdx>/<totalChunks>', resource_class_kwargs=resourceArgs)
+
+# GET: uploaded files
+api.add_resource(Uploads, API_PREFIX + '/uploads', resource_class_kwargs=resourceArgs)
+
+# PUT: complete
+api.add_resource(CompleteUpload, API_PREFIX + '/completeupload/<filename>/<totalChunks>/<status>',
+                 resource_class_kwargs=resourceArgs)
+
 
 def main(args=None):
     """ The main routine. """

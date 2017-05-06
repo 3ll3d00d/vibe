@@ -15,6 +15,7 @@ import "babel-polyfill";
 import vibeApp from "./reducers/index";
 import {Provider} from "react-redux";
 import {createStore} from "redux";
+import Upload from "./scenes/upload/Upload";
 
 let store = createStore(vibeApp);
 
@@ -38,7 +39,7 @@ ReactDOM.render(
                             </Route>
                         </Route>
                     </Route>
-                    {/*<Route path="/rta" component={About}/>*/}
+                    <Route path="/upload" component={Upload}/>
                     <Route path="*" component={NotFound}/>
                 </Route>
             </Router>

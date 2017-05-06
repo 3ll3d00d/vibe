@@ -11,13 +11,14 @@ class Reactor(object):
     tuple of args )
     """
 
-    def __init__(self, name='reactor'):
+    def __init__(self, name='reactor', threads=1):
         self._workQueue = Queue()
         self._name = name
         self._funcsByRequest = {}
         self.running = True
-        t = Thread(name=name, target=self._accept, daemon=True)
-        t.start()
+        for i in range(threads):
+            t = Thread(name=name + "_" + str(i), target=self._accept, daemon=True)
+            t.start()
 
     def _accept(self):
         """

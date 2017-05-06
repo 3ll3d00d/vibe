@@ -1,5 +1,5 @@
 import React, {PropTypes, PureComponent} from "react";
-import {Line} from "./ChartJS";
+import {Line} from "react-chartjs-2";
 import {hexToRGBA, SERIES_COLOURS} from "../../constants";
 
 export default class LineChart extends PureComponent {

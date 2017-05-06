@@ -79,7 +79,7 @@ Prerequisites
 
 3) Install dependencies that aren't in conda::
 
-    pip.exe install aniso8601 pefile flask-restful smbus2 versioneer unittest-data-provider sphinx-rtd-theme flask-uploads
+    pip.exe install aniso8601 pefile flask-restful smbus2 versioneer unittest-data-provider sphinx-rtd-theme
 
 4) Install dependencies that are in conda::
 

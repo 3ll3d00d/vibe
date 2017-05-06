@@ -42,6 +42,9 @@ class App extends Component {
                                         <LinkContainer to="/analyse">
                                             <NavItem eventKey={4}>Analyse</NavItem>
                                         </LinkContainer>
+                                        <LinkContainer to="/upload">
+                                            <NavItem eventKey={4}>Upload</NavItem>
+                                        </LinkContainer>
                                     </Nav>
                                 </Navbar.Collapse>
                             </Navbar>
