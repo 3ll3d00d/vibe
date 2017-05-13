@@ -1,4 +1,5 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {connect, PromiseState} from "react-refetch";
 import {Panel} from "react-bootstrap";
 import AnalysisNavigator from "./AnalysisNavigator";
@@ -32,6 +33,7 @@ class Analyse extends Component {
         this.setState((previousState, props) => {
             const pathStore = previousState.pathStore.removePath(id);
             this.context.router.push(pathStore.toRouterPath());
+            if (pathStore)
             return {pathStore: pathStore};
         });
     };

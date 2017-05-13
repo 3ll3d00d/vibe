@@ -81,11 +81,13 @@ class Signal(object):
             Power spectral density.
 
         """
+
         def analysisFunc(x, nperseg):
             f, Pxx_den = signal.welch(self.samples, self.fs, nperseg=nperseg, detrend=False)
             if ref is not None:
                 Pxx_den = librosa.power_to_db(Pxx_den, ref)
             return f, Pxx_den
+
         if mode == 'cq':
             return self._cq(analysisFunc, segmentLengthMultiplier)
         else:
@@ -104,12 +106,13 @@ class Signal(object):
             linear spectrum.
 
         """
+
         def analysisFunc(x, nperseg):
             f, Pxx_spec = signal.welch(self.samples, self.fs, nperseg=nperseg, scaling='spectrum', detrend=False)
             Pxx_spec = np.sqrt(Pxx_spec)
             # it seems a 3dB adjustment is required to account for the change in nperseg
             if x > 0:
-                Pxx_spec = Pxx_spec / (10**((3*x)/20))
+                Pxx_spec = Pxx_spec / (10 ** ((3 * x) / 20))
             if ref is not None:
                 Pxx_spec = librosa.amplitude_to_db(Pxx_spec, ref)
             return f, Pxx_spec
@@ -131,6 +134,7 @@ class Signal(object):
             Pxx : ndarray
             linear spectrum max values.
         """
+
         def analysisFunc(x, nperseg):
             freqs, _, Pxy = signal.spectrogram(self.samples,
                                                self.fs,
@@ -141,7 +145,7 @@ class Signal(object):
                                                scaling='spectrum')
             Pxy_max = np.sqrt(Pxy.max(axis=-1).real)
             if x > 0:
-                Pxy_max = Pxy_max / (10**((3*x)/20))
+                Pxy_max = Pxy_max / (10 ** ((3 * x) / 20))
             if ref is not None:
                 Pxy_max = librosa.amplitude_to_db(Pxy_max, ref=ref)
             return freqs, Pxy_max
@@ -270,24 +274,13 @@ def readWav(inputSignalFile, selectedChannel=1) -> Tuple[Signal, Any]:
             if sampleWidth not in dataTypes:
                 raise ValueError('sampleWidth %d unknown' % sampleWidth)
             if channelCount != 1:
-                raise ValueError('Unable to read ' + inputSignalFile + ' - ' + str(channelCount) + ' channels is not supported')
-            rate, samples = wavfile.read(inputSignalFile)
+                raise ValueError(
+                    'Unable to read ' + inputSignalFile + ' - ' + str(channelCount) + ' channels is not supported')
+            rate, samples = wavfile.read(inputSignalFile, mmap=True)
             source = Signal(samples, rate)
         except ValueError:
-            # code adapted from http://greenteapress.com/wp/think-dsp/ thinkdsp.py read_wave
-            frameCount = fp.getnframes()
-            sampleWidth = fp.getsampwidth()
-            frameRate = fp.getframerate()
-            framesAsString = fp.readframes(frameCount)
-
-            if sampleWidth not in dataTypes:
-                raise ValueError('sampleWidth %d unknown' % sampleWidth)
-            if sampleWidth == 3:
-                xs = np.fromstring(framesAsString, dtype=np.int8).astype(np.int32)
-                ys = (xs[2::3] * 256 + xs[1::3]) * 256 + xs[0::3]
-            else:
-                ys = np.fromstring(framesAsString, dtype=dataTypes[sampleWidth])
-
+            import soundfile as sf
+            ys, frameRate = sf.read(inputSignalFile)
             source = Signal(ys[::selectedChannel], frameRate)
         return source, bitDepth[sampleWidth]
 

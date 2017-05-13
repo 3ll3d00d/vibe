@@ -79,7 +79,7 @@ Prerequisites
 
 3) Install dependencies that aren't in conda::
 
-    pip.exe install aniso8601 pefile flask-restful smbus2 versioneer unittest-data-provider sphinx-rtd-theme flask-uploads
+    pip.exe install aniso8601 pefile flask-restful smbus2 versioneer unittest-data-provider sphinx-rtd-theme
 
 4) Install dependencies that are in conda::
 
@@ -116,7 +116,7 @@ Build
 
 1) Generate a spec::
 
-    pyi-makespec -F -n vibe-analyser --exclude-module pkg_resources --hidden-import=cython --additional-hooks-dir=.\release\hooks analyser\app.py
+    pyi-makespec -F -n vibe-analyser --exclude-module pkg_resources --hidden-import=cython --additional-hooks-dir=.\release\hooks backend\src\analyser\app.py
 
 2) manually add the following after a.binaries in exe = EXE::
 

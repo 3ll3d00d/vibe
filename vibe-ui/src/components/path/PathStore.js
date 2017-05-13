@@ -40,12 +40,17 @@ class PathStore {
             this.paths = this.paths.delete(index);
             // reset the reference path if required
             if (this.referenceSeriesId !== NO_OPTION_SELECTED) {
-                if (!this.paths.find(p => p.ownsReference(this.referenceSeriesId))) {
+                if (!this.paths.find(p => p.ownsReference(this.referenceSeriesId)) || this.getSeriesCount() < 2) {
                     this.setReferenceSeriesId(NO_OPTION_SELECTED);
                 }
             }
         }
         return this;
+    }
+
+    /** @returns the total number of series in all the paths. */
+    getSeriesCount() {
+        return this.paths.map(p => p.getSeriesCount()).reduce((a, b) => a + b, 0);
     }
 
     /**
@@ -135,7 +140,7 @@ class PathStore {
 
     propagateReferenceSeries() {
         if (this.referenceSeriesId !== NO_OPTION_SELECTED) {
-            const referencePath = this.paths.find(p => p.ownsReference(this.referenceSeriesId));
+            const referencePath = this.paths.find(p => p.isReferenceVisible(this.referenceSeriesId));
             if (referencePath) {
                 const referenceData = referencePath.getReferenceData(this.referenceSeriesId);
                 this.paths = this.paths.map(p => p.normalise(this.referenceSeriesId, referenceData));

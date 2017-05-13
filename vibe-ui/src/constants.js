@@ -1,6 +1,8 @@
 // magic value to specify that a multi select actually has nothing selected
 export const NO_OPTION_SELECTED = "none";
 
+export const UPLOAD_CHUNK_SIZE = 100 * (1024 * 1024);
+
 export const SERIES_COLOURS = {
     x: [
         '#00ff00',

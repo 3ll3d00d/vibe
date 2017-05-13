@@ -1,4 +1,5 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {connect} from "react-refetch";
 import MeasurementTable from "./MeasurementTable";
 
@@ -22,12 +23,16 @@ class Measurements extends Component {
      * @param deleteFunc the delete function.
      * @param fetchFunc the fetch time series function.
      * @param clearFunc the clear selected time series function.
-     * @param selectedMeasurement the selected measurement, if any.
+     * @param showEditFunc shows the edit modal.
+     * @param clearEditFunc closes the edit modal.
+     * @param selectedChart the selected chart, if any.
+     * @param selectedEdit the selected edit, if any.
      * @returns {*}
      */
-    convert(row, responses, deleteFunc, fetchFunc, clearFunc, selectedMeasurement) {
+    convert(row, responses, deleteFunc, fetchFunc, clearFunc, showEditFunc, clearEditFunc, selectedChart, selectedEdit) {
         const deleteMeasurement = () => deleteFunc(row.id);
         const fetchTimeSeries = () => fetchFunc(row.id);
+        const showEdit = () => showEditFunc(row.id);
         return Object.assign(row, {
             date: row.startTime.split('_')[0],
             time: row.startTime.split('_')[1],
@@ -36,13 +41,16 @@ class Measurements extends Component {
             deleteResponse: this.findResponse(row.id, responses),
             fetchTimeSeries: fetchTimeSeries,
             clearTimeSeries: clearFunc,
-            isSelected: row.id === selectedMeasurement
+            showEdit: showEdit,
+            clearEdit: clearEditFunc,
+            isSelectedChart: row.id === selectedChart,
+            isSelectedEdit: row.id === selectedEdit
         });
     }
 
     render() {
-        const {measurements, deleteFunc, fetcher, clearFunc, selectedMeasurement, ...responses} = this.props;
-        const data = measurements.map(m => this.convert(m, responses, deleteFunc, fetcher, clearFunc, selectedMeasurement));
+        const {measurements, deleteFunc, fetcher, clearFunc, showEditFunc, clearEditFunc, selectedChart, selectedEdit, ...responses} = this.props;
+        const data = measurements.map(m => this.convert(m, responses, deleteFunc, fetcher, clearFunc, showEditFunc, clearEditFunc, selectedChart, selectedEdit));
         return <MeasurementTable data={data}/>
     }
 }

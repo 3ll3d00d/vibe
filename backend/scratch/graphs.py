@@ -90,18 +90,17 @@ class HandlerTestCase(object):
 
     def showSpectrum(self):
         # measurementPath = 'C:\\Users\\\Matt\\OneDrive\\Documents\\eot\\Edge of Tomorrow - Opening.wav'
-        measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
-        measurement = ms.loadSignalFromWav(measurementPath)
-        plt.xlim(5, 24000)
+        # measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
+        measurement1 = ms.loadSignalFromWav('C:\\Users\\Matt\\.vibe\\upload\\fast.wav')
+        measurement2 = ms.loadSignalFromWav('C:\\Users\\Matt\\.vibe\\upload\\best.wav')
+        plt.xlim(5, 1000)
         plt.ylim(-120, 0)
         plt.grid()
         plt.xlabel('frequency [Hz]')
-        f, Pxx_den = measurement.psd(ref=1.0)
-        plt.semilogx(f, Pxx_den)
-        f, Pxx_spec = measurement.spectrum(ref=1.0)
+        f, Pxx_spec = measurement1.spectrum(ref=1.0)
         plt.semilogx(f, Pxx_spec)
-        f, Pxx_spec = measurement.peakSpectrum(ref=1.0)
-        plt.plot(f, Pxx_spec)
+        f, Pxx_spec = measurement2.spectrum(ref=1.0)
+        plt.semilogx(f, Pxx_spec)
         plt.show()
 
     def showSpectro(self):

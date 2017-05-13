@@ -1,9 +1,10 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {Button, ButtonGroup, ControlLabel, FormControl, FormGroup, Well} from "react-bootstrap";
 import {connect} from "react-refetch";
-import DropzoneComponent from "react-dropzone-component";
-import "dropzone/dist/min/dropzone.min.css";
-import "react-dropzone-component/styles/filepicker.css";
+// import DropzoneComponent from "react-dropzone-component";
+// import "dropzone/dist/min/dropzone.min.css";
+// import "react-dropzone-component/styles/filepicker.css";
 
 class CreateTarget extends Component {
     static propTypes = {
@@ -54,6 +55,7 @@ class CreateTarget extends Component {
 class WavSelector extends Component {
 
     state = {name: ''};
+    // dropzone = null;
 
     handleName = (event) => {
         const value = event.target.value;
@@ -63,13 +65,23 @@ class WavSelector extends Component {
     render() {
         let selector = null;
         if (this.state.name.length > 0) {
-            const dropzoneConfig = {
-                iconFiletypes: ['.wav'],
-                showFiletypeIcon: true,
-                postUrl: `${this.props.rootURL}/${this.state.name}`,
-                maxFiles: 1
-            };
-            selector = <DropzoneComponent key={this.state.name} config={dropzoneConfig}/>
+            // const dropzoneConfig = {
+            //     iconFiletypes: ['.wav'],
+            //     showFiletypeIcon: true,
+            //     postUrl: `${this.props.rootURL}/${this.state.name}`
+            // };
+            // const djsConfig = {
+            //     maxFiles: 1,
+            //     maxFilesize: 1024*3
+            // };
+            // const eventHandlers = {
+            //     init: dz => this.dropzone = dz
+            //     complete: file => this.dropzone.removeFile(file)
+            // };
+            // selector = <DropzoneComponent key={this.state.name}
+            //                               config={dropzoneConfig}
+            //                               djsConfig={djsConfig}
+            //                               eventHandlers={eventHandlers}/>
         }
         return (
             <form>

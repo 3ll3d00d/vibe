@@ -1,4 +1,5 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {Nav, NavItem, Panel} from "react-bootstrap";
 import LineChart from "../../components/chart/LineChart";
 import Message from "../../components/Message";

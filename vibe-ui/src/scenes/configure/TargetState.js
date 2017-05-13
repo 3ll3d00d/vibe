@@ -1,4 +1,5 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {Button, Col, ControlLabel, FormControl, FormGroup, Panel, Row} from "react-bootstrap";
 import {connect} from "react-refetch";
 

@@ -103,6 +103,10 @@ export default class PathBridge extends Record({
         return this.path && this.path.ownsReference(referenceSeriesId);
     }
 
+    isReferenceVisible(referenceSeriesId) {
+        return this.path && this.path.isReferenceVisible(referenceSeriesId);
+    }
+
     getReferenceData(referenceSeriesId) {
         if (this.path) {
             return this.path.getReferenceData(referenceSeriesId);
@@ -151,5 +155,13 @@ export default class PathBridge extends Record({
             }
         }
         return this;
+    }
+
+    /** @returns the number of series in this path (or 0 if no path is set). */
+    getSeriesCount() {
+        if (this.path) {
+            return this.path.getSeriesCount();
+        }
+        return 0;
     }
 }
