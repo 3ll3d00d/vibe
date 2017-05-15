@@ -13,7 +13,7 @@ from analyser.common.uploadcontroller import UploadController
 from analyser.resources.analyse import Analyse
 from analyser.resources.target import Target
 from analyser.resources.targets import Targets
-from analyser.resources.upload import Upload, CompleteUpload, Uploads
+from analyser.resources.upload import Upload, CompleteUpload, Uploads, UploadAnalyser
 from analyser.resources.timeseries import TimeSeries
 from analyser.resources.measurement import InitialiseMeasurement, RecordData, CompleteMeasurement, Measurement, \
     FailMeasurement
@@ -102,6 +102,9 @@ api.add_resource(Upload, API_PREFIX + '/upload/<filename>/<chunkIdx>/<totalChunk
 
 # GET: uploaded files
 api.add_resource(Uploads, API_PREFIX + '/uploads', resource_class_kwargs=resourceArgs)
+
+# GET: analyse uploaded file
+api.add_resource(UploadAnalyser, API_PREFIX + '/uploads/<name>/<start>/<end>/<resolution>/<window>', resource_class_kwargs=resourceArgs)
 
 # PUT: complete
 api.add_resource(CompleteUpload, API_PREFIX + '/completeupload/<filename>/<totalChunks>/<status>',

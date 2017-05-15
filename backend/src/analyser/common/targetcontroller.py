@@ -36,27 +36,6 @@ class TargetController(object):
                 return True
         return False
 
-    # def save(self, name, file):
-        # if name not in self._cache:
-        #     logger.info("Saving " + file.filename)
-        #     filename = self._uploadSet.save(file)
-        #     fullPath = os.path.join(self._dataDir, self._uploadSet.name, filename)
-        #     logger.info("Reading " + fullPath)
-        #     try:
-        #         signal = loadSignalFromWav(fullPath)
-        #         if signal.fs > 1024:
-        #             self.resample(fullPath, signal, 1000)
-        #         cached = [{'name': name + '|' + n, 'type': 'wav', 'filename': filename} for n in analyses]
-        #         for cache in cached:
-        #             self._cache[cache['name']] = cache
-        #         self.writeCache()
-        #         return True
-        #     except:
-        #         logger.exception("Unable to process file, deleting " + fullPath)
-        #         if os.path.exists(fullPath):
-        #             os.remove(fullPath)
-        # return False
-
     def delete(self, name):
         """
         Deletes the named entry in the cache.
@@ -117,13 +96,13 @@ class TargetController(object):
                     x = np.insert(x, len(x), 500.0)
                     y = np.insert(y, len(y), y[-1])
                 # convert the y axis dB values into a linear value
-                y = 10**(y/10)
+                y = 10 ** (y / 10)
                 # perform a logspace interpolation
                 f = self.log_interp1d(x, y)
                 # remap to 0-500
                 xnew = np.linspace(x[0], x[-1], num=500, endpoint=False)
                 # and convert back to dB
-                return xnew, 10*np.log10(f(xnew))
+                return xnew, 10 * np.log10(f(xnew))
             else:
                 logger.error('Unknown target type with name ' + name)
         return None

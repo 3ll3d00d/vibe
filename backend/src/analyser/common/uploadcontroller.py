@@ -12,6 +12,7 @@ logger = logging.getLogger('analyser.upload')
 
 CONVERT_WAV = 'cw'
 
+
 class UploadController(object):
     def __init__(self, uploadCfg):
         self._tmpDir = uploadCfg['tmpDir']
@@ -24,8 +25,25 @@ class UploadController(object):
         self._findNewFiles()
 
     def get(self):
-        # TODO add the jobs in flight and apply a status field
+        """
+        :return: metadata about all files in the cache.
+        """
         return self._uploadCache + self._tmpCache
+
+    def loadSignal(self, name, start=None, end=None):
+        """
+        Loads the named entry from the upload cache as a signal.
+        :param name: the name.
+        :param start: the time to start from in HH:mm:ss.SSS format
+        :param end: the time to end at in HH:mm:ss.SSS format.
+        :return: the signal if the named upload exists.
+        """
+        entry = next((x for x in self._uploadCache if x['name'] == name), None)
+        if entry is not None:
+            from analyser.common.signal import loadSignalFromWav
+            return loadSignalFromWav(entry['path'], start=start, end=end)
+        else:
+            return None
 
     def _scanUpload(self):
         return [self._extractMeta(p, 'loaded') for p in glob.iglob(self._uploadDir + '/*.wav')]
@@ -125,6 +143,7 @@ class UploadController(object):
         :param status: 
         :return: 
         """
+
         def getChunkIdx(x):
             try:
                 return int(x.suffix[1:])
@@ -178,5 +197,19 @@ class UploadController(object):
         else:
             outputSamples = samples
         logger.info("Writing output to " + filename)
-        maxv = np.iinfo(np.int16).max
-        librosa.output.write_wav(filename, (outputSamples * maxv).astype(np.int16), targetFs)
+        maxv = np.iinfo(np.int32).max
+        librosa.output.write_wav(filename, (outputSamples * maxv).astype(np.int32), targetFs)
+        logger.info("Output written to " + filename)
+
+    def delete(self, name):
+        """
+        Deletes the named entry.
+        :param name: the entry.
+        :return: the deleted entry.
+        """
+        entry = next((x for x in self._uploadCache if x['name'] == name), None)
+        if entry is not None:
+            os.remove(str(entry['path']))
+            return entry
+        else:
+            return None

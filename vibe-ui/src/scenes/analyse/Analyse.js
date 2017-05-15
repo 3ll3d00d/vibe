@@ -4,7 +4,7 @@ import {connect, PromiseState} from "react-refetch";
 import {Panel} from "react-bootstrap";
 import AnalysisNavigator from "./AnalysisNavigator";
 import Message from "../../components/Message";
-import ChartController from "./ChartController";
+import ChartController from "../../components/chart/ChartController";
 import {pathStore} from "../../components/path/PathStore";
 
 class Analyse extends Component {
@@ -139,7 +139,6 @@ class Analyse extends Component {
                 <Panel bsStyle="info">
                     <ChartController range={range}
                                      series={chartData}
-                                     pathCount={this.state.pathStore.getPathCount()}
                                      referenceSeriesId={this.state.pathStore.getReferenceSeriesId()}
                                      referenceSeriesHandler={this.handleReferenceSeries}/>
                 </Panel>

@@ -14,10 +14,10 @@ class HandlerTestCase(object):
     def resam(self):
         measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'white.wav')
         measurement = ms.loadSignalFromWav(measurementPath)
-        y_1000 = librosa.resample(measurement.samples, measurement.fs, 1000)
+        y_1000 = librosa.resample(measurement.samples, measurement.fs, 1000, res_type='kaiser_fast')
         measurementPath_1000 = os.path.join(os.path.dirname(__file__), '../test/data', 'white_1000.wav')
-        maxv = np.iinfo(np.int16).max
-        librosa.output.write_wav(measurementPath_1000, (y_1000 * maxv).astype(np.int16), 1000)
+        maxv = np.iinfo(np.int32).max
+        librosa.output.write_wav(measurementPath_1000, (y_1000 * maxv).astype(np.int32), 1000)
         # librosa.output.write_wav(measurementPath_1000, y_1000, 1000)
         measurement_1000 = ms.loadSignalFromWav(measurementPath_1000)
         y_1000 = Signal(y_1000, 1000)
@@ -91,16 +91,16 @@ class HandlerTestCase(object):
     def showSpectrum(self):
         # measurementPath = 'C:\\Users\\\Matt\\OneDrive\\Documents\\eot\\Edge of Tomorrow - Opening.wav'
         # measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
-        measurement1 = ms.loadSignalFromWav('C:\\Users\\Matt\\.vibe\\upload\\fast.wav')
-        measurement2 = ms.loadSignalFromWav('C:\\Users\\Matt\\.vibe\\upload\\best.wav')
+        measurement1 = ms.loadSignalFromWav('C:\\Users\\Matt\\.vibe\\upload\\The Admiral Roaring Currents.wav')
+        # measurement2 = ms.loadSignalFromWav('C:\\Users\\Matt\\.vibe\\upload\\How to Train Your Dragon - Dragon Crash.wav')
         plt.xlim(5, 1000)
         plt.ylim(-120, 0)
         plt.grid()
         plt.xlabel('frequency [Hz]')
         f, Pxx_spec = measurement1.spectrum(ref=1.0)
         plt.semilogx(f, Pxx_spec)
-        f, Pxx_spec = measurement2.spectrum(ref=1.0)
-        plt.semilogx(f, Pxx_spec)
+        # f, Pxx_spec = measurement2.spectrum(ref=1.0)
+        # plt.semilogx(f, Pxx_spec)
         plt.show()
 
     def showSpectro(self):
@@ -258,4 +258,4 @@ class HandlerTestCase(object):
 
 
 t = HandlerTestCase()
-t.showSpectrum()
+t.resam()

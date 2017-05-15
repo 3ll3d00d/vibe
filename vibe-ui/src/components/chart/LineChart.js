@@ -8,6 +8,22 @@ export default class LineChart extends PureComponent {
         config: PropTypes.object.isRequired,
     };
 
+    state = {
+        redraw: false
+    };
+
+    componentWillReceiveProps = (nextProps) => {
+        if (this.props.config.xLog !== nextProps.config.xLog) {
+            this.setState({redraw: true});
+        }
+    };
+
+    componentDidUpdate = (prevProps, prevState) => {
+        if (this.state.redraw) {
+            this.setState({redraw: false});
+        }
+    };
+
     // credit to https://www.paulirish.com/2009/random-hex-color-code-snippets/
     generateRandomColour() {
         return '#' + ~~(Math.random() * (1 << 24)).toString(16);
@@ -94,6 +110,7 @@ export default class LineChart extends PureComponent {
         return <Line ref='chart'
                      type={'line'}
                      data={{datasets: datasets}}
-                     options={options}/>;
+                     options={options}
+                     redraw={this.state.redraw}/>;
     }
 }

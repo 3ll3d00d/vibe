@@ -34,6 +34,54 @@ class Uploads(Resource):
         return self._uploadController.get(), 200
 
 
+class UploadAnalyser(Resource):
+    def __init__(self, **kwargs):
+        self._uploadController = kwargs['uploadController']
+
+    def get(self, name, start, end, resolution, window):
+        """
+        :param name:
+        :param start:
+        :param end:
+        :param resolution:
+        :param window:
+        :return: an analysed file.
+        """
+        logger.info(
+            'Analysing ' + name + ' from ' + start + ' to ' + end + ' at ' + resolution + 'x resolution using ' + window + ' window')
+        signal = self._uploadController.loadSignal(name,
+                                                   start=start if start != 'start' else None,
+                                                   end=end if end != 'end' else None)
+        if signal is not None:
+            window = tuple(filter(None, window.split(' ')))
+            if len(window) == 2:
+                window = (window[0], float(window[1]))
+            data = {
+                'spectrum': self._jsonify(
+                    signal.spectrum(ref=1.0, segmentLengthMultiplier=int(resolution), window=window)),
+                'peakSpectrum': self._jsonify(
+                    signal.peakSpectrum(ref=1.0, segmentLengthMultiplier=int(resolution), window=window))
+            }
+            return data, 200
+        else:
+            return None, 404
+
+    def delete(self, name):
+        """
+        Deletes the named file.
+        :param name: the name.
+        :return: 200 if it was deleted, 404 if it doesn't exist or 500 for anything else.
+        """
+        try:
+            result = self._uploadController.delete(name)
+            return None, 200 if result is not None else 404
+        except Exception as e:
+            return str(e), 500
+
+    def _jsonify(self, tup):
+        return {'freq': tup[0].tolist(), 'val': tup[1].tolist()}
+
+
 class CompleteUpload(Resource):
     def __init__(self, **kwargs):
         self._uploadController = kwargs['uploadController']

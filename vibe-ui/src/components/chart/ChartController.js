@@ -1,4 +1,5 @@
 import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {
     Button,
     Col,
@@ -13,12 +14,19 @@ import {
 } from "react-bootstrap";
 import ToggleButton from "react-toggle-button";
 import FontAwesome from "react-fontawesome";
-import LineChart from "../../components/chart/LineChart";
-import PreciseIntNumericInput from "./PreciseIntNumericInput";
+import LineChart from "./LineChart";
+import PreciseIntNumericInput from "../../scenes/analyse/PreciseIntNumericInput";
 import {NO_OPTION_SELECTED} from "../../constants";
-import {getAnalysisChartConfig} from "../../components/chart/ConfigGenerator";
+import {getAnalysisChartConfig} from "./ConfigGenerator";
 
 export default class ChartController extends Component {
+
+    static propTypes = {
+        range: PropTypes.object.isRequired,
+        series: PropTypes.array.isRequired,
+        referenceSeriesId: PropTypes.string,
+        referenceSeriesHandler: PropTypes.func
+    };
 
     constructor(props) {
         super(props);
@@ -39,7 +47,8 @@ export default class ChartController extends Component {
 
     createChartConfig(state, range) {
         const yRange = [this.chooseValue('minY', state, range), this.chooseValue('maxY', state, range)];
-        const xRange = [Math.round(this.chooseValue('minX', state, range)), this.chooseValue('maxX', state, range)];
+        const minX = Math.round(this.chooseValue('minX', state, range) * 10) / 10;
+        const xRange = [minX === 0 ? 0.1 : minX, this.chooseValue('maxX', state, range)];
         return {config: getAnalysisChartConfig(xRange, yRange, state.xLog, state.dots)};
     }
 
@@ -129,28 +138,28 @@ export default class ChartController extends Component {
     }
 
     /**
-     * Creates a reference series selector if we have >1 series in the chart.
+     * Creates a reference series selector if we have >1 series in the chart and a handler if available.
      * @returns {*}
      */
     makeReferenceSeriesSelector() {
-        const options = this.makeReferenceSeriesOptions();
-        if (options && options.length > 1) {
-            return (
-                <FormGroup controlId="normalise">
-                    <ControlLabel>Reference Series:</ControlLabel>
-                    <FormControl componentClass="select"
-                                 value={this.props.referenceSeriesId}
-                                 onChange={this.props.referenceSeriesHandler}
-                                 placeholder="select">
-                        <option key="disabled" value={NO_OPTION_SELECTED}>Disabled</option>
-                        {options}
-                    </FormControl>
-                </FormGroup>
-            );
-        } else {
-            return null;
+        if (this.props.referenceSeriesHandler) {
+            const options = this.makeReferenceSeriesOptions();
+            if (options && options.length > 1) {
+                return (
+                    <FormGroup controlId="normalise">
+                        <ControlLabel>Reference Series:</ControlLabel>
+                        <FormControl componentClass="select"
+                                     value={this.props.referenceSeriesId}
+                                     onChange={this.props.referenceSeriesHandler}
+                                     placeholder="select">
+                            <option key="disabled" value={NO_OPTION_SELECTED}>Disabled</option>
+                            {options}
+                        </FormControl>
+                    </FormGroup>
+                );
+            }
         }
-
+        return null;
     }
 
     /**
@@ -164,14 +173,15 @@ export default class ChartController extends Component {
     render() {
         const xRange = this.makeXFields(this.props.range);
         const yRange = this.makeYFields(this.props.range);
-        const updateButton = <Button onClick={this.renderChart}>Update</Button>;
-        const resetButton = <Button onClick={this.resetChart}>Reset</Button>;
+        const updateButton = <Button onClick={this.renderChart} bsSize="small"><FontAwesome name="repeat"/></Button>;
+        const resetButton = <Button onClick={this.resetChart} bsSize="small"><FontAwesome name="undo"/></Button>;
+        const downloadButton = <Button href="#" bsSize="small"><FontAwesome name="download"/></Button>;
         return (
             <div>
                 <Well bsSize="small">
                     <Row>
-                        <Col md={2} sm={4}>{xRange}</Col>
-                        <Col md={1} sm={2}>
+                        <Col lg={2} md={2} sm={4} xs={4}>{xRange}</Col>
+                        <Col lg={1} md={1} sm={2} xs={2}>
                             <ToggleButton activeLabel="x log"
                                           inactiveLabel="x lin"
                                           value={this.state.xLog}
@@ -181,17 +191,17 @@ export default class ChartController extends Component {
                                           value={this.state.dots}
                                           onToggle={this.handleDotsChange}/>
                         </Col>
-                        <Col md={2} sm={4}>{yRange}</Col>
-                        <Col md={1} smHidden={true} xsHidden={true}>
-                            {updateButton}{resetButton}
+                        <Col lg={2} md={2} sm={4} xs={4}>{yRange}</Col>
+                        <Col lg={1} md={1} smHidden={true} xsHidden={true}>
+                            {updateButton}{resetButton}{downloadButton}
                         </Col>
-                        <Col md={6} sm={8}>
+                        <Col lg={6} md={6} sm={8} xs={8}>
                             {this.makeReferenceSeriesSelector()}
                         </Col>
                     </Row>
                     <Row>
-                        <Col mdHidden={true} xs={6}>
-                            {updateButton}{resetButton}
+                        <Col lgHidden={true} mdHidden={true} sm={6} xs={6}>
+                            {updateButton}{resetButton}{downloadButton}
                         </Col>
                     </Row>
                 </Well>
