@@ -31,6 +31,7 @@ export const getAnalysisChartConfig = (inputXRange, inputYRange, xLogScale, show
         },
         xOverrideRange: true,
         y: [minY, maxY],
+        yLabel: 'dB',
         yStep: yStep,
         yLog: false,
         yOverrideRange: true,
