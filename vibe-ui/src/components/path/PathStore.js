@@ -197,10 +197,10 @@ class PathStore {
         return {
             chartData: chartData.toJS(),
             range: {
-                minX: chartData.map(k => k.minX).reduce((r, n) => Math.min(r,n), Number.MAX_VALUE),
-                minY: chartData.map(k => k.minY).reduce((r, n) => Math.min(r,n), Number.MAX_VALUE),
-                maxX: chartData.map(k => k.maxX).reduce((r, n) => Math.max(r,n), Number.MIN_VALUE),
-                maxY: chartData.map(k => k.maxY).reduce((r, n) => Math.max(r,n), Number.MIN_VALUE)
+                minX: chartData.map(k => k.minX).reduce((r, n) => Math.min(r,n), Number.MAX_SAFE_INTEGER),
+                minY: chartData.map(k => k.minY).reduce((r, n) => Math.min(r,n), Number.MAX_SAFE_INTEGER),
+                maxX: chartData.map(k => k.maxX).reduce((r, n) => Math.max(r,n), Number.MIN_SAFE_INTEGER),
+                maxY: chartData.map(k => k.maxY).reduce((r, n) => Math.max(r,n), Number.MIN_SAFE_INTEGER)
             }
         };
     }

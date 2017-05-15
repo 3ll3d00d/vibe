@@ -24,6 +24,8 @@ export const getAnalysisChartConfig = (inputXRange, inputYRange, xLogScale, show
             let formatted = Math.round(value);
             if (value >= 1000) {
                 return (value / 1000) + 'k';
+            } else if (value < 1) {
+                return Math.round(value * 10) / 10;
             }
             return formatted;
         },

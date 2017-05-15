@@ -29,10 +29,10 @@ export default class TimeSeries extends Component {
     asChartData(device, series, axis, data) {
         const raw = data[device][series][axis];
         let xyz = [];
-        let minX = Number.MAX_VALUE;
-        let minY = Number.MAX_VALUE;
-        let maxX = Number.MIN_VALUE;
-        let maxY = Number.MIN_VALUE;
+        let minX = Number.MAX_SAFE_INTEGER;
+        let minY = Number.MAX_SAFE_INTEGER;
+        let maxX = Number.MIN_SAFE_INTEGER;
+        let maxY = Number.MIN_SAFE_INTEGER;
         for (let [idx, value] of raw.entries()) {
             xyz.push({x: idx / this.props.fs, y: raw[idx], z: 1});
             if (value < minX) minX = value;

@@ -2,11 +2,14 @@ import React, {Component} from "react";
 import PropTypes from "prop-types";
 import Dropzone from "react-dropzone";
 import {ListGroup, ListGroupItem, Panel, Table} from "react-bootstrap";
-import {List} from "immutable";
+import {List, Map} from "immutable";
 import FontAwesome from "react-fontawesome";
 import {UPLOAD_CHUNK_SIZE} from "../../constants";
 import UploadRecord from "./UploadRecord";
 import {connect} from "react-refetch";
+import UploadTable from "./UploadTable";
+import Preview from "./Preview";
+import PathSeries from "../../components/path/PathSeries";
 import {DateTimeFormatter, LocalTime} from "js-joda";
 
 class Upload extends Component {
@@ -16,7 +19,39 @@ class Upload extends Component {
     };
 
     state = {
-        uploaded: new List()
+        uploaded: new List(),
+        selectedChart: null,
+        previewStarts: new Map(),
+        previewEnds: new Map(),
+        previewResolutions: new Map(),
+        previewWindows: new Map()
+    };
+
+    showSeries = (name) => {
+        this.setState((previousState, props) => {
+            let start = 'start';
+            if (previousState.previewStarts.has(name)) {
+                start = previousState.previewStarts.get(name);
+            }
+            let end = 'end';
+            if (previousState.previewEnds.has(name)) {
+                end = previousState.previewEnds.get(name);
+            }
+            let resolution = 1;
+            if (previousState.previewResolutions.has(name)) {
+                resolution = previousState.previewResolutions.get(name);
+            }
+            let window = 'hann';
+            if (previousState.previewWindows.has(name)) {
+                window = previousState.previewWindows.get(name);
+            }
+            this.props.fetchAnalysis(name, start, end, resolution, window);
+            return {selectedChart: name};
+        });
+    };
+
+    clearSeries = () => {
+        this.setState({selectedChart: null});
     };
 
     postFile = (accepted, rejected) => {
@@ -122,29 +157,68 @@ class Upload extends Component {
         xhr.send(chunk);
     };
 
-    asStatus = (status) => {
-        if (status === 'loaded') {
-            return <FontAwesome name="check" size="lg"/>;
-        } else if (status === 'failed') {
-            return <FontAwesome name="times" size="lg"/>;
-        } else if (status === 'converting') {
-            return <FontAwesome name="spinner" size="lg" spin/>;
-        } else {
-            return <FontAwesome name="question" size="lg"/>;
+    getPreviewStart = (name) => {
+        if (this.state.previewStarts.has(name)) {
+            return this.state.previewStarts.get(name);
         }
+        return '00:00:00.000';
     };
 
-    asUploadedRow = (uploaded) => {
-        return (
-            <tr key={uploaded.name}>
-                <td>{this.asStatus(uploaded.status)}</td>
-                <td>{uploaded.name}</td>
-                <td>{Math.round(uploaded.size / 1000) / 1000}</td>
-                <td>{DateTimeFormatter.ofPattern("HH:mm:ss").format(new LocalTime(0, 0).plusSeconds(uploaded.duration))}</td>
-                <td>{uploaded.fs}</td>
-                <td></td>
-            </tr>
-        );
+    getPreviewEnd = (name, duration) => {
+        if (this.state.previewEnds.has(name)) {
+            return this.state.previewEnds.get(name);
+        }
+        return duration;
+    };
+
+    getPreviewResolution = (name) => {
+        if (this.state.previewResolutions.has(name)) {
+            return this.state.previewResolutions.get(name);
+        }
+        return 1;
+    };
+
+    getPreviewWindow = (name) => {
+        if (this.state.previewWindows.has(name)) {
+            return this.state.previewWindows.get(name);
+        }
+        return 'hann';
+    };
+
+    setPreviewStart = (name) => (event) => {
+        const val = event.target.value;
+        this.setState((previousState, props) => {
+            if (val === '00:00') {
+                return {previewStarts: previousState.previewStarts.remove(name)}
+            } else {
+                return {previewStarts: previousState.previewStarts.set(name, val)}
+            }
+        });
+    };
+
+    setPreviewEnd = (name) => (event) => {
+        const val = event.target.value;
+        this.setState((previousState, props) => {
+            if (val === '00:00') {
+                return {previewEnds: previousState.previewEnds.remove(name)}
+            } else {
+                return {previewEnds: previousState.previewEnds.set(name, val)}
+            }
+        });
+    };
+
+    setPreviewResolution = (name) => (event) => {
+        const val = event.target.value;
+        this.setState((previousState, props) => {
+            return {previewResolutions: previousState.previewResolutions.set(name, val)}
+        });
+    };
+
+    setPreviewWindow = (name) => (event) => {
+        const val = event.target.value;
+        this.setState((previousState, props) => {
+            return {previewWindows: previousState.previewWindows.set(name, val)}
+        });
     };
 
     renderUploaded = () => {
@@ -166,24 +240,23 @@ class Upload extends Component {
                 </ListGroup>
             );
         } else if (uploads.fulfilled) {
-            const rows = uploads.value.map(u => this.asUploadedRow(u));
-            return (
-                <Table fill striped bordered condensed hover>
-                    <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Name</th>
-                        <th>Size (MB)</th>
-                        <th>Duration (s)</th>
-                        <th>Fs (Hz)</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {rows}
-                    </tbody>
-                </Table>
-            );
+            const data = uploads.value.map(u => {
+                const formattedDuration = DateTimeFormatter.ofPattern("HH:mm:ss.SSS").format(new LocalTime(0, 0).plusNanos(u.duration*1000000000));
+                return Object.assign(u, {
+                    fetchData: () => this.showSeries(u.name),
+                    clearData: this.clearSeries,
+                    previewStart: this.getPreviewStart(u.name),
+                    handlePreviewStart: this.setPreviewStart(u.name),
+                    previewEnd: this.getPreviewEnd(u.name, formattedDuration),
+                    handlePreviewEnd: this.setPreviewEnd(u.name),
+                    previewResolution: this.getPreviewResolution(u.name),
+                    handlePreviewResolution: this.setPreviewResolution(u.name),
+                    previewWindow: this.getPreviewWindow(u.name),
+                    handlePreviewWindow: this.setPreviewWindow(u.name),
+                    durationStr: formattedDuration
+                });
+            });
+            return <UploadTable data={data}/>
         }
     };
 
@@ -194,6 +267,26 @@ class Upload extends Component {
                 this.setState((previousState, props) => {
                     return {uploaded: previousState.uploaded.filter(u => !completeFiles.includes(u.name))};
                 });
+            }
+        }
+    };
+
+    renderPreview = () => {
+        const {selectedChart} = this.state;
+        if (selectedChart) {
+            const {fetchedAnalysis} = this.props;
+            if (fetchedAnalysis && fetchedAnalysis.fulfilled) {
+                const series = Object.keys(fetchedAnalysis.value).map(k => {
+                    return Object.assign(new PathSeries(k).acceptData(fetchedAnalysis.value[k]).rendered.toJS(), {
+                        id: selectedChart,
+                        series: k,
+                        seriesIdx: 1
+                    });
+                });
+                return <Preview loadedAt={fetchedAnalysis.value.ts} series={series}/>
+            } else {
+                // TODO show error
+                return null;
             }
         }
     };
@@ -216,6 +309,7 @@ class Upload extends Component {
             </tbody>
         </Table>;
         const uploaded = this.renderUploaded();
+        const preview = this.renderPreview();
         return (
             <Panel header="Upload" bsStyle="info">
                 <ListGroup fill>
@@ -239,11 +333,18 @@ class Upload extends Component {
                 </ListGroup>
                 {this.state.uploaded.size > 0 ? uploading : null}
                 {uploaded}
+                {preview}
             </Panel>
         );
     }
 }
 
 export default connect((props, context) => ( {
-    uploads: {url: `${context.apiPrefix}/uploads`, refreshInterval: 1000}
+    uploads: {url: `${context.apiPrefix}/uploads`, refreshInterval: 1000},
+    fetchAnalysis: (name, start, end, resolution, window) => ({
+        fetchedAnalysis: `${context.apiPrefix}/uploads/${name}/${start}/${end}/${resolution}/${window}`,
+        then: fetchedAnalysis => ({
+            value: Object.assign(fetchedAnalysis, {ts: new Date().getTime()})
+        })
+    })
 } ))(Upload)

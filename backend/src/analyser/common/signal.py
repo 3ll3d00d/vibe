@@ -1,10 +1,6 @@
-from typing import Tuple, Any
-from wave import open as openWav
-
 import librosa
 import numpy as np
 from scipy import signal
-from scipy.io import wavfile
 
 # 1 micro m/s2 in G
 LA_REFERENCE_ACCELERATION_IN_G = (10 ** -6) / 9.80665
@@ -68,7 +64,7 @@ class Signal(object):
         p = np.concatenate([n[1] for n in slices])
         return f, p
 
-    def psd(self, ref=None, segmentLengthMultiplier=1, mode=None):
+    def psd(self, ref=None, segmentLengthMultiplier=1, mode=None, **kwargs):
         """
         analyses the source and returns a PSD, segment is set to get ~1Hz frequency resolution
         :param ref: the reference value for dB purposes.
@@ -82,8 +78,8 @@ class Signal(object):
 
         """
 
-        def analysisFunc(x, nperseg):
-            f, Pxx_den = signal.welch(self.samples, self.fs, nperseg=nperseg, detrend=False)
+        def analysisFunc(x, nperseg, **kwargs):
+            f, Pxx_den = signal.welch(self.samples, self.fs, nperseg=nperseg, detrend=False, **kwargs)
             if ref is not None:
                 Pxx_den = librosa.power_to_db(Pxx_den, ref)
             return f, Pxx_den
@@ -91,9 +87,9 @@ class Signal(object):
         if mode == 'cq':
             return self._cq(analysisFunc, segmentLengthMultiplier)
         else:
-            return analysisFunc(0, self.getSegmentLength() * segmentLengthMultiplier)
+            return analysisFunc(0, self.getSegmentLength() * segmentLengthMultiplier, **kwargs)
 
-    def spectrum(self, ref=None, segmentLengthMultiplier=1, mode=None):
+    def spectrum(self, ref=None, segmentLengthMultiplier=1, mode=None, **kwargs):
         """
         analyses the source to generate the linear spectrum.
         :param ref: the reference value for dB purposes.
@@ -107,8 +103,9 @@ class Signal(object):
 
         """
 
-        def analysisFunc(x, nperseg):
-            f, Pxx_spec = signal.welch(self.samples, self.fs, nperseg=nperseg, scaling='spectrum', detrend=False)
+        def analysisFunc(x, nperseg, **kwargs):
+            f, Pxx_spec = signal.welch(self.samples, self.fs, nperseg=nperseg, scaling='spectrum', detrend=False,
+                                       **kwargs)
             Pxx_spec = np.sqrt(Pxx_spec)
             # it seems a 3dB adjustment is required to account for the change in nperseg
             if x > 0:
@@ -120,9 +117,9 @@ class Signal(object):
         if mode == 'cq':
             return self._cq(analysisFunc, segmentLengthMultiplier)
         else:
-            return analysisFunc(0, self.getSegmentLength() * segmentLengthMultiplier)
+            return analysisFunc(0, self.getSegmentLength() * segmentLengthMultiplier, **kwargs)
 
-    def peakSpectrum(self, ref=None, segmentLengthMultiplier=1, mode=None):
+    def peakSpectrum(self, ref=None, segmentLengthMultiplier=1, mode=None, window='hann'):
         """
         analyses the source to generate the max values per bin per segment
         :param ref: the reference value for dB purposes.
@@ -138,7 +135,7 @@ class Signal(object):
         def analysisFunc(x, nperseg):
             freqs, _, Pxy = signal.spectrogram(self.samples,
                                                self.fs,
-                                               window='hann',
+                                               window=window,
                                                nperseg=int(nperseg),
                                                noverlap=int(nperseg // 2),
                                                detrend=False,
@@ -155,7 +152,7 @@ class Signal(object):
         else:
             return analysisFunc(0, self.getSegmentLength() * segmentLengthMultiplier)
 
-    def spectrogram(self, ref=None, segmentLengthMultiplier=1):
+    def spectrogram(self, ref=None, segmentLengthMultiplier=1, window='hann'):
         """
         analyses the source to generate a spectrogram
         :param ref: the reference value for dB purposes.
@@ -170,7 +167,7 @@ class Signal(object):
         """
         t, f, Sxx = signal.spectrogram(self.samples,
                                        self.fs,
-                                       window='hann',
+                                       window=window,
                                        nperseg=self.getSegmentLength() * segmentLengthMultiplier,
                                        detrend=False,
                                        scaling='spectrum')
@@ -233,7 +230,8 @@ def loadSignalFromDelimitedFile(filename, timeColumnIdx=0, dataColumnIdx=1, deli
     return source
 
 
-def loadSignalFromWav(inputSignalFile, calibrationRealWorldValue=None, calibrationSignalFile=None) -> Signal:
+def loadSignalFromWav(inputSignalFile, calibrationRealWorldValue=None, calibrationSignalFile=None, start=None,
+                      end=None) -> Signal:
     """ reads a wav file into a Signal and scales the input so that the sample are expressed in real world values
     (as defined by the calibration signal).
     :param inputSignalFile: a path to the input signal file
@@ -242,47 +240,41 @@ def loadSignalFromWav(inputSignalFile, calibrationRealWorldValue=None, calibrati
     :param bitDepth: the bit depth of the input signal, used to rescale the value to a range of +1 to -1
     :returns: a Signal
     """
-    inputSignal, bitDepth = readWav(inputSignalFile)
-    if calibrationSignalFile is None:
-        if bitDepth is not None:
-            scalingFactor = 1 / (2. ** (bitDepth - 1))
-        else:
-            scalingFactor = 1
-    else:
-        calibrationSignal, _ = readWav(calibrationSignalFile)
+    inputSignal = readWav(inputSignalFile, start=start, end=end)
+    if calibrationSignalFile is not None:
+        calibrationSignal = readWav(calibrationSignalFile)
         scalingFactor = calibrationRealWorldValue / np.max(calibrationSignal.samples)
-    return Signal(inputSignal.samples * scalingFactor, inputSignal.fs)
+        return Signal(inputSignal.samples * scalingFactor, inputSignal.fs)
+    else:
+        return inputSignal
 
 
-def readWav(inputSignalFile, selectedChannel=1) -> Tuple[Signal, Any]:
+def readWav(inputSignalFile, selectedChannel=1, start=None, end=None) -> Signal:
     """ reads a wav file into a Signal.
     :param inputSignalFile: a path to the input signal file
-    :param bitDepth: supply a bit depth if the measurement should be rescaled to a range of -1 to +1
-    :returns: Signal and the datatype for subsequent scaling.
+    :param selectedChannel: the channel to read.
+    :param start: the time to start reading from in HH:mm:ss.SSS format.
+    :param end: the time to end reading from in HH:mm:ss.SSS format.
+    :returns: Signal.
     """
-    # verify the wav can be read
-    with openWav(inputSignalFile, 'r') as fp:
-        channelCount = fp.getnchannels()
-        sampleWidth = fp.getsampwidth()
-        dataTypes = {1: np.int8, 2: np.int16, 3: 'special', 4: np.int32}
-        bitDepth = {1: 8, 2: 16, 3: 24, 4: 32}
-        if channelCount < selectedChannel:
-            raise ValueError('Unable to read channel ' + str(selectedChannel) + ' from ' + inputSignalFile +
-                             ', has ' + channelCount + ' channels')
 
-        try:
-            if sampleWidth not in dataTypes:
-                raise ValueError('sampleWidth %d unknown' % sampleWidth)
-            if channelCount != 1:
-                raise ValueError(
-                    'Unable to read ' + inputSignalFile + ' - ' + str(channelCount) + ' channels is not supported')
-            rate, samples = wavfile.read(inputSignalFile, mmap=True)
-            source = Signal(samples, rate)
-        except ValueError:
-            import soundfile as sf
-            ys, frameRate = sf.read(inputSignalFile)
-            source = Signal(ys[::selectedChannel], frameRate)
-        return source, bitDepth[sampleWidth]
+    def asFrames(time, fs):
+        hours, minutes, seconds = (time.split(":"))[-3:]
+        hours = int(hours)
+        minutes = int(minutes)
+        seconds = float(seconds)
+        millis = int((3600000 * hours) + (60000 * minutes) + (1000 * seconds))
+        return int(millis * (fs / 1000))
+
+    import soundfile as sf
+    if start is not None or end is not None:
+        info = sf.info(inputSignalFile)
+        startFrame = 0 if start is None else asFrames(start, info.samplerate)
+        endFrame = None if end is None else asFrames(end, info.samplerate)
+        ys, frameRate = sf.read(inputSignalFile, start=startFrame, stop=endFrame)
+    else:
+        ys, frameRate = sf.read(inputSignalFile)
+    return Signal(ys[::selectedChannel], frameRate)
 
 
 class TriAxisSignal(object):
