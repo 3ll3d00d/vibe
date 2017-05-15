@@ -177,7 +177,7 @@ def main(args=None):
                     # release script moves the ui under the analyser package because setuptools doesn't seem to include
                     # files from outside the package
                     uiRoot = os.path.dirname(__file__)
-                logger.error('Serving ui from ' + str(uiRoot))
+                logger.info('Serving ui from ' + str(uiRoot))
                 self.react = ReactApp(os.path.join(uiRoot, 'ui'))
                 self.static = static.File(os.path.join(uiRoot, 'ui', 'static'))
 
