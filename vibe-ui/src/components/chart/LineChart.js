@@ -1,11 +1,12 @@
 import React, {PropTypes, PureComponent} from "react";
-import {Line} from "react-chartjs-2";
+import {Chart, Line} from "react-chartjs-2";
 import {hexToRGBA, SERIES_COLOURS} from "../../constants";
 
 export default class LineChart extends PureComponent {
     static propTypes = {
         series: PropTypes.array.isRequired,
         config: PropTypes.object.isRequired,
+        chartDataUrlHandler: PropTypes.func
     };
 
     state = {
@@ -18,6 +19,17 @@ export default class LineChart extends PureComponent {
         }
     };
 
+    componentWillMount = () => {
+        // required for png export as per https://github.com/chartjs/Chart.js/issues/2830
+        Chart.plugins.register({
+            beforeDraw: (chartInstance) => {
+                const ctx = chartInstance.chart.ctx;
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, chartInstance.chart.width, chartInstance.chart.height);
+            }
+        });
+    };
+
     componentDidUpdate = (prevProps, prevState) => {
         if (this.state.redraw) {
             this.setState({redraw: false});
@@ -28,6 +40,10 @@ export default class LineChart extends PureComponent {
     generateRandomColour() {
         return '#' + ~~(Math.random() * (1 << 24)).toString(16);
     }
+
+    propagateDataUrl = (anim) => {
+        this.props.chartDataUrlHandler(this.refs.chart.chart_instance.toBase64Image());
+    };
 
     render() {
         const datasets = this.props.series.map((s) => {
@@ -79,6 +95,10 @@ export default class LineChart extends PureComponent {
         if (this.props.config.yFormatter) {
             yAxisTicks = Object.assign(yAxisTicks, {callback: this.props.config.yFormatter});
         }
+        let animation = {duration: 750};
+        if (this.props.chartDataUrlHandler) {
+            animation = Object.assign(animation, {onComplete: this.propagateDataUrl});
+        }
         const options = {
             scales: {
                 xAxes: [{
@@ -103,9 +123,7 @@ export default class LineChart extends PureComponent {
                 position: 'bottom'
             },
             responsive: true,
-            animation: {
-                duration: 750
-            }
+            animation: animation
         };
         return <Line ref='chart'
                      type={'line'}

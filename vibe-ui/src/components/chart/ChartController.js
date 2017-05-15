@@ -40,10 +40,15 @@ export default class ChartController extends Component {
             minY: -100,
             maxY: -100,
             xLog: true,
-            dots: false
+            dots: false,
+            chartDataUrl: null
         };
         return Object.assign(state, this.createChartConfig(state, props.range));
     }
+
+    acceptChartDataUrl = (url) => {
+        this.setState({chartDataUrl: url});
+    };
 
     createChartConfig(state, range) {
         const yRange = [this.chooseValue('minY', state, range), this.chooseValue('maxY', state, range)];
@@ -170,12 +175,21 @@ export default class ChartController extends Component {
         this.setState((previousState, props) => this.createChartConfig(previousState, nextProps.range));
     }
 
+    getDownloadButton = () => {
+        const url = this.state.chartDataUrl;
+        if (url !== null) {
+            console.dir(url);
+            return <Button download="chart.png" href={url} bsSize="small"><FontAwesome name="download"/></Button>;
+        }
+        return null;
+    };
+
     render() {
         const xRange = this.makeXFields(this.props.range);
         const yRange = this.makeYFields(this.props.range);
         const updateButton = <Button onClick={this.renderChart} bsSize="small"><FontAwesome name="repeat"/></Button>;
         const resetButton = <Button onClick={this.resetChart} bsSize="small"><FontAwesome name="undo"/></Button>;
-        const downloadButton = <Button href="#" bsSize="small"><FontAwesome name="download"/></Button>;
+        const downloadButton = this.getDownloadButton();
         return (
             <div>
                 <Well bsSize="small">
@@ -207,7 +221,8 @@ export default class ChartController extends Component {
                 </Well>
                 <Row>
                     <Col>
-                        <LineChart series={this.props.series} config={this.state.config}/>
+                        <LineChart series={this.props.series} config={this.state.config}
+                                   chartDataUrlHandler={this.acceptChartDataUrl}/>
                     </Col>
                 </Row>
             </div>
