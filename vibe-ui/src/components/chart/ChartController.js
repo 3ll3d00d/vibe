@@ -221,8 +221,10 @@ export default class ChartController extends Component {
                 </Well>
                 <Row>
                     <Col>
+                        <div style={{position: "relative", width:"2048px"}}>
                         <LineChart series={this.props.series} config={this.state.config}
                                    chartDataUrlHandler={this.acceptChartDataUrl}/>
+                        </div>
                     </Col>
                 </Row>
             </div>
