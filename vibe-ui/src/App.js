@@ -2,7 +2,7 @@ import React, {Component} from "react";
 import PropTypes from "prop-types";
 import {Grid, Navbar, Nav, NavItem, Image, Row, Col} from "react-bootstrap";
 import {LinkContainer} from 'react-router-bootstrap';
-import logo from "../public/vibe-24x24.png";
+import logo from "./vibe-24x24.png";
 
 class App extends Component {
     static childContextTypes = {

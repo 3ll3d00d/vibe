@@ -15,7 +15,7 @@ export default class PreciseIntNumericInput extends Component {
                           format={this.round}
                           onChange={this.props.handler}
                           className="form-control"
-                          style={false}/>
+                          style={false}/> // eslint-disable-line react/style-prop-object
         );
     }
 }
