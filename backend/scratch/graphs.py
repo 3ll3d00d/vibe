@@ -27,6 +27,16 @@ class HandlerTestCase(object):
         plt.semilogx(f, Pxx)
         plt.show()
 
+    def spec(self):
+        measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
+        measurement = ms.loadSignalFromWav(measurementPath)
+        # y_1000 = librosa.resample(measurement.samples, measurement.fs, 1000, res_type='kaiser_fast')
+        # measurement = Signal(y_1000, 1000)
+        f, Pxx = measurement.peakSpectrum(ref=1/(2**0.5))
+        print(str(np.max(Pxx)))
+        plt.semilogx(f, Pxx)
+        plt.show()
+
     def librosaSpectrum(self):
         import librosa.display
         measurementPath = os.path.join(os.path.dirname(__file__), '../test/data', 'eot.wav')
@@ -258,4 +268,4 @@ class HandlerTestCase(object):
 
 
 t = HandlerTestCase()
-t.resam()
+t.spec()

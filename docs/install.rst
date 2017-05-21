@@ -247,7 +247,7 @@ Running on Linux
 Login to your linux box and::
 
     $ ssh pi@myrpi
-    $ sudo apt install python3 python3-venv python3-pip libyaml-dev
+    $ sudo apt install python3 python3-venv python3-pip libyaml-dev libsndfile1
     $ mkdir python
     $ cd python
     $ python3 -m venv analyser

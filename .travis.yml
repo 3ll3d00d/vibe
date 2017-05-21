@@ -21,6 +21,7 @@ addons:
     - libblas-dev
     - liblapack-dev
     - gfortran
+    - libsndfile1
 # switch to conda due to travis issue with scipy - http://www.camillescott.org/2016/07/15/travis-pytest-scipyconf/
 # install: pip install -r requirements.txt
 install:
@@ -37,9 +38,9 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create -q -n test python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib pytest pytest-cov coverage
+  - conda create -q -n test python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib pytest pytest-cov coverage cffi
   - source activate test
-  - pip install -q -U codecov smbus2 unittest-data-provider flask flask-restful pyyaml requests typing librosa
+  - pip install -q -U codecov smbus2 unittest-data-provider flask flask-restful pyyaml requests typing librosa pysoundfile
   - python setup_travis.py install
 # Install node 6 (current LTS as of January 2017)
   - rm -rf ~/.nvm && git clone https://github.com/creationix/nvm.git ~/.nvm && (cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`) && source ~/.nvm/nvm.sh && nvm install 6
