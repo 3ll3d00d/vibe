@@ -178,7 +178,6 @@ export default class ChartController extends Component {
     getDownloadButton = () => {
         const url = this.state.chartDataUrl;
         if (url !== null) {
-            console.dir(url);
             return <Button download="chart.png" href={url} bsSize="small"><FontAwesome name="download"/></Button>;
         }
         return null;
@@ -221,10 +220,8 @@ export default class ChartController extends Component {
                 </Well>
                 <Row>
                     <Col>
-                        <div style={{position: "relative", width:"2048px"}}>
                         <LineChart series={this.props.series} config={this.state.config}
                                    chartDataUrlHandler={this.acceptChartDataUrl}/>
-                        </div>
                     </Col>
                 </Row>
             </div>

@@ -27,26 +27,6 @@ const statusCell = ({row}) => {
 };
 
 class ActionCell extends Component {
-    getEditButton(measurement) {
-        if (measurement.status === 'COMPLETE') {
-            if (measurement.isSelectedEdit) {
-                return (
-                    <Button bsStyle="success"
-                            onClick={() => measurement.clearEdit()} bsSize="xsmall">
-                        <FontAwesome name="eject"/>
-                    </Button>
-                );
-            } else {
-                return (
-                    <Button bsStyle="primary" onClick={() => measurement.showEdit()} bsSize="xsmall">
-                        <FontAwesome name="pencil"/>
-                    </Button>
-                );
-            }
-        }
-        return null;
-    }
-
     getAnalyseButton(upload) {
         if (upload.status === 'loaded') {
             if (upload.isSelectedChart) {
@@ -67,15 +47,15 @@ class ActionCell extends Component {
         return null;
     }
 
-    getDeleteButton(row) {
-        let deletePromise = row.deleteResponse;
+    getDeleteButton(upload) {
+        let deletePromise = upload.deleteResponse;
         if (deletePromise) {
             if (deletePromise.pending) {
                 return <Button bsStyle="danger" disabled bsSize="xsmall"><FontAwesome name="spinner" spin/></Button>;
             } else if (deletePromise.rejected) {
                 const code = deletePromise.meta.response.status;
                 const text = deletePromise.meta.response.statusText;
-                const tooltip = <Tooltip id={row.name}>{code} - {text}</Tooltip>;
+                const tooltip = <Tooltip id={upload.name}>{code} - {text}</Tooltip>;
                 return (
                     <OverlayTrigger placement="top" overlay={tooltip}>
                         <div>
@@ -92,25 +72,20 @@ class ActionCell extends Component {
                     </Button>
                 );
             }
-        } else {
-            if (row.status === 'COMPLETE' || row.status === 'FAILED') {
-                return (
-                    <Button bsStyle="danger" onClick={() => row.deleteMeasurement()}
-                            bsSize="xsmall">
-                        <FontAwesome name="trash"/>
-                    </Button>
-                );
-            }
+        } else if (upload.status === 'loaded') {
+            return (
+                <Button bsStyle="danger" onClick={() => upload.deleteData()} bsSize="xsmall">
+                    <FontAwesome name="trash"/>
+                </Button>
+            );
         }
         return null;
     }
 
     render() {
-        // const editButton = this.getEditButton(this.props.row);
         const analyseButton = this.getAnalyseButton(this.props.row);
-        // const deleteButton = this.getDeleteButton(this.props.row);
-        // return <ButtonToolbar>{editButton}{analyseButton}{deleteButton}</ButtonToolbar>;
-        return <ButtonToolbar>{analyseButton}</ButtonToolbar>;
+        const deleteButton = this.getDeleteButton(this.props.row);
+        return <ButtonToolbar>{analyseButton}{deleteButton}</ButtonToolbar>;
     }
 }
 

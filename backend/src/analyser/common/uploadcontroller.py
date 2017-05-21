@@ -20,6 +20,7 @@ class UploadController(object):
         self._watchdogInterval = uploadCfg['watchdogInterval']
         self._uploadCache = self._scanUpload()
         self._tmpCache = []
+        self._conversionCache = []
         self._reactor = Reactor(name='converter', threads=uploadCfg['converterThreads'])
         self._reactor.register(CONVERT_WAV, self._convertTmp)
         self._findNewFiles()
@@ -28,7 +29,7 @@ class UploadController(object):
         """
         :return: metadata about all files in the cache.
         """
-        return self._uploadCache + self._tmpCache
+        return self._uploadCache + self._tmpCache + self._conversionCache
 
     def loadSignal(self, name, start=None, end=None):
         """
@@ -93,6 +94,7 @@ class UploadController(object):
         else:
             logger.warning('Tmp cache file does not exist: ' + tmpCacheEntry['path'])
         self._tmpCache.remove(tmpCacheEntry)
+        self._conversionCache.append(tmpCacheEntry)
         srcFs = signal.fs
         completeSamples = signal.samples
         outputFileName = os.path.join(self._uploadDir, tmpCacheEntry['name'])
@@ -101,6 +103,7 @@ class UploadController(object):
             self.writeOutput(outputFileName, completeSamples, srcFs, 1000)
         else:
             self.writeOutput(outputFileName, completeSamples, srcFs, srcFs)
+        self._conversionCache.remove(tmpCacheEntry)
         self._uploadCache.append(self._extractMeta(outputFileName, 'loaded'))
 
     def _scanTmp(self):
@@ -207,9 +210,12 @@ class UploadController(object):
         :param name: the entry.
         :return: the deleted entry.
         """
-        entry = next((x for x in self._uploadCache if x['name'] == name), None)
+        i, entry = next(((i, x) for i, x in enumerate(self._uploadCache) if x['name'] == name), (None, None))
         if entry is not None:
+            logger.info("Deleting " + name)
             os.remove(str(entry['path']))
+            del self._uploadCache[i]
             return entry
         else:
+            logger.info("Unable to delete " + name + ", not found")
             return None

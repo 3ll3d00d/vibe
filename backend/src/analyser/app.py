@@ -101,7 +101,8 @@ api.add_resource(Target, API_PREFIX + '/targets/<targetId>', resource_class_kwar
 api.add_resource(Upload, API_PREFIX + '/upload/<filename>/<chunkIdx>/<totalChunks>', resource_class_kwargs=resourceArgs)
 
 # GET: uploaded files
-api.add_resource(Uploads, API_PREFIX + '/uploads', resource_class_kwargs=resourceArgs)
+# DELETE: named file
+api.add_resource(Uploads, API_PREFIX + '/uploads', API_PREFIX + '/uploads/<name>', resource_class_kwargs=resourceArgs)
 
 # GET: analyse uploaded file
 api.add_resource(UploadAnalyser, API_PREFIX + '/uploads/<name>/<start>/<end>/<resolution>/<window>', resource_class_kwargs=resourceArgs)

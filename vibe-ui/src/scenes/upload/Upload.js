@@ -221,6 +221,14 @@ class Upload extends Component {
         });
     };
 
+    findDeleteResponse = (name) => {
+        const dataPromiseKey = Object.keys(this.props).find(p => p === `deleteUpload_${name}`);
+        if (dataPromiseKey) {
+            return this.props[dataPromiseKey];
+        }
+        return null;
+    };
+
     renderUploaded = () => {
         const {uploads} = this.props;
         if (uploads.pending) {
@@ -245,6 +253,8 @@ class Upload extends Component {
                 return Object.assign(u, {
                     fetchData: () => this.showSeries(u.name),
                     clearData: this.clearSeries,
+                    deleteData: () => this.props.deleteData(u.name),
+                    deleteResponse: this.findDeleteResponse(u.name),
                     previewStart: this.getPreviewStart(u.name),
                     handlePreviewStart: this.setPreviewStart(u.name),
                     previewEnd: this.getPreviewEnd(u.name, formattedDuration),
@@ -346,5 +356,11 @@ export default connect((props, context) => ( {
         then: fetchedAnalysis => ({
             value: Object.assign(fetchedAnalysis, {ts: new Date().getTime()})
         })
+    }),
+    deleteData: name => ({
+        [`deleteUpload_${name}`]: {
+            url: `${context.apiPrefix}/uploads/${name}`,
+            method: 'DELETE'
+        }
     })
 } ))(Upload)

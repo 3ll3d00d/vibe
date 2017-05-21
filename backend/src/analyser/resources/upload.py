@@ -33,6 +33,18 @@ class Uploads(Resource):
         """
         return self._uploadController.get(), 200
 
+    def delete(self, name):
+        """
+        Deletes the named file.
+        :param name: the name.
+        :return: 200 if it was deleted, 404 if it doesn't exist or 500 for anything else.
+        """
+        try:
+            result = self._uploadController.delete(name)
+            return None, 200 if result is not None else 404
+        except Exception as e:
+            return str(e), 500
+
 
 class UploadAnalyser(Resource):
     def __init__(self, **kwargs):
@@ -65,18 +77,6 @@ class UploadAnalyser(Resource):
             return data, 200
         else:
             return None, 404
-
-    def delete(self, name):
-        """
-        Deletes the named file.
-        :param name: the name.
-        :return: 200 if it was deleted, 404 if it doesn't exist or 500 for anything else.
-        """
-        try:
-            result = self._uploadController.delete(name)
-            return None, 200 if result is not None else 404
-        except Exception as e:
-            return str(e), 500
 
     def _jsonify(self, tup):
         return {'freq': tup[0].tolist(), 'val': tup[1].tolist()}
