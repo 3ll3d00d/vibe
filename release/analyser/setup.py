@@ -45,7 +45,9 @@ setup(name='vibe-analyser',
           'scipy',
           'twisted',
           'librosa',
-          'typing'
+          'typing',
+          'cffi',
+          'pysoundfile'
       ],
       setup_requires=[
           'pytest-runner',
