@@ -29,14 +29,7 @@ class Upload extends Component {
 
     showSeries = (name) => {
         this.setState((previousState, props) => {
-            let start = 'start';
-            if (previousState.previewStarts.has(name)) {
-                start = previousState.previewStarts.get(name);
-            }
-            let end = 'end';
-            if (previousState.previewEnds.has(name)) {
-                end = previousState.previewEnds.get(name);
-            }
+            const {start, end} = this.calculateStartEnd(name, previousState);
             let resolution = 1;
             if (previousState.previewResolutions.has(name)) {
                 resolution = previousState.previewResolutions.get(name);
@@ -48,6 +41,18 @@ class Upload extends Component {
             this.props.fetchAnalysis(name, start, end, resolution, window);
             return {selectedChart: name};
         });
+    };
+
+    calculateStartEnd = (name, state) => {
+        let start = 'start';
+        if (state.previewStarts.has(name)) {
+            start = state.previewStarts.get(name);
+        }
+        let end = 'end';
+        if (state.previewEnds.has(name)) {
+            end = state.previewEnds.get(name);
+        }
+        return {start, end};
     };
 
     clearSeries = () => {
@@ -229,6 +234,14 @@ class Upload extends Component {
         return null;
     };
 
+    findCreateResponse = (name, start, end) => {
+        const dataPromiseKey = Object.keys(this.props).find(p => p === `createTarget_${name}_${start}_${end}`);
+        if (dataPromiseKey) {
+            return this.props[dataPromiseKey];
+        }
+        return null;
+    };
+
     renderUploaded = () => {
         const {uploads} = this.props;
         if (uploads.pending) {
@@ -250,11 +263,14 @@ class Upload extends Component {
         } else if (uploads.fulfilled) {
             const data = uploads.value.map(u => {
                 const formattedDuration = DateTimeFormatter.ofPattern("HH:mm:ss.SSS").format(new LocalTime(0, 0).plusNanos(u.duration*1000000000));
+                const {start, end} = this.calculateStartEnd(u.name, this.state);
                 return Object.assign(u, {
                     fetchData: () => this.showSeries(u.name),
                     clearData: this.clearSeries,
                     deleteData: () => this.props.deleteData(u.name),
                     deleteResponse: this.findDeleteResponse(u.name),
+                    createTarget: () => this.props.createTarget(u.name, start, end),
+                    createResponse: this.findCreateResponse(u.name, start, end),
                     previewStart: this.getPreviewStart(u.name),
                     handlePreviewStart: this.setPreviewStart(u.name),
                     previewEnd: this.getPreviewEnd(u.name, formattedDuration),
@@ -263,7 +279,8 @@ class Upload extends Component {
                     handlePreviewResolution: this.setPreviewResolution(u.name),
                     previewWindow: this.getPreviewWindow(u.name),
                     handlePreviewWindow: this.setPreviewWindow(u.name),
-                    durationStr: formattedDuration
+                    durationStr: formattedDuration,
+                    target: 'target' // dummy column
                 });
             });
             return <UploadTable data={data}/>
@@ -361,6 +378,12 @@ export default connect((props, context) => ( {
         [`deleteUpload_${name}`]: {
             url: `${context.apiPrefix}/uploads/${name}`,
             method: 'DELETE'
+        }
+    }),
+    createTarget: (name, start, end) => ({
+        [`createTarget_${name}_${start}_${end}`]: {
+            url: `${context.apiPrefix}/uploadtarget/${name}/${start}/${end}`,
+            method: 'PUT'
         }
     })
 } ))(Upload)

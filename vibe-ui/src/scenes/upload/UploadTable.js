@@ -123,7 +123,42 @@ const previewWindowCell = ({row}) => {
     </FormControl>;
 };
 
-[sizeCell, durationCell, statusCell, ActionCell, previewStartCell, previewEndCell, previewResolutionCell].forEach(m => {
+const targetCell = ({row}) => {
+    let targetPromise = row.targetResponse;
+    if (targetPromise) {
+        if (targetPromise.pending) {
+            return <Button bsStyle="danger" disabled bsSize="xsmall"><FontAwesome name="spinner" spin/></Button>;
+        } else if (targetPromise.rejected) {
+            const code = targetPromise.meta.response.status;
+            const text = targetPromise.meta.response.statusText;
+            const tooltip = <Tooltip id={row.name}>{code} - {text}</Tooltip>;
+            return (
+                <OverlayTrigger placement="top" overlay={tooltip}>
+                    <div>
+                        <Button bsStyle="warning" bsSize="xsmall">
+                            <FontAwesome name="exclamation"/>&nbsp;FAILED
+                        </Button>
+                    </div>
+                </OverlayTrigger>
+            );
+        } else if (targetPromise.fulfilled) {
+            return (
+                <Button bsStyle="success" disabled bsSize="xsmall">
+                    <FontAwesome name="check"/>&nbsp;Target
+                </Button>
+            );
+        }
+    } else if (row.status === 'loaded') {
+        return (
+            <Button bsStyle="primary" onClick={() => row.createTarget()} bsSize="xsmall">
+                <FontAwesome name="bullseye"/>
+            </Button>
+        );
+    }
+    return null;
+};
+
+[sizeCell, durationCell, statusCell, targetCell, ActionCell, previewStartCell, previewEndCell, previewResolutionCell].forEach(m => {
     m.propTypes = {
         row: PropTypes.object.isRequired,
     }
@@ -139,7 +174,8 @@ const columns = [
     {key: 'end', header: 'End', Component: previewEndCell},
     {key: 'resolution', header: 'Resolution (Hz)', Component: previewResolutionCell},
     {key: 'window', header: 'FFT Window', Component: previewWindowCell},
-    {key: 'actions', header: 'Actions', Component: ActionCell},
+    {key: 'target', header: 'Create Target', Component: targetCell},
+    {key: 'actions', header: 'Preview/Delete', Component: ActionCell},
 ];
 
 class UploadTable extends Component {
