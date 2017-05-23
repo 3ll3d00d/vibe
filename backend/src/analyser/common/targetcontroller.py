@@ -1,20 +1,18 @@
 import logging
+import os
 
 import numpy as np
-import os
 from flask import json
 from scipy.interpolate import interp1d
 
-from analyser.common.signal import loadSignalFromWav
-
 logger = logging.getLogger('analyser.targetstate')
-analyses = ['spectrum', 'peakSpectrum', 'psd']
 
 
 class TargetController(object):
-    def __init__(self, dataDir):
+    def __init__(self, dataDir, uploadController):
         self._dataDir = dataDir
         self._cache = self.readCache()
+        self._uploadController = uploadController
 
     def getTargets(self):
         """
@@ -22,7 +20,7 @@ class TargetController(object):
         """
         return list(self._cache.values())
 
-    def store(self, name, hingePoints):
+    def storeFromHinge(self, name, hingePoints):
         """
         Stores a new item in the cache if it is allowed in.
         :param name: the name.
@@ -34,6 +32,33 @@ class TargetController(object):
                 self._cache[name] = {'name': name, 'type': 'hinge', 'hinge': hingePoints}
                 self.writeCache()
                 return True
+        return False
+
+    def storeFromWav(self, uploadCacheEntry, start, end):
+        """
+        Stores a new item in the cache.
+        :param name: file name.
+        :param start: start time.
+        :param end: end time.
+        :return: true if stored.
+        """
+        # TODO check if start and end match
+        match = next((x for x in self._cache.values() if x['type'] == 'wav' and x['filename'] == uploadCacheEntry['name']), None)
+        if match is None:
+            cached = [
+                {
+                    'name': uploadCacheEntry['name'] + '_' + n + '_' + start + '_' + end,
+                    'analysis': n,
+                    'start': start,
+                    'end': end,
+                    'type': 'wav',
+                    'filename': uploadCacheEntry['name']
+                } for n in ['spectrum', 'peakSpectrum']
+            ]
+            for cache in cached:
+                self._cache[cache['name']] = cache
+            self.writeCache()
+            return True
         return False
 
     def delete(self, name):
@@ -72,18 +97,15 @@ class TargetController(object):
         if name in self._cache:
             target = self._cache[name]
             if target['type'] == 'wav':
-                path = self._uploadSet.path(target['filename'])
-                if os.path.exists(path):
-                    try:
-                        analysis = target['name'].split('|')
-                        if len(analysis) == 2:
-                            return getattr(loadSignalFromWav(path), analysis[1])(ref=1.0)
-                        else:
-                            logger.error('Unknown cached file type ' + name)
-                    except:
-                        logger.exception('Unable to analyse ' + name)
+                signal = self._uploadController.loadSignal(target['filename'],
+                                                           start=target['start'] if target['start'] != 'start' else None,
+                                                           end=target['end'] if target['end'] != 'end' else None)
+                if signal is not None:
+                    # TODO allow user defined window
+                    return getattr(signal, target['analysis'])(ref=1.0)
                 else:
-                    logger.error('Target ' + name + ' does not exist at ' + path)
+                    return None, 404
+                pass
             elif target['type'] == 'hinge':
                 hingePoints = np.array(target['hinge']).astype(np.float64)
                 x = hingePoints[:, 1]

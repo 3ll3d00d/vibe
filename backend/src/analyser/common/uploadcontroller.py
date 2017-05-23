@@ -1,10 +1,10 @@
 import glob
 import logging
+import os
 import shutil
 from pathlib import Path
 
 import numpy as np
-import os
 
 from core.reactor import Reactor
 
@@ -31,6 +31,13 @@ class UploadController(object):
         """
         return self._uploadCache + self._tmpCache + self._conversionCache
 
+    def getEntry(self, name):
+        """
+        :param name: the named wav.
+        :return: the cached info.
+        """
+        return self._getCacheEntry(name)
+
     def loadSignal(self, name, start=None, end=None):
         """
         Loads the named entry from the upload cache as a signal.
@@ -39,12 +46,19 @@ class UploadController(object):
         :param end: the time to end at in HH:mm:ss.SSS format.
         :return: the signal if the named upload exists.
         """
-        entry = next((x for x in self._uploadCache if x['name'] == name), None)
+        entry = self._getCacheEntry(name)
         if entry is not None:
             from analyser.common.signal import loadSignalFromWav
             return loadSignalFromWav(entry['path'], start=start, end=end)
         else:
             return None
+
+    def _getCacheEntry(self, name):
+        """
+        :param name: the name of the cache entry.
+        :return: the entry or none.
+        """
+        return next((x for x in self._uploadCache if x['name'] == name), None)
 
     def _scanUpload(self):
         return [self._extractMeta(p, 'loaded') for p in glob.iglob(self._uploadDir + '/*.wav')]

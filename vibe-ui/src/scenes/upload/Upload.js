@@ -371,7 +371,7 @@ export default connect((props, context) => ( {
     fetchAnalysis: (name, start, end, resolution, window) => ({
         fetchedAnalysis: `${context.apiPrefix}/uploads/${name}/${start}/${end}/${resolution}/${window}`,
         then: fetchedAnalysis => ({
-            value: Object.assign(fetchedAnalysis, {ts: new Date().getTime()})
+            value: Object.assign(fetchedAnalysis.value, {ts: new Date().getTime()})
         })
     }),
     deleteData: name => ({

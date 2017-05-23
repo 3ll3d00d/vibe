@@ -4,6 +4,9 @@ from flask_restful import Resource
 
 logger = logging.getLogger('analyser.upload')
 
+""" speclab reports a peak of 0dB but, by default, we report a peak of -3dB """
+SPECLAB_REFERENCE = 1 / (2 ** 0.5)
+
 
 class Upload(Resource):
     def __init__(self, **kwargs):
@@ -46,6 +49,26 @@ class Uploads(Resource):
             return str(e), 500
 
 
+class UploadTarget(Resource):
+    def __init__(self, **kwargs):
+        self._uploadController = kwargs['uploadController']
+        self._targetController = kwargs['targetController']
+
+    def put(self, name, start, end):
+        """
+        Stores a new target.
+        :param name: the name.
+        :param start: start time.
+        :param end: end time.
+        :return:
+        """
+        entry = self._uploadController.getEntry(name)
+        if entry is not None:
+            return None, 200 if self._targetController.storeFromWav(entry, start, end) else 500
+        else:
+            return None, 404
+
+
 class UploadAnalyser(Resource):
     def __init__(self, **kwargs):
         self._uploadController = kwargs['uploadController']
@@ -70,9 +93,11 @@ class UploadAnalyser(Resource):
                 window = (window[0], float(window[1]))
             data = {
                 'spectrum': self._jsonify(
-                    signal.spectrum(ref=1.0, segmentLengthMultiplier=int(resolution), window=window)),
+                    signal.spectrum(ref=SPECLAB_REFERENCE, segmentLengthMultiplier=int(resolution), window=window)
+                ),
                 'peakSpectrum': self._jsonify(
-                    signal.peakSpectrum(ref=1.0, segmentLengthMultiplier=int(resolution), window=window))
+                    signal.peakSpectrum(ref=SPECLAB_REFERENCE, segmentLengthMultiplier=int(resolution), window=window)
+                )
             }
             return data, 200
         else:

@@ -27,7 +27,7 @@ const statusCell = ({row}) => {
 };
 
 class ActionCell extends Component {
-    getAnalyseButton(upload) {
+    getAnalyseButton = (upload) => {
         if (upload.status === 'loaded') {
             if (upload.isSelectedChart) {
                 return (
@@ -45,9 +45,9 @@ class ActionCell extends Component {
             }
         }
         return null;
-    }
+    };
 
-    getDeleteButton(upload) {
+    getDeleteButton = (upload) => {
         let deletePromise = upload.deleteResponse;
         if (deletePromise) {
             if (deletePromise.pending) {
@@ -80,7 +80,7 @@ class ActionCell extends Component {
             );
         }
         return null;
-    }
+    };
 
     render() {
         const analyseButton = this.getAnalyseButton(this.props.row);
@@ -150,7 +150,7 @@ const targetCell = ({row}) => {
         }
     } else if (row.status === 'loaded') {
         return (
-            <Button bsStyle="primary" onClick={() => row.createTarget()} bsSize="xsmall">
+            <Button bsStyle="primary" onClick={() => row.createTarget(row.name, row.start, row.end)} bsSize="xsmall">
                 <FontAwesome name="bullseye"/>
             </Button>
         );

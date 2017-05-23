@@ -13,7 +13,7 @@ from analyser.common.uploadcontroller import UploadController
 from analyser.resources.analyse import Analyse
 from analyser.resources.target import Target
 from analyser.resources.targets import Targets
-from analyser.resources.upload import Upload, CompleteUpload, Uploads, UploadAnalyser
+from analyser.resources.upload import Upload, CompleteUpload, Uploads, UploadAnalyser, UploadTarget
 from analyser.resources.timeseries import TimeSeries
 from analyser.resources.measurement import InitialiseMeasurement, RecordData, CompleteMeasurement, Measurement, \
     FailMeasurement
@@ -41,8 +41,8 @@ targetStateController = TargetStateController(targetStateProvider, reactor, http
 deviceController = DeviceController(targetStateController, cfg.dataDir, httpclient)
 targetStateController.deviceController = deviceController
 measurementController = MeasurementController(targetStateProvider, cfg.dataDir, deviceController)
-targetController = TargetController(cfg.dataDir)
 uploadController = UploadController(cfg.upload)
+targetController = TargetController(cfg.dataDir, uploadController)
 resourceArgs = {
     'deviceController': deviceController,
     'targetStateController': targetStateController,
@@ -102,7 +102,12 @@ api.add_resource(Upload, API_PREFIX + '/upload/<filename>/<chunkIdx>/<totalChunk
 
 # GET: uploaded files
 # DELETE: named file
-api.add_resource(Uploads, API_PREFIX + '/uploads', API_PREFIX + '/uploads/<name>', resource_class_kwargs=resourceArgs)
+api.add_resource(Uploads,
+                 API_PREFIX + '/uploads',
+                 API_PREFIX + '/uploads/<name>',
+                 resource_class_kwargs=resourceArgs)
+
+api.add_resource(UploadTarget, API_PREFIX + '/uploadtarget/<name>/<start>/<end>', resource_class_kwargs=resourceArgs)
 
 # GET: analyse uploaded file
 api.add_resource(UploadAnalyser, API_PREFIX + '/uploads/<name>/<start>/<end>/<resolution>/<window>', resource_class_kwargs=resourceArgs)
