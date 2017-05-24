@@ -42,12 +42,12 @@ class TargetController(object):
         :param end: end time.
         :return: true if stored.
         """
-        # TODO check if start and end match
-        match = next((x for x in self._cache.values() if x['type'] == 'wav' and x['filename'] == uploadCacheEntry['name']), None)
+        prefix = uploadCacheEntry['name'] + '_' + start + '_' + end
+        match = next((x for x in self._cache.values() if x['type'] == 'wav' and x['name'].startswith(prefix)), None)
         if match is None:
             cached = [
                 {
-                    'name': uploadCacheEntry['name'] + '_' + n + '_' + start + '_' + end,
+                    'name': prefix + '_' + n,
                     'analysis': n,
                     'start': start,
                     'end': end,

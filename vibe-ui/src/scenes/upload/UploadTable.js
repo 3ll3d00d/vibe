@@ -124,10 +124,10 @@ const previewWindowCell = ({row}) => {
 };
 
 const targetCell = ({row}) => {
-    let targetPromise = row.targetResponse;
+    let targetPromise = row.createResponse;
     if (targetPromise) {
         if (targetPromise.pending) {
-            return <Button bsStyle="danger" disabled bsSize="xsmall"><FontAwesome name="spinner" spin/></Button>;
+            return <Button bsStyle="danger" disabled bsSize="xsmall"><FontAwesome name="spinner" spin/>&nbsp;Saving</Button>;
         } else if (targetPromise.rejected) {
             const code = targetPromise.meta.response.status;
             const text = targetPromise.meta.response.statusText;
@@ -144,7 +144,7 @@ const targetCell = ({row}) => {
         } else if (targetPromise.fulfilled) {
             return (
                 <Button bsStyle="success" disabled bsSize="xsmall">
-                    <FontAwesome name="check"/>&nbsp;Target
+                    <FontAwesome name="check"/>&nbsp;Saved
                 </Button>
             );
         }
