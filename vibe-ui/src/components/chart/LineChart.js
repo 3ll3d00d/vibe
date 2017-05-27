@@ -8,7 +8,7 @@ export default class LineChart extends PureComponent {
         series: PropTypes.array.isRequired,
         config: PropTypes.object.isRequired,
         chartExportHandler: PropTypes.func,
-        customChartDimensions: PropTypes.object
+        customChartConfig: PropTypes.object
     };
 
     state = {
@@ -19,15 +19,6 @@ export default class LineChart extends PureComponent {
         if (this.props.config.xLog !== nextProps.config.xLog) {
             this.setState({redraw: true});
         }
-        if (nextProps.customChartDimensions && !this.props.customChartDimensions) {
-            this.setState({redraw: true});
-        }
-        if (nextProps.customChartDimensions && this.props.customChartDimensions) {
-            if (nextProps.customChartDimensions.width !== this.props.customChartDimensions.width
-                || nextProps.customChartDimensions.height !== this.props.customChartDimensions.height) {
-                this.setState({redraw: true});
-            }
-        }
     };
 
     componentWillMount = () => {
@@ -35,7 +26,7 @@ export default class LineChart extends PureComponent {
         Chart.plugins.register({
             beforeDraw: (chartInstance) => {
                 const ctx = chartInstance.chart.ctx;
-                ctx.fillStyle = "white";
+                ctx.fillStyle = this.props.customChartConfig ? this.props.customChartConfig.colours.background : 'white';
                 ctx.fillRect(0, 0, chartInstance.chart.width, chartInstance.chart.height);
             }
         });
@@ -115,33 +106,42 @@ export default class LineChart extends PureComponent {
             animation = Object.assign(animation, {onComplete: this.propagateExportableChart});
         }
         let divSize = {};
-        const customDims = this.props.customChartDimensions
-            && this.props.customChartDimensions.hasOwnProperty("height")
-            && this.props.customChartDimensions.height > 0
-            && this.props.customChartDimensions.hasOwnProperty("width")
-            && this.props.customChartDimensions.width > 0;
+        const customDims = this.props.customChartConfig
+            && this.props.customChartConfig.hasOwnProperty("height")
+            && this.props.customChartConfig.height > 0
+            && this.props.customChartConfig.hasOwnProperty("width")
+            && this.props.customChartConfig.width > 0;
         if (customDims) {
-            divSize = {height: this.props.customChartDimensions.height, width: this.props.customChartDimensions.width};
+            divSize = {height: this.props.customChartConfig.height, width: this.props.customChartConfig.width};
+        }
+        let gridColour = {};
+        if (this.props.customChartConfig) {
+            const colour = this.props.customChartConfig.colours.gridlines;
+            gridColour = {gridLines: {color: `rgba(${colour.r}, ${colour.g}, ${colour.b}, ${colour.a})`}};
         }
         const options = {
             scales: {
-                xAxes: [{
-                    type: xLinLog,
-                    position: 'bottom',
-                    ticks: xAxisTicks,
-                    scaleLabel: {
-                        display: true,
-                        labelString: this.props.config.xLabel
-                    }
-                }],
-                yAxes: [{
-                    type: yLinLog,
-                    ticks: yAxisTicks,
-                    scaleLabel: {
-                        display: true,
-                        labelString: this.props.config.yLabel
-                    }
-                }]
+                xAxes: [
+                    Object.assign({
+                        type: xLinLog,
+                        position: 'bottom',
+                        ticks: xAxisTicks,
+                        scaleLabel: {
+                            display: true,
+                            labelString: this.props.config.xLabel
+                        }
+                    }, gridColour)
+                ],
+                yAxes: [
+                    Object.assign({
+                        type: yLinLog,
+                        ticks: yAxisTicks,
+                        scaleLabel: {
+                            display: true,
+                            labelString: this.props.config.yLabel
+                        }
+                    }, gridColour)
+                ]
             },
             legend: {
                 position: 'bottom'
@@ -152,10 +152,10 @@ export default class LineChart extends PureComponent {
         return (
             <div style={Object.assign({position: "relative"}, divSize)}>
                 <Line ref='chart'
-                             type={'line'}
-                             data={{datasets: datasets}}
-                             options={options}
-                             redraw={this.state.redraw}/>;
+                      type={'line'}
+                      data={{datasets: datasets}}
+                      options={options}
+                      redraw={this.state.redraw}/>;
             </div>
         );
     }

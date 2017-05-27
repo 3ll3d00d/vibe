@@ -24,6 +24,7 @@
     "react-bootstrap": "^0.30.7",
     "react-bootstrap-multiselect": "^2.3.0",
     "react-chartjs-2": "^2.1.0",
+    "react-color": "^2.11.7",
     "react-dom": "^15.4.2",
     "react-dropzone": "^3.13.1",
     "react-fontawesome": "^1.5.0",

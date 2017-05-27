@@ -43,9 +43,8 @@ export default class ChartController extends Component {
             xLog: true,
             dots: false,
             chartDataUrl: null,
-            useCustomDims: false,
             actualChartDimensions: {},
-            customChartDimensions: {},
+            customChartConfig: null,
             exportModalState: false
         };
         return Object.assign(state, this.createChartConfig(state, props.range));
@@ -112,17 +111,17 @@ export default class ChartController extends Component {
             return {exportModalState: !previousState.exportModalState};
         });
     };
-    getChartDimensions = () => {
-        if (this.state.useCustomDims) {
-            return this.state.customChartDimensions;
+    getCustomChartConfig = () => {
+        if (this.state.customChartConfig) {
+            return this.state.customChartConfig;
         }
         return null;
     };
-    setCustomChartDimensions = (height, width) => {
-        this.setState({useCustomDims: true, customChartDimensions: {height, width}});
+    updateCustomChartConfig = (config) => {
+        this.setState({customChartConfig: config});
     };
-    resetCustomDims = () => {
-        this.setState({useCustomDims: false, customChartDimensions: null});
+    resetCustomChartConfig = () => {
+        this.setState({customChartConfig: null});
     };
 
     makeYFields(range) {
@@ -213,8 +212,8 @@ export default class ChartController extends Component {
                           toggleVisibility={this.toggleExportModal}
                           currentChartDimensions={this.state.actualChartDimensions}
                           currentChartURL={this.state.chartDataUrl}
-                          resetDims={this.resetCustomDims}
-                          updateDims={this.setCustomChartDimensions}/>
+                          resetCustomChartConfig={this.resetCustomChartConfig}
+                          updateChart={this.updateCustomChartConfig}/>
                 <Well bsSize="small">
                     <Row>
                         <Col lg={2} md={2} sm={4} xs={4}>{xRange}</Col>
@@ -247,7 +246,7 @@ export default class ChartController extends Component {
                         <LineChart series={this.props.series}
                                    config={this.state.config}
                                    chartExportHandler={this.handleExportChart}
-                                   customChartDimensions={this.getChartDimensions()}/>
+                                   customChartConfig={this.getCustomChartConfig()}/>
                     </Col>
                 </Row>
             </div>
