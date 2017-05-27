@@ -18,7 +18,7 @@ import LineChart from "./LineChart";
 import PreciseIntNumericInput from "../../scenes/analyse/PreciseIntNumericInput";
 import {NO_OPTION_SELECTED} from "../../constants";
 import {getAnalysisChartConfig} from "./ConfigGenerator";
-import Download from "./Download";
+import ChartCustomiser from "./ChartCustomiser";
 
 export default class ChartController extends Component {
 
@@ -208,12 +208,12 @@ export default class ChartController extends Component {
         const resetButton = <Button onClick={this.resetChart} bsSize="small"><FontAwesome name="undo"/></Button>;
         return (
             <div>
-                <Download visible={this.state.exportModalState}
-                          toggleVisibility={this.toggleExportModal}
-                          currentChartDimensions={this.state.actualChartDimensions}
-                          currentChartURL={this.state.chartDataUrl}
-                          resetCustomChartConfig={this.resetCustomChartConfig}
-                          updateChart={this.updateCustomChartConfig}/>
+                <ChartCustomiser visible={this.state.exportModalState}
+                                 toggleVisibility={this.toggleExportModal}
+                                 currentChartDimensions={this.state.actualChartDimensions}
+                                 currentChartURL={this.state.chartDataUrl}
+                                 resetCustomChartConfig={this.resetCustomChartConfig}
+                                 updateChart={this.updateCustomChartConfig}/>
                 <Well bsSize="small">
                     <Row>
                         <Col lg={2} md={2} sm={4} xs={4}>{xRange}</Col>
