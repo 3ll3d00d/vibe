@@ -7,7 +7,8 @@ export default class LineChart extends PureComponent {
     static propTypes = {
         series: PropTypes.array.isRequired,
         config: PropTypes.object.isRequired,
-        chartDataUrlHandler: PropTypes.func
+        chartExportHandler: PropTypes.func,
+        customChartDimensions: PropTypes.object
     };
 
     state = {
@@ -17,6 +18,15 @@ export default class LineChart extends PureComponent {
     componentWillReceiveProps = (nextProps) => {
         if (this.props.config.xLog !== nextProps.config.xLog) {
             this.setState({redraw: true});
+        }
+        if (nextProps.customChartDimensions && !this.props.customChartDimensions) {
+            this.setState({redraw: true});
+        }
+        if (nextProps.customChartDimensions && this.props.customChartDimensions) {
+            if (nextProps.customChartDimensions.width !== this.props.customChartDimensions.width
+                || nextProps.customChartDimensions.height !== this.props.customChartDimensions.height) {
+                this.setState({redraw: true});
+            }
         }
     };
 
@@ -42,8 +52,12 @@ export default class LineChart extends PureComponent {
         return '#' + ~~(Math.random() * (1 << 24)).toString(16);
     }
 
-    propagateDataUrl = (anim) => {
-        this.props.chartDataUrlHandler(this.refs.chart.chart_instance.toBase64Image());
+    propagateExportableChart = (anim) => {
+        const {height, width} = this.refs.chart.chart_instance.chart;
+        const url = this.refs.chart.chart_instance.toBase64Image();
+        if (this.props.chartExportHandler) {
+            this.props.chartExportHandler({height, width, url});
+        }
     };
 
     render() {
@@ -97,8 +111,17 @@ export default class LineChart extends PureComponent {
             yAxisTicks = Object.assign(yAxisTicks, {callback: this.props.config.yFormatter});
         }
         let animation = {duration: 750};
-        if (this.props.chartDataUrlHandler) {
-            animation = Object.assign(animation, {onComplete: this.propagateDataUrl});
+        if (this.props.chartExportHandler) {
+            animation = Object.assign(animation, {onComplete: this.propagateExportableChart});
+        }
+        let divSize = {};
+        const customDims = this.props.customChartDimensions
+            && this.props.customChartDimensions.hasOwnProperty("height")
+            && this.props.customChartDimensions.height > 0
+            && this.props.customChartDimensions.hasOwnProperty("width")
+            && this.props.customChartDimensions.width > 0;
+        if (customDims) {
+            divSize = {height: this.props.customChartDimensions.height, width: this.props.customChartDimensions.width};
         }
         const options = {
             scales: {
@@ -123,13 +146,17 @@ export default class LineChart extends PureComponent {
             legend: {
                 position: 'bottom'
             },
-            responsive: true,
-            animation: animation
+            animation: animation,
+            responsive: true
         };
-        return <Line ref='chart'
-                     type={'line'}
-                     data={{datasets: datasets}}
-                     options={options}
-                     redraw={this.state.redraw}/>;
+        return (
+            <div style={Object.assign({position: "relative"}, divSize)}>
+                <Line ref='chart'
+                             type={'line'}
+                             data={{datasets: datasets}}
+                             options={options}
+                             redraw={this.state.redraw}/>;
+            </div>
+        );
     }
 }

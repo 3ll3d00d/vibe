@@ -18,6 +18,7 @@ import LineChart from "./LineChart";
 import PreciseIntNumericInput from "../../scenes/analyse/PreciseIntNumericInput";
 import {NO_OPTION_SELECTED} from "../../constants";
 import {getAnalysisChartConfig} from "./ConfigGenerator";
+import Download from "./Download";
 
 export default class ChartController extends Component {
 
@@ -41,13 +42,18 @@ export default class ChartController extends Component {
             maxY: -100,
             xLog: true,
             dots: false,
-            chartDataUrl: null
+            chartDataUrl: null,
+            useCustomDims: false,
+            actualChartDimensions: {},
+            customChartDimensions: {},
+            exportModalState: false
         };
         return Object.assign(state, this.createChartConfig(state, props.range));
     }
 
-    acceptChartDataUrl = (url) => {
-        this.setState({chartDataUrl: url});
+    handleExportChart = (parameters) => {
+        const {height, width} = parameters;
+        this.setState({chartDataUrl: parameters.url, actualChartDimensions: {height, width}});
     };
 
     createChartConfig(state, range) {
@@ -100,6 +106,23 @@ export default class ChartController extends Component {
         this.setState((previousState, props) => {
             return this.createInitialState(props);
         });
+    };
+    toggleExportModal = () => {
+        this.setState((previousState, props) => {
+            return {exportModalState: !previousState.exportModalState};
+        });
+    };
+    getChartDimensions = () => {
+        if (this.state.useCustomDims) {
+            return this.state.customChartDimensions;
+        }
+        return null;
+    };
+    setCustomChartDimensions = (height, width) => {
+        this.setState({useCustomDims: true, customChartDimensions: {height, width}});
+    };
+    resetCustomDims = () => {
+        this.setState({useCustomDims: false, customChartDimensions: null});
     };
 
     makeYFields(range) {
@@ -176,11 +199,7 @@ export default class ChartController extends Component {
     }
 
     getDownloadButton = () => {
-        const url = this.state.chartDataUrl;
-        if (url !== null) {
-            return <Button download="chart.png" href={url} bsSize="small"><FontAwesome name="download"/></Button>;
-        }
-        return null;
+        return <Button onClick={this.toggleExportModal} bsSize="small"><FontAwesome name="download"/></Button>;
     };
 
     render() {
@@ -188,9 +207,14 @@ export default class ChartController extends Component {
         const yRange = this.makeYFields(this.props.range);
         const updateButton = <Button onClick={this.renderChart} bsSize="small"><FontAwesome name="repeat"/></Button>;
         const resetButton = <Button onClick={this.resetChart} bsSize="small"><FontAwesome name="undo"/></Button>;
-        const downloadButton = this.getDownloadButton();
         return (
             <div>
+                <Download visible={this.state.exportModalState}
+                          toggleVisibility={this.toggleExportModal}
+                          currentChartDimensions={this.state.actualChartDimensions}
+                          currentChartURL={this.state.chartDataUrl}
+                          resetDims={this.resetCustomDims}
+                          updateDims={this.setCustomChartDimensions}/>
                 <Well bsSize="small">
                     <Row>
                         <Col lg={2} md={2} sm={4} xs={4}>{xRange}</Col>
@@ -206,7 +230,7 @@ export default class ChartController extends Component {
                         </Col>
                         <Col lg={2} md={2} sm={4} xs={4}>{yRange}</Col>
                         <Col lg={1} md={1} smHidden={true} xsHidden={true}>
-                            {updateButton}{resetButton}{downloadButton}
+                            {updateButton}{resetButton}{this.getDownloadButton()}
                         </Col>
                         <Col lg={6} md={6} sm={8} xs={8}>
                             {this.makeReferenceSeriesSelector()}
@@ -214,14 +238,16 @@ export default class ChartController extends Component {
                     </Row>
                     <Row>
                         <Col lgHidden={true} mdHidden={true} sm={6} xs={6}>
-                            {updateButton}{resetButton}{downloadButton}
+                            {updateButton}{resetButton}{this.getDownloadButton()}
                         </Col>
                     </Row>
                 </Well>
                 <Row>
                     <Col>
-                        <LineChart series={this.props.series} config={this.state.config}
-                                   chartDataUrlHandler={this.acceptChartDataUrl}/>
+                        <LineChart series={this.props.series}
+                                   config={this.state.config}
+                                   chartExportHandler={this.handleExportChart}
+                                   customChartDimensions={this.getChartDimensions()}/>
                     </Col>
                 </Row>
             </div>
