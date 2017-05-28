@@ -6,17 +6,20 @@ import {
     Checkbox,
     Col,
     ControlLabel,
+    DropdownButton,
     Form,
     FormControl,
     FormGroup,
     InputGroup,
+    MenuItem,
     Modal,
     Well
 } from "react-bootstrap";
 import NumericInput from "react-numeric-input";
 import FontAwesome from "react-fontawesome";
 import StylePicker from "./StylePicker";
-import {Map} from "immutable";
+import {fromJS, List, Map} from "immutable";
+import Cookies from "universal-cookie";
 
 const DEFAULT_COLOURS = Map({
     'background': {r: 255, g: 255, b: 255, a: 1},
@@ -34,14 +37,30 @@ export default class ChartCustomiser extends Component {
         visible: PropTypes.bool.isRequired
     };
 
+    constructor(props) {
+        super(props);
+        this.cookies = new Cookies();
+    }
+
     state = {
         height: this.props.currentChartDimensions.height,
         width: this.props.currentChartDimensions.width,
         namedColours: DEFAULT_COLOURS,
         title: '',
         titleSize: 12,
-        showLegend: true
+        showLegend: true,
+        presets: List(),
+        presetName: ''
     };
+
+    componentWillMount() {
+        const presets = this.cookies.get('presets');
+        if (presets) {
+            this.setState((previousState, props) => {
+                return {presets: previousState.presets.push(...presets)}
+            })
+        }
+    }
 
     reset = () => {
         this.setState({namedColours: DEFAULT_COLOURS});
@@ -105,11 +124,73 @@ export default class ChartCustomiser extends Component {
         return <Button onClick={this.reset}>Reset</Button>;
     };
 
+    savePreset = () => {
+        const name = this.state.presetName;
+        this.setState((previousState, props) => {
+            const {height, width, namedColours, titleSize, showLegend} = previousState;
+            const colours = namedColours.toJS();
+            const idx = previousState.presets.findIndex(p => p.name === name);
+            const preset = {name, height, width, colours, titleSize, showLegend};
+            const nextPresets = idx > -1 ? previousState.presets.set(idx, preset) : previousState.presets.push(preset);
+            this.cookies.set('presets', JSON.stringify(nextPresets.toJS()), {path: '/'});
+            return {presets: nextPresets}
+        });
+    };
+
+    deletePreset = () => {
+        const name = this.state.presetName;
+        this.setState((previousState, props) => {
+            const idx = previousState.presets.findIndex(p => p.name === name);
+            const nextPresets = idx > -1 ? previousState.presets.delete(idx) : previousState.presets;
+            this.cookies.set('presets', JSON.stringify(nextPresets.toJS()), {path: '/'});
+            return {presets: nextPresets, presetName: ''};
+        });
+    };
+
+    loadPreset = (name) => {
+        const preset = this.state.presets.find(p => p.name === name);
+        if (preset) {
+            const {height, width, colours, titleSize, showLegend} = preset;
+            const namedColours = fromJS(colours);
+            this.setState({height, width, namedColours, titleSize, showLegend});
+        }
+    };
+
+    handlePresetName = (event) => {
+        this.setState({presetName: event.target.value});
+    };
+
+    cannotSavePreset = () => {
+        const {presetName, height, width, namedColours, titleSize} = this.state;
+        return presetName.length === 0 || !height || ! width || !titleSize;
+    };
+
+    cannotDeletePreset = () => {
+        const {presets, presetName} = this.state;
+        return presetName.length === 0 || presets.findIndex(p => p.name === presetName) === -1;
+    };
+
     render() {
+        const presetMenuItems = this.state.presets.toJS().map(p => <MenuItem key={p.name}
+                                                                             eventKey={p.name}>{p.name}</MenuItem>);
         return (
             <Modal show={this.props.visible} onHide={this.props.toggleVisibility}>
                 <Modal.Header>
                     <Modal.Title>Customise Chart</Modal.Title>
+                    <Form inline>
+                        <ButtonGroup>
+                            <DropdownButton title="Presets" id="preset" onSelect={this.loadPreset}>
+                                {presetMenuItems}
+                            </DropdownButton>
+                            <FormControl type="text" value={this.state.presetName} onChange={this.handlePresetName}/>
+                            <Button disabled={this.cannotSavePreset()} onClick={this.savePreset}>
+                                <FontAwesome name="plus"/>
+                            </Button>
+                            <Button disabled={this.cannotDeletePreset()} onClick={this.deletePreset}>
+                                <FontAwesome name="minus"/>
+                            </Button>
+                        </ButtonGroup>
+                    </Form>
                 </Modal.Header>
                 <Modal.Body>
                     <Form horizontal>

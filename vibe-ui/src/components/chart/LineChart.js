@@ -148,7 +148,6 @@ export default class LineChart extends PureComponent {
         // title
         let title = {};
         if (customChartConfig && customChartConfig.title.text) {
-            const fontColor = customChartConfig.colours.text;
             title = Object.assign(customChartConfig.title, {
                 fontColor: textColour,
                 position: 'top',
