@@ -1,4 +1,5 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import Message from "../../components/Message";
 import {Col, Grid, Panel, Row} from "react-bootstrap";
 import {connect} from "react-refetch";
@@ -85,13 +86,13 @@ class Target extends Component {
                             <Col>
                                 <Panel header="Targets" bsStyle="info">
                                     <Row>
-                                        <Col md={6}>
+                                        <Col md={7}>
                                             <Targets targets={this.props.targets.value}
                                                      showFunc={this.showTimeSeries}
                                                      clearFunc={this.clearTimeSeries}
                                                      selected={this.state.selected}/>
                                         </Col>
-                                        <Col md={6}>
+                                        <Col md={5}>
                                             <CreateTarget previewFunc={this.handlePreview}/>
                                         </Col>
                                     </Row>

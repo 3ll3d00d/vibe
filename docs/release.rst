@@ -79,7 +79,7 @@ Prerequisites
 
 3) Install dependencies that aren't in conda::
 
-    pip.exe install aniso8601 pefile flask-restful smbus2 versioneer unittest-data-provider sphinx-rtd-theme flask-uploads
+    pip.exe install aniso8601 pefile flask-restful smbus2 versioneer unittest-data-provider sphinx-rtd-theme
 
 4) Install dependencies that are in conda::
 
@@ -96,7 +96,7 @@ Prerequisites
 * remove the python 3.6 specific files from ``<CONDA-ENV-DIR>\Lib\site-packages\jinja2`` (as per https://github.com/pallets/jinja/issues/655)
 * move the ``import pkg_resources`` statement in ``<CONDA-ENV-DIR>\Lib\site-packages\librosa\util\files.py`` into the function that uses it
 * update ``release\resampy_pyinst`` from ``<CONDA-ENV-DIR>\Lib\site-packages\resampy\data`` if necessary
-* replace the implementation of ``load_filter`` in ``resampy\filters.py`` with::
+* replace the implementation of ``load_filter`` in ``resampy\filters.py`` with the implementation below and remove the ``import pkg_resources``::
 
     # hack in pyinstaller support
     if getattr(sys, 'frozen', False):
@@ -116,12 +116,44 @@ Build
 
 1) Generate a spec::
 
-    pyi-makespec -F -n vibe-analyser --exclude-module pkg_resources --hidden-import=cython --additional-hooks-dir=.\release\hooks analyser\app.py
+    pyi-makespec -F -n vibe-analyser --exclude-module pkg_resources --hidden-import=cython --additional-hooks-dir=.\release\hooks backend\src\analyser\app.py
 
-2) manually add the following after a.binaries in exe = EXE::
+2) manually add the following (though adjust the path for your env dir) after a.binaries in exe = EXE::
 
     Tree('vibe-ui\\build', prefix='ui'),
     Tree('release\\resampy_pyinst', prefix='resampy_filters'),
+    Tree('C:\\Users\\Matt\\Anaconda3\\envs\\vibe35\\Lib\\site-packages\\_soundfile_data', prefix='_soundfile_data'),
+
+It should now look like this::
+
+
+    a = Analysis(['backend\\src\\analyser\\app.py'],
+                 pathex=['C:\\Users\\Matt\\github\\vibe\\backend\\src'],
+                 binaries=None,
+                 datas=None,
+                 hiddenimports=['cython'],
+                 hookspath=['.\\release\\hooks'],
+                 runtime_hooks=[],
+                 excludes=['pkg_resources', 'PyQt4'],
+                 win_no_prefer_redirects=False,
+                 win_private_assemblies=False,
+                 cipher=block_cipher)
+    pyz = PYZ(a.pure, a.zipped_data,
+                 cipher=block_cipher)
+    exe = EXE(pyz,
+              a.scripts,
+              a.binaries,
+              Tree('vibe-ui\\build', prefix='ui'),
+              Tree('release\\resampy_pyinst', prefix='resampy_filters'),
+              Tree('C:\\Users\\Matt\\Anaconda3\\envs\\vibe35\\Lib\\site-packages\\_soundfile_data', prefix='_soundfile_data'),
+              a.zipfiles,
+              a.datas,
+              name='vibe-analyser',
+              debug=False,
+              strip=False,
+              upx=True,
+              console=True )
+
 
 3) build the UI::
 

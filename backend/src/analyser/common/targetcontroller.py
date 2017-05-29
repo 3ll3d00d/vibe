@@ -1,22 +1,18 @@
 import logging
 import os
 
-import librosa
 import numpy as np
 from flask import json
-
-from analyser.common.signal import loadSignalFromWav
 from scipy.interpolate import interp1d
 
 logger = logging.getLogger('analyser.targetstate')
-analyses = ['spectrum', 'peakSpectrum', 'psd']
 
 
 class TargetController(object):
-    def __init__(self, dataDir, uploadSet):
+    def __init__(self, dataDir, uploadController):
         self._dataDir = dataDir
-        self._uploadSet = uploadSet
         self._cache = self.readCache()
+        self._uploadController = uploadController
 
     def getTargets(self):
         """
@@ -24,7 +20,7 @@ class TargetController(object):
         """
         return list(self._cache.values())
 
-    def store(self, name, hingePoints):
+    def storeFromHinge(self, name, hingePoints):
         """
         Stores a new item in the cache if it is allowed in.
         :param name: the name.
@@ -38,48 +34,32 @@ class TargetController(object):
                 return True
         return False
 
-    def save(self, name, file):
+    def storeFromWav(self, uploadCacheEntry, start, end):
         """
-        saves a series of targets generated from the uploaded wav.
-        :param name: the named wav.
-        :param file: the file.
-        :return: true if cached.
+        Stores a new item in the cache.
+        :param name: file name.
+        :param start: start time.
+        :param end: end time.
+        :return: true if stored.
         """
-        if name not in self._cache:
-            logger.info("Saving " + file.filename)
-            filename = self._uploadSet.save(file)
-            fullPath = os.path.join(self._dataDir, self._uploadSet.name, filename)
-            logger.info("Reading " + fullPath)
-            try:
-                signal = loadSignalFromWav(fullPath)
-                if signal.fs > 1024:
-                    self.resample(fullPath, signal, 1000)
-                cached = [{'name': name + '|' + n, 'type': 'wav', 'filename': filename} for n in analyses]
-                for cache in cached:
-                    self._cache[cache['name']] = cache
-                self.writeCache()
-                return True
-            except:
-                logger.exception("Unable to process file, deleting " + fullPath)
-                if os.path.exists(fullPath):
-                    os.remove(fullPath)
+        prefix = uploadCacheEntry['name'] + '_' + start + '_' + end
+        match = next((x for x in self._cache.values() if x['type'] == 'wav' and x['name'].startswith(prefix)), None)
+        if match is None:
+            cached = [
+                {
+                    'name': prefix + '_' + n,
+                    'analysis': n,
+                    'start': start,
+                    'end': end,
+                    'type': 'wav',
+                    'filename': uploadCacheEntry['name']
+                } for n in ['spectrum', 'peakSpectrum']
+            ]
+            for cache in cached:
+                self._cache[cache['name']] = cache
+            self.writeCache()
+            return True
         return False
-
-    def resample(self, filename, signal, targetFs):
-        """
-        Resamples the signal to the targetFs and writes it to filename.
-        :param filename: the filename.
-        :param signal: the signal to resample.
-        :param targetFs: the target fs.
-        :return: None
-        """
-        logger.info("Resampling from " + str(signal.fs) + " to 1000")
-        y_1000 = librosa.resample(signal.samples, signal.fs, targetFs)
-        maxv = np.iinfo(np.int16).max
-        librosa.output.write_wav(filename, (y_1000 * maxv).astype(np.int16), targetFs)
-        # check we can read it
-        signal = loadSignalFromWav(filename)
-        logger.info("Resampling complete")
 
     def delete(self, name):
         """
@@ -117,18 +97,15 @@ class TargetController(object):
         if name in self._cache:
             target = self._cache[name]
             if target['type'] == 'wav':
-                path = self._uploadSet.path(target['filename'])
-                if os.path.exists(path):
-                    try:
-                        analysis = target['name'].split('|')
-                        if len(analysis) == 2:
-                            return getattr(loadSignalFromWav(path), analysis[1])(ref=1.0)
-                        else:
-                            logger.error('Unknown cached file type ' + name)
-                    except:
-                        logger.exception('Unable to analyse ' + name)
+                signal = self._uploadController.loadSignal(target['filename'],
+                                                           start=target['start'] if target['start'] != 'start' else None,
+                                                           end=target['end'] if target['end'] != 'end' else None)
+                if signal is not None:
+                    # TODO allow user defined window
+                    return getattr(signal, target['analysis'])(ref=1.0)
                 else:
-                    logger.error('Target ' + name + ' does not exist at ' + path)
+                    return None, 404
+                pass
             elif target['type'] == 'hinge':
                 hingePoints = np.array(target['hinge']).astype(np.float64)
                 x = hingePoints[:, 1]
@@ -141,13 +118,13 @@ class TargetController(object):
                     x = np.insert(x, len(x), 500.0)
                     y = np.insert(y, len(y), y[-1])
                 # convert the y axis dB values into a linear value
-                y = 10**(y/10)
+                y = 10 ** (y / 10)
                 # perform a logspace interpolation
                 f = self.log_interp1d(x, y)
                 # remap to 0-500
                 xnew = np.linspace(x[0], x[-1], num=500, endpoint=False)
                 # and convert back to dB
-                return xnew, 10*np.log10(f(xnew))
+                return xnew, 10 * np.log10(f(xnew))
             else:
                 logger.error('Unknown target type with name ' + name)
         return None

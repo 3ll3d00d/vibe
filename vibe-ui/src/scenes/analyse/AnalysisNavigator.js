@@ -1,9 +1,9 @@
 import React, {Component} from "react";
-import {Button, ButtonGroup, ButtonToolbar, DropdownButton, FormControl, MenuItem, OverlayTrigger, Tooltip} from "react-bootstrap";
+import {Button, ButtonGroup, ButtonToolbar, DropdownButton, MenuItem, OverlayTrigger, Tooltip} from "react-bootstrap";
 import NavigatorMultiSelect from "./NavigatorMultiSelect";
 import FontAwesome from "react-fontawesome";
 import "react-bootstrap-multiselect/css/bootstrap-multiselect.css";
-import PreciseIntNumericInput from "./PreciseIntNumericInput";
+import PreciseIntNumericInput from "../../components/PreciseIntNumericInput";
 
 export default class AnalysisNavigator extends Component {
 
@@ -16,7 +16,7 @@ export default class AnalysisNavigator extends Component {
         this.navigate({type: 'target', measurementId: targetName, deviceId: valNum})
     };
 
-    createTypeLinks() { {}
+    createTypeLinks() {
         let namedType;
         let style;
         if (this.props.type) {

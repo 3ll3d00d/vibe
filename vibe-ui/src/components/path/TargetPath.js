@@ -166,6 +166,11 @@ export default class TargetPath extends Record({
         return `${this.getExternalId()}/` === referenceSeriesId;
     }
 
+    /** @returns boolean delegates to ownsReference. */
+    isReferenceVisible(referenceSeriesId) {
+        return this.ownsReference(referenceSeriesId);
+    }
+
     /**
      * Normalises the series against the given reference.
      * @param referenceSeriesId
@@ -188,5 +193,10 @@ export default class TargetPath extends Record({
             return this.series.rendered;
         }
         return null;
+    }
+
+    /** @returns 1 if this path has a series. */
+    getSeriesCount() {
+        return this.series ? 1 : 0;
     }
 }

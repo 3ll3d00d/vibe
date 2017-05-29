@@ -34,22 +34,8 @@ class Target(Resource):
         json = request.get_json()
         if 'hinge' in json:
             logger.info('Storing target ' + targetId)
-            if self._targetController.store(targetId, json['hinge']):
+            if self._targetController.storeFromHinge(targetId, json['hinge']):
                 logger.info('Stored target ' + targetId)
-                return None, 200
-            else:
-                return None, 500
-        else:
-            return None, 400
-
-    def post(self, targetId):
-        """
-        stores a new wav target.
-        :param targetId: 
-        :return: 
-        """
-        if 'file' in request.files:
-            if self._targetController.save(targetId, request.files['file']):
                 return None, 200
             else:
                 return None, 500

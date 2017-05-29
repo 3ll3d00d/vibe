@@ -1,4 +1,5 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {Panel} from "react-bootstrap";
 import LineChart from "../../components/chart/LineChart";
 import {getAnalysisChartConfig} from "../../components/chart/ConfigGenerator";

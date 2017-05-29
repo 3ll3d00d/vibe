@@ -30,10 +30,10 @@ export default class RenderedData extends Record({xyz: new List(), minX: 0, maxX
  */
 export function renderData(data) {
     let xyz = new List();
-    let minX = Number.MAX_VALUE;
-    let minY = Number.MAX_VALUE;
-    let maxX = Number.MIN_VALUE;
-    let maxY = Number.MIN_VALUE;
+    let minX = Number.MAX_SAFE_INTEGER;
+    let minY = Number.MAX_SAFE_INTEGER;
+    let maxX = Number.MIN_SAFE_INTEGER;
+    let maxY = Number.MIN_SAFE_INTEGER;
     for (let [idx, value] of data.freq.entries()) {
         if (value > 0.01) {
             xyz = xyz.push(new DataPoint({x: value, y: data.val[idx], z: 1}));
@@ -54,8 +54,8 @@ export function renderData(data) {
  */
 export function normaliseData(renderedData, referenceData) {
     let normedData = new List();
-    let minY = Number.MAX_VALUE;
-    let maxY = Number.MIN_VALUE;
+    let minY = Number.MAX_SAFE_INTEGER;
+    let maxY = Number.MIN_SAFE_INTEGER;
     const renderedDataCount = renderedData.xyz.count();
     referenceData.xyz.forEach((val, idx) => {
         // the datasets might be a different size

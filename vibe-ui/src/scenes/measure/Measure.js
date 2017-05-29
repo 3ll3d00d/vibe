@@ -1,10 +1,12 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import Message from "../../components/Message";
 import {Col, Grid, Panel, Row} from "react-bootstrap";
 import {connect, PromiseState} from "react-refetch";
 import Measurements from "./Measurements";
 import ScheduleMeasurement from "./ScheduleMeasurement";
 import TimeSeries from "./TimeSeries";
+import EditMeasurement from "./EditMeasurement";
 
 class Measure extends Component {
     static contextTypes = {
@@ -12,24 +14,37 @@ class Measure extends Component {
     };
 
     state = {
-        selectedMeasurement: null
+        selectedChart: null,
+        selectedEdit: null
     };
 
     showTimeSeries = (measurementId) => {
         this.setState((previousState, props) => {
             props.fetchMeasurementData(measurementId);
-            return {selected: measurementId};
+            return {selectedChart: measurementId};
+        });
+    };
+
+    showEdit = (measurementId) => {
+        this.setState((previousState, props) => {
+            return {selectedEdit: measurementId};
+        });
+    };
+
+    clearEdit  = () => {
+        this.setState((previousState, props) => {
+            return {selectedEdit: null};
         });
     };
 
     clearTimeSeries = () => {
         this.setState((previousState, props) => {
-            return {selected: null};
+            return {selectedChart: null};
         });
     };
 
     findTimeSeriesData() {
-        const mId = this.state.selected;
+        const mId = this.state.selectedChart;
         if (mId) {
             const dataPromiseKey = Object.keys(this.props).find(p => p === `fetchedData_${mId}`);
             if (dataPromiseKey) {
@@ -42,7 +57,7 @@ class Measure extends Component {
     renderTimeSeriesIfAny() {
         const dataPromise = this.findTimeSeriesData();
         if (dataPromise) {
-            const selected = this.props.measurements.value.find(m => m.id === this.state.selected);
+            const selected = this.props.measurements.value.find(m => m.id === this.state.selectedChart);
             if (selected) {
                 return <TimeSeries fs={selected.measurementParameters.fs}
                                    dataPromise={dataPromise}/>
@@ -80,14 +95,19 @@ class Measure extends Component {
                                             <Measurements measurements={this.props.measurements.value}
                                                           fetcher={this.showTimeSeries}
                                                           clearFunc={this.clearTimeSeries}
-                                                          selectedMeasurement={this.state.selected}/>
+                                                          showEditFunc={this.showEdit}
+                                                          clearEditFunc={this.clearEdit}
+                                                          selectedChart={this.state.selectedChart}
+                                                          selectedEdit={this.state.selectedEdit}/>
+                                            <EditMeasurement selected={this.props.measurements.value.find(m => m.id === this.state.selectedEdit)}
+                                                             clearEditFunc={this.clearEdit}/>
                                         </Col>
                                     </Row>
                                     <Row>
-                                        <Col md={9}>
+                                        <Col md={8}>
                                             {timeSeries}
                                         </Col>
-                                        <Col md={3}>
+                                        <Col mdOffset={3} md={1}>
                                             <ScheduleMeasurement deviceStatuses={this.props.deviceStatuses.value}/>
                                         </Col>
                                     </Row>

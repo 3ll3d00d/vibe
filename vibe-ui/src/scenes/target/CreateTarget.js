@@ -1,9 +1,7 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {Button, ButtonGroup, ControlLabel, FormControl, FormGroup, Well} from "react-bootstrap";
 import {connect} from "react-refetch";
-import DropzoneComponent from "react-dropzone-component";
-import "dropzone/dist/min/dropzone.min.css";
-import "react-dropzone-component/styles/filepicker.css";
 
 class CreateTarget extends Component {
     static propTypes = {
@@ -14,75 +12,11 @@ class CreateTarget extends Component {
         apiPrefix: PropTypes.string.isRequired
     };
 
-    state = {active: 'hinge'};
-
-    selectHinge = () => {
-        this.setState((previousState, props) => {
-            return {active: 'hinge'}
-        });
-    };
-
-    selectWav = () => {
-        this.setState((previousState, props) => {
-            return {active: 'wav'}
-        });
-    };
-
     render() {
-        const selector = this.state.active === 'hinge'
-            ? <HingeSelector previewFunc={this.props.previewFunc} createTarget={this.props.createTarget}/>
-            : <WavSelector rootURL={`${this.context.apiPrefix}/targets`}/>;
-
         return (
             <Well>
-                <ButtonGroup>
-                    <Button active={this.state.active === 'hinge'}
-                            onClick={() => this.selectHinge()}>
-                        Hinge Points
-                    </Button>
-                    <Button active={this.state.active === 'wav'}
-                            onClick={() => this.selectWav()}>
-                        WAV
-                    </Button>
-                </ButtonGroup>
-                {selector}
+                <HingeSelector previewFunc={this.props.previewFunc} createTarget={this.props.createTarget}/>
             </Well>
-        );
-    }
-}
-
-class WavSelector extends Component {
-
-    state = {name: ''};
-
-    handleName = (event) => {
-        const value = event.target.value;
-        this.setState({name: value});
-    };
-
-    render() {
-        let selector = null;
-        if (this.state.name.length > 0) {
-            const dropzoneConfig = {
-                iconFiletypes: ['.wav'],
-                showFiletypeIcon: true,
-                postUrl: `${this.props.rootURL}/${this.state.name}`,
-                maxFiles: 1
-            };
-            selector = <DropzoneComponent key={this.state.name} config={dropzoneConfig}/>
-        }
-        return (
-            <form>
-                <FormGroup>
-                    <FormGroup controlId="name">
-                        <ControlLabel>Name</ControlLabel>
-                        <FormControl type="text"
-                                     value={this.state.name}
-                                     onChange={this.handleName}/>
-                        {selector}
-                    </FormGroup>
-                </FormGroup>
-            </form>
         );
     }
 }

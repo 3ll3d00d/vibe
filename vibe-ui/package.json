@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
-    "react-scripts": "0.8.5",
+    "react-scripts": "1.0.6",
     "redux-devtools": "^3.3.2"
   },
   "dependencies": {
@@ -13,16 +13,20 @@
     "chart.js": "^2.5.0",
     "font-awesome": "^4.7.0",
     "immutable": "^3.8.1",
+    "js-joda": "^1.5.2",
     "lodash.isequal": "^4.5.0",
     "promise-polyfill": "^6.0.2",
+    "prop-types": "^15.5.8",
     "rc-progress": "^2.0.6",
     "react": "^15.4.2",
     "react-addons-shallow-compare": "^15.4.2",
     "react-addons-transition-group": "^15.4.2",
     "react-bootstrap": "^0.30.7",
     "react-bootstrap-multiselect": "^2.3.0",
+    "react-chartjs-2": "^2.1.0",
+    "react-color": "^2.11.7",
     "react-dom": "^15.4.2",
-    "react-dropzone-component": "^1.4.1",
+    "react-dropzone": "^3.13.1",
     "react-fontawesome": "^1.5.0",
     "react-numeric-input": "^2.0.7",
     "react-redux": "^5.0.3",
@@ -33,6 +37,7 @@
     "react-toggle-button": "^2.1.0",
     "reactable": "^0.14.1",
     "redux": "^3.6.0",
+    "resumablejs": "^1.0.2",
     "sematable": "^1.4.4",
     "whatwg-fetch": "^2.0.2"
   },
@@ -42,7 +47,12 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
-  "proxy": "http://localhost:8080/",
+  "proxy": {
+    "/api": {
+      "target": "http://127.0.0.1:8080",
+      "ws": true
+    }
+  },
   "jest": {
     "coverageReporters": [
       "json",

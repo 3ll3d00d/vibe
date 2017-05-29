@@ -1,7 +1,8 @@
-import React, {Component, PropTypes} from "react";
+import React, {Component} from "react";
+import PropTypes from "prop-types";
 import {Grid, Navbar, Nav, NavItem, Image, Row, Col} from "react-bootstrap";
 import {LinkContainer} from 'react-router-bootstrap';
-import logo from "../public/vibe-24x24.png";
+import logo from "./vibe-24x24.png";
 
 class App extends Component {
     static childContextTypes = {
@@ -41,11 +42,9 @@ class App extends Component {
                                         <LinkContainer to="/analyse">
                                             <NavItem eventKey={4}>Analyse</NavItem>
                                         </LinkContainer>
-{/*
-                                        <LinkContainer to="/rta">
-                                            <NavItem eventKey={4}>RTA</NavItem>
+                                        <LinkContainer to="/upload">
+                                            <NavItem eventKey={4}>Upload</NavItem>
                                         </LinkContainer>
-*/}
                                     </Nav>
                                 </Navbar.Collapse>
                             </Navbar>
