@@ -91,13 +91,15 @@ class UploadAnalyser(Resource):
             window = tuple(filter(None, window.split(' ')))
             if len(window) == 2:
                 window = (window[0], float(window[1]))
+            import time
             data = {
                 'spectrum': self._jsonify(
                     signal.spectrum(ref=SPECLAB_REFERENCE, segmentLengthMultiplier=int(resolution), window=window)
                 ),
                 'peakSpectrum': self._jsonify(
                     signal.peakSpectrum(ref=SPECLAB_REFERENCE, segmentLengthMultiplier=int(resolution), window=window)
-                )
+                ),
+                'analysedAt': int(time.time() * 1000)
             }
             return data, 200
         else:

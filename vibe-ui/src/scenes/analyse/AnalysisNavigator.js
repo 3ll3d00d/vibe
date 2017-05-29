@@ -3,7 +3,7 @@ import {Button, ButtonGroup, ButtonToolbar, DropdownButton, MenuItem, OverlayTri
 import NavigatorMultiSelect from "./NavigatorMultiSelect";
 import FontAwesome from "react-fontawesome";
 import "react-bootstrap-multiselect/css/bootstrap-multiselect.css";
-import PreciseIntNumericInput from "./PreciseIntNumericInput";
+import PreciseIntNumericInput from "../../components/PreciseIntNumericInput";
 
 export default class AnalysisNavigator extends Component {
 

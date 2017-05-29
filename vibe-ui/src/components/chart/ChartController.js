@@ -15,7 +15,7 @@ import {
 import ToggleButton from "react-toggle-button";
 import FontAwesome from "react-fontawesome";
 import LineChart from "./LineChart";
-import PreciseIntNumericInput from "../../scenes/analyse/PreciseIntNumericInput";
+import PreciseIntNumericInput from "../PreciseIntNumericInput";
 import {NO_OPTION_SELECTED} from "../../constants";
 import {getAnalysisChartConfig} from "./ConfigGenerator";
 import ChartCustomiser from "./ChartCustomiser";

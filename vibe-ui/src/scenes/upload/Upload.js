@@ -303,14 +303,14 @@ class Upload extends Component {
         if (selectedChart) {
             const {fetchedAnalysis} = this.props;
             if (fetchedAnalysis && fetchedAnalysis.fulfilled) {
-                const series = Object.keys(fetchedAnalysis.value).map(k => {
+                const series = Object.keys(fetchedAnalysis.value).filter(k => k !== 'analysedAt').map(k => {
                     return Object.assign(new PathSeries(k).acceptData(fetchedAnalysis.value[k]).rendered.toJS(), {
                         id: selectedChart,
                         series: k,
                         seriesIdx: 1
                     });
                 });
-                return <Preview loadedAt={fetchedAnalysis.value.ts} series={series}/>
+                return <Preview loadedAt={fetchedAnalysis.value.analysedAt} series={series}/>
             } else {
                 // TODO show error
                 return null;
@@ -369,10 +369,7 @@ class Upload extends Component {
 export default connect((props, context) => ( {
     uploads: {url: `${context.apiPrefix}/uploads`, refreshInterval: 1000},
     fetchAnalysis: (name, start, end, resolution, window) => ({
-        fetchedAnalysis: `${context.apiPrefix}/uploads/${name}/${start}/${end}/${resolution}/${window}`,
-        then: fetchedAnalysis => ({
-            value: Object.assign(fetchedAnalysis.value, {ts: new Date().getTime()})
-        })
+        fetchedAnalysis: `${context.apiPrefix}/uploads/${name}/${start}/${end}/${resolution}/${window}`
     }),
     deleteData: name => ({
         [`deleteUpload_${name}`]: {

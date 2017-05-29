@@ -15,11 +15,10 @@ import {
     Modal,
     Well
 } from "react-bootstrap";
-import NumericInput from "react-numeric-input";
 import FontAwesome from "react-fontawesome";
 import StylePicker from "./StylePicker";
 import {fromJS, List, Map} from "immutable";
-import Cookies from "universal-cookie";
+import PreciseIntNumericInput from "../PreciseIntNumericInput";
 
 const DEFAULT_COLOURS = Map({
     'background': {r: 255, g: 255, b: 255, a: 1},
@@ -37,11 +36,6 @@ export default class ChartCustomiser extends Component {
         visible: PropTypes.bool.isRequired
     };
 
-    constructor(props) {
-        super(props);
-        this.cookies = new Cookies();
-    }
-
     state = {
         height: this.props.currentChartDimensions.height,
         width: this.props.currentChartDimensions.width,
@@ -54,13 +48,13 @@ export default class ChartCustomiser extends Component {
     };
 
     componentWillMount() {
-        const presets = this.cookies.get('presets');
+        const presets = localStorage.getItem('presets');
         if (presets) {
             this.setState((previousState, props) => {
-                return {presets: previousState.presets.push(...presets)}
-            })
+                return {presets: previousState.presets.push(...JSON.parse(presets))}
+            });
         }
-    }
+    };
 
     reset = () => {
         this.setState({namedColours: DEFAULT_COLOURS});
@@ -132,7 +126,7 @@ export default class ChartCustomiser extends Component {
             const idx = previousState.presets.findIndex(p => p.name === name);
             const preset = {name, height, width, colours, titleSize, showLegend};
             const nextPresets = idx > -1 ? previousState.presets.set(idx, preset) : previousState.presets.push(preset);
-            this.cookies.set('presets', JSON.stringify(nextPresets.toJS()), {path: '/'});
+            localStorage.setItem('presets', JSON.stringify(nextPresets.toJS()));
             return {presets: nextPresets}
         });
     };
@@ -142,7 +136,7 @@ export default class ChartCustomiser extends Component {
         this.setState((previousState, props) => {
             const idx = previousState.presets.findIndex(p => p.name === name);
             const nextPresets = idx > -1 ? previousState.presets.delete(idx) : previousState.presets;
-            this.cookies.set('presets', JSON.stringify(nextPresets.toJS()), {path: '/'});
+            localStorage.set('presets', JSON.stringify(nextPresets.toJS()));
             return {presets: nextPresets, presetName: ''};
         });
     };
@@ -160,7 +154,7 @@ export default class ChartCustomiser extends Component {
     };
 
     cannotSavePreset = () => {
-        const {presetName, height, width, namedColours, titleSize} = this.state;
+        const {presetName, height, width, titleSize} = this.state;
         return presetName.length === 0 || !height || !width || !titleSize;
     };
 
@@ -200,13 +194,11 @@ export default class ChartCustomiser extends Component {
                                     <FormControl type="text" value={this.state.title} onChange={this.handleTitle}/>
                                 </Col>
                                 <Col md={2}>
-                                    <NumericInput step={1}
-                                                  precision={0}
-                                                  min={6}
-                                                  value={this.state.titleSize}
-                                                  onChange={this.handleTitleSize}
-                                                  className="form-control"
-                                                  style={false}/>
+                                    <PreciseIntNumericInput precision={0}
+                                                            min={6}
+                                                            value={this.state.titleSize}
+                                                            format={(number) => number}
+                                                            handler={this.handleTitleSize}/>
                                 </Col>
                             </FormGroup>
                             <FormGroup controlId="legend">
@@ -223,13 +215,12 @@ export default class ChartCustomiser extends Component {
                                         <InputGroup.Addon>
                                             <FontAwesome name="arrows-h"/>
                                         </InputGroup.Addon>
-                                        <NumericInput step={10}
-                                                      precision={0}
-                                                      min={10}
-                                                      value={this.state.width}
-                                                      onChange={this.handleWidth}
-                                                      className="form-control"
-                                                      style={false}/>
+                                        <PreciseIntNumericInput precision={0}
+                                                                step={10}
+                                                                min={10}
+                                                                value={this.state.width}
+                                                                format={(number) => number}
+                                                                handler={this.handleWidth}/>
                                     </InputGroup>
                                 </Col>
                                 <Col md={4}>
@@ -237,13 +228,12 @@ export default class ChartCustomiser extends Component {
                                         <InputGroup.Addon>
                                             <FontAwesome name="arrows-v"/>
                                         </InputGroup.Addon>
-                                        <NumericInput step={10}
-                                                      precision={0}
-                                                      min={10}
-                                                      value={this.state.height}
-                                                      onChange={this.handleHeight}
-                                                      className="form-control"
-                                                      style={false}/>
+                                        <PreciseIntNumericInput precision={0}
+                                                                step={10}
+                                                                min={10}
+                                                                value={this.state.height}
+                                                                format={(number) => number}
+                                                                handler={this.handleHeight}/>
                                     </InputGroup>
                                 </Col>
                             </FormGroup>
@@ -268,7 +258,7 @@ export default class ChartCustomiser extends Component {
                         {this.getDownloadButton()}
                     </ButtonGroup>
                 </Modal.Footer>
-            </Modal>
+            </Modal> // eslint-disable-line react/style-prop-object
         );
     }
 }

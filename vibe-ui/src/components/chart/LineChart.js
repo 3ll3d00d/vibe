@@ -202,7 +202,7 @@ export default class LineChart extends PureComponent {
                       type={'line'}
                       data={{datasets: datasets}}
                       options={options}
-                      redraw={this.state.redraw}/>;
+                      redraw={this.state.redraw}/>
             </div>
         );
     }
