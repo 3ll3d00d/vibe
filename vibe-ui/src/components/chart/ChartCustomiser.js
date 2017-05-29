@@ -151,8 +151,7 @@ export default class ChartCustomiser extends Component {
         const preset = this.state.presets.find(p => p.name === name);
         if (preset) {
             const {height, width, colours, titleSize, showLegend} = preset;
-            const namedColours = fromJS(colours);
-            this.setState({height, width, namedColours, titleSize, showLegend});
+            this.setState({height, width, namedColours: fromJS(colours), titleSize, showLegend, presetName: name});
         }
     };
 
@@ -162,7 +161,7 @@ export default class ChartCustomiser extends Component {
 
     cannotSavePreset = () => {
         const {presetName, height, width, namedColours, titleSize} = this.state;
-        return presetName.length === 0 || !height || ! width || !titleSize;
+        return presetName.length === 0 || !height || !width || !titleSize;
     };
 
     cannotDeletePreset = () => {
@@ -197,13 +196,10 @@ export default class ChartCustomiser extends Component {
                         <Well bsSize="small">
                             <FormGroup controlId="title">
                                 <Col componentClass={ControlLabel} md={2}>Title</Col>
-                                <Col md={8}>
+                                <Col md={6}>
                                     <FormControl type="text" value={this.state.title} onChange={this.handleTitle}/>
                                 </Col>
-                            </FormGroup>
-                            <FormGroup controlId="titleSize">
-                                <Col componentClass={ControlLabel} md={2}>Title Size</Col>
-                                <Col md={8}>
+                                <Col md={2}>
                                     <NumericInput step={1}
                                                   precision={0}
                                                   min={6}
@@ -222,20 +218,7 @@ export default class ChartCustomiser extends Component {
                             </FormGroup>
                             <FormGroup controlId="size">
                                 <Col componentClass={ControlLabel} md={2}>Dimensions</Col>
-                                <Col md={8}>
-                                    <InputGroup bsSize="small">
-                                        <InputGroup.Addon>
-                                            <FontAwesome name="arrows-v"/>
-                                        </InputGroup.Addon>
-                                        <NumericInput step={10}
-                                                      precision={0}
-                                                      min={10}
-                                                      value={this.state.height}
-                                                      onChange={this.handleHeight}
-                                                      className="form-control"
-                                                      style={false}/>
-                                    </InputGroup>
-                                    {'  '}
+                                <Col md={4}>
                                     <InputGroup bsSize="small">
                                         <InputGroup.Addon>
                                             <FontAwesome name="arrows-h"/>
@@ -245,6 +228,20 @@ export default class ChartCustomiser extends Component {
                                                       min={10}
                                                       value={this.state.width}
                                                       onChange={this.handleWidth}
+                                                      className="form-control"
+                                                      style={false}/>
+                                    </InputGroup>
+                                </Col>
+                                <Col md={4}>
+                                    <InputGroup bsSize="small">
+                                        <InputGroup.Addon>
+                                            <FontAwesome name="arrows-v"/>
+                                        </InputGroup.Addon>
+                                        <NumericInput step={10}
+                                                      precision={0}
+                                                      min={10}
+                                                      value={this.state.height}
+                                                      onChange={this.handleHeight}
                                                       className="form-control"
                                                       style={false}/>
                                     </InputGroup>
