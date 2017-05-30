@@ -56,6 +56,7 @@ export default class LineChart extends PureComponent {
     };
 
     render() {
+        const {customChartConfig} = this.props;
         const datasets = this.props.series.map((s) => {
             let colour;
             if (SERIES_COLOURS[s.series]) {
@@ -74,7 +75,9 @@ export default class LineChart extends PureComponent {
                 pointRadius: this.props.config.showDots ? 1 : 0,
                 borderColor: colour,
                 backgroundColor: hexToRGBA(colour, 2),
-                borderWidth: 1,
+                borderWidth: customChartConfig ? customChartConfig.lineWidth : 1,
+                lineTension: customChartConfig ? customChartConfig.lineTension : 0.4,
+                fill: customChartConfig ? (customChartConfig.lineFill ? 'bottom' : false) : false
             };
             if (s.renderMetaData) {
                 return Object.assign(dataset, s.renderMetaData);
@@ -83,7 +86,6 @@ export default class LineChart extends PureComponent {
             }
         });
         let textColour = '#666';
-        const {customChartConfig} = this.props;
         if (customChartConfig) {
             const fontColor = customChartConfig.colours.text;
             textColour = `rgba(${fontColor.r}, ${fontColor.g}, ${fontColor.b}, ${fontColor.a})`;

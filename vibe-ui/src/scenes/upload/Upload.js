@@ -307,7 +307,7 @@ class Upload extends Component {
                     return Object.assign(new PathSeries(k).acceptData(fetchedAnalysis.value[k]).rendered.toJS(), {
                         id: selectedChart,
                         series: k,
-                        seriesIdx: 1
+                        seriesIdx: 0
                     });
                 });
                 return <Preview loadedAt={fetchedAnalysis.value.analysedAt} series={series}/>
