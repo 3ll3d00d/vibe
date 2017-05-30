@@ -14,10 +14,18 @@ class EditMeasurement extends PureComponent {
         clearEditFunc: PropTypes.func.isRequired
     };
 
-    constructor(props) {
-        super(props);
-        this.state = this.initState(props, true);
-    }
+    makeEmptyState = () => {
+        return {
+            name: '',
+            description: '',
+            start: 0,
+            end: 0,
+            maxEnd: 0,
+            showModal: false
+        };
+    };
+
+    state = this.makeEmptyState();
 
     initState(props, onInit) {
         if (onInit) {
@@ -39,18 +47,8 @@ class EditMeasurement extends PureComponent {
         }
     }
 
-    makeEmptyState() {
-        return {
-            name: '',
-            description: '',
-            start: 0,
-            end: 0,
-            maxEnd: 0,
-            showModal: false
-        };
-    }
 
-    makeSelectedState(props) {
+    makeSelectedState = (props) => {
         let state = {
             name: props.selected.name,
             description: props.selected.description ? props.selected.description : '',
@@ -61,14 +59,20 @@ class EditMeasurement extends PureComponent {
         };
         let devices = Object.keys(props.selected.recordingDevices).map(k => {return {[k]: k}});
         return Object.assign(state, ...devices);
+    };
+
+    componentWillReceiveProps(nextProps) {
+        if (this.props.selected && !nextProps.selected) {
+            this.setState(this.makeEmptyState());
+        } else if (!this.props.selected && nextProps.selected) {
+            this.setState(this.makeSelectedState(nextProps));
+        } else if (this.props.selected && nextProps.selected) {
+
+        }
     }
 
     getFs() {
         return this.props.selected ? this.props.selected.fs : 1;
-    }
-
-    componentWillReceiveProps(nextProps) {
-        this.setState(this.initState(nextProps));
     }
 
     handleName = (event) => {
