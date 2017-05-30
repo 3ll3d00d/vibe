@@ -48,15 +48,25 @@ export default class ChartCustomiser extends Component {
         lineTension: 0.4,
         lineWidth: 1,
         lineFill: false,
+        dotSize: 0,
+        yStep: 0,
         presets: List(),
         presetName: ''
     };
 
     componentWillMount() {
-        const presets = localStorage.getItem('presets');
-        if (presets) {
+        const jsonPresets = localStorage.getItem('presets');
+        if (jsonPresets) {
             this.setState((previousState, props) => {
-                return {presets: previousState.presets.push(...JSON.parse(presets))}
+                const presets = previousState.presets.push(...JSON.parse(jsonPresets));
+                const defaultPreset = presets.find(p => p.name === 'default');
+                if (defaultPreset) {
+                    const state = Object.assign({presets}, this.loadPresetInstance('default', defaultPreset));
+                    this.props.updateChart(this.generateConfigToPropagate(state));
+                    return state;
+                } else {
+                    return {presets};
+                }
             });
         }
     };
@@ -96,6 +106,14 @@ export default class ChartCustomiser extends Component {
         this.setState({lineWidth: valNum});
     };
 
+    handleYStep = (valNum, valStr) => {
+        this.setState({yStep: valNum});
+    };
+
+    handleDotSize = (valNum, valStr) => {
+        this.setState({dotSize: valNum});
+    };
+
     handleLineFill = () => {
         this.setState((previousState, props) => {
             return {lineFill: !previousState.lineFill};
@@ -119,17 +137,23 @@ export default class ChartCustomiser extends Component {
         return <Button disabled><FontAwesome name="download"/></Button>;
     };
 
+    generateConfigToPropagate = (state) => {
+        return {
+            height: Math.round(state.height * 2 / 3),
+            width: Math.round(state.width * 2 / 3),
+            colours: state.namedColours.toJS(),
+            title: {text: state.title, fontSize: state.titleSize},
+            legend: state.showLegend,
+            lineWidth: state.lineWidth,
+            lineTension: state.lineTension,
+            lineFill: state.lineFill,
+            dotSize: state.dotSize,
+            yStep: state.yStep
+        };
+    };
+
     updateChart = () => {
-        this.props.updateChart({
-            height: Math.round(this.state.height * 2 / 3),
-            width: Math.round(this.state.width * 2 / 3),
-            colours: this.state.namedColours.toJS(),
-            title: {text: this.state.title, fontSize: this.state.titleSize},
-            legend: this.state.showLegend,
-            lineWidth: this.state.lineWidth,
-            lineTension: this.state.lineTension,
-            lineFill: this.state.lineFill
-        });
+        this.props.updateChart(this.generateConfigToPropagate(this.state));
     };
 
     getPropagateButton = () => {
@@ -143,10 +167,22 @@ export default class ChartCustomiser extends Component {
     savePreset = () => {
         const name = this.state.presetName;
         this.setState((previousState, props) => {
-            const {height, width, namedColours, titleSize, showLegend, lineWidth, lineTension, lineFill} = previousState;
+            const {height, width, namedColours, titleSize, showLegend, lineWidth, lineTension, lineFill, dotSize, yStep} = previousState;
             const colours = namedColours.toJS();
             const idx = previousState.presets.findIndex(p => p.name === name);
-            const preset = {name, height, width, colours, titleSize, showLegend, lineWidth, lineTension, lineFill};
+            const preset = {
+                name,
+                height,
+                width,
+                colours,
+                titleSize,
+                showLegend,
+                lineWidth,
+                lineTension,
+                lineFill,
+                dotSize,
+                yStep
+            };
             const nextPresets = idx > -1 ? previousState.presets.set(idx, preset) : previousState.presets.push(preset);
             localStorage.setItem('presets', JSON.stringify(nextPresets.toJS()));
             return {presets: nextPresets}
@@ -163,18 +199,40 @@ export default class ChartCustomiser extends Component {
         });
     };
 
+    loadPresetInstance = (name, preset) => {
+        const {height, width, colours, titleSize, showLegend, lineWidth, lineTension, lineFill, dotSize, yStep} = preset;
+        let newPreset = {
+            height,
+            width,
+            namedColours: fromJS(colours),
+            titleSize,
+            showLegend,
+            presetName: name,
+            lineWidth,
+            lineTension,
+            lineFill,
+            dotSize,
+            yStep
+        };
+        if (!lineWidth) {
+            newPreset = Object.assign(newPreset, {lineWidth: 2});
+        }
+        if (!lineTension) {
+            newPreset = Object.assign(newPreset, {lineTension: 0.4});
+        }
+        if (!dotSize) {
+            newPreset = Object.assign(newPreset, {dotSize: 0});
+        }
+        if (!yStep) {
+            newPreset = Object.assign(newPreset, {yStep: 0});
+        }
+        return newPreset;
+    };
+
     loadPreset = (name) => {
         const preset = this.state.presets.find(p => p.name === name);
         if (preset) {
-            const {height, width, colours, titleSize, showLegend, lineWidth, lineTension, lineFill} = preset;
-            let newPreset = {height, width, namedColours: fromJS(colours), titleSize, showLegend, presetName: name, lineWidth, lineTension, lineFill};
-            if (!lineWidth) {
-                newPreset = Object.assign(newPreset, {lineWidth: 2});
-            }
-            if (!lineTension) {
-                newPreset = Object.assign(newPreset, {lineTension: 0.4});
-            }
-            this.setState(newPreset);
+            this.setState(this.loadPresetInstance(name, preset));
         }
     };
 
@@ -222,7 +280,7 @@ export default class ChartCustomiser extends Component {
                                 <Col md={6}>
                                     <FormControl type="text" value={this.state.title} onChange={this.handleTitle}/>
                                 </Col>
-                                <Col md={2}>
+                                <Col md={3}>
                                     <OverlayTrigger placement="bottom" overlay={<Tooltip id="ok">Font Size</Tooltip>}>
                                         <PreciseIntNumericInput precision={0}
                                                                 min={6}
@@ -235,7 +293,7 @@ export default class ChartCustomiser extends Component {
                             </FormGroup>
                             <FormGroup controlId="size">
                                 <Col componentClass={ControlLabel} md={2}>Dimensions</Col>
-                                <Col md={4}>
+                                <Col md={3}>
                                     <InputGroup bsSize="small">
                                         <InputGroup.Addon>
                                             <FontAwesome name="arrows-h"/>
@@ -248,7 +306,7 @@ export default class ChartCustomiser extends Component {
                                                                 handler={this.handleWidth}/>
                                     </InputGroup>
                                 </Col>
-                                <Col md={4}>
+                                <Col md={3}>
                                     <InputGroup bsSize="small">
                                         <InputGroup.Addon>
                                             <FontAwesome name="arrows-v"/>
@@ -261,11 +319,26 @@ export default class ChartCustomiser extends Component {
                                                                 handler={this.handleHeight}/>
                                     </InputGroup>
                                 </Col>
+                                <Col md={3}>
+                                    <OverlayTrigger placement="bottom"
+                                                    overlay={<Tooltip id="ok">Y Axis Step Size</Tooltip>}>
+                                        <InputGroup bsSize="small">
+                                            <InputGroup.Addon>y</InputGroup.Addon>
+                                            <PreciseIntNumericInput precision={0}
+                                                                    step={1}
+                                                                    min={0}
+                                                                    value={this.state.yStep}
+                                                                    format={(number) => number}
+                                                                    handler={this.handleYStep}/>
+                                        </InputGroup>
+                                    </OverlayTrigger>
+                                </Col>
                             </FormGroup>
                             <FormGroup controlId="line">
                                 <Col componentClass={ControlLabel} md={2}>Line Style</Col>
-                                <Col md={4}>
-                                    <OverlayTrigger placement="bottom" overlay={<Tooltip id="ok">Line width (in pixels)</Tooltip>}>
+                                <Col md={3}>
+                                    <OverlayTrigger placement="bottom"
+                                                    overlay={<Tooltip id="ok">Line width (in pixels)</Tooltip>}>
                                         <PreciseIntNumericInput precision={0}
                                                                 step={1}
                                                                 min={0}
@@ -274,8 +347,10 @@ export default class ChartCustomiser extends Component {
                                                                 handler={this.handleLineWidth}/>
                                     </OverlayTrigger>
                                 </Col>
-                                <Col md={4}>
-                                    <OverlayTrigger placement="bottom" overlay={<Tooltip id="ok">Bezier curve tension (lower number = straighter lines, 0 = join the dots)</Tooltip>}>
+                                <Col md={3}>
+                                    <OverlayTrigger placement="bottom"
+                                                    overlay={<Tooltip id="ok">Bezier curve tension (lower number =
+                                                        straighter lines, 0 = join the dots)</Tooltip>}>
                                         <PreciseIntNumericInput precision={2}
                                                                 step={0.01}
                                                                 min={0}
@@ -286,14 +361,25 @@ export default class ChartCustomiser extends Component {
                                                                 handler={this.handleLineTension}/>
                                     </OverlayTrigger>
                                 </Col>
+                                <Col md={3}>
+                                    <OverlayTrigger placement="bottom"
+                                                    overlay={<Tooltip id="ok">Dot Size</Tooltip>}>
+                                        <PreciseIntNumericInput precision={0}
+                                                                step={1}
+                                                                min={0}
+                                                                value={this.state.dotSize}
+                                                                format={(number) => number}
+                                                                handler={this.handleDotSize}/>
+                                    </OverlayTrigger>
+                                </Col>
                             </FormGroup>
                             <FormGroup controlId="legend">
-                                <Col md={4} mdOffset={2}>
+                                <Col md={3} mdOffset={2}>
                                     <Checkbox onChange={this.handleShowLegend} checked={this.state.showLegend}>
                                         Show Legend?
                                     </Checkbox>
                                 </Col>
-                                <Col md={4}>
+                                <Col md={3}>
                                     <Checkbox onChange={this.handleLineFill} checked={this.state.lineFill}>
                                         Fill Lines?
                                     </Checkbox>
@@ -302,7 +388,7 @@ export default class ChartCustomiser extends Component {
                         </Well>
                         <FormGroup controlId="style">
                             <Col componentClass={ControlLabel} md={2}>Colours</Col>
-                            <Col md={8}>
+                            <Col md={9}>
                                 <StylePicker namedColours={this.state.namedColours}
                                              selectColour={this.handleColourChange}/>
                             </Col>
