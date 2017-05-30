@@ -157,8 +157,10 @@ class ActionCell extends Component {
                     </Button>
                 );
             } else {
+                // TODO enable this once we get this to work properly
+                // 
                 return (
-                    <Button bsStyle="primary" onClick={() => measurement.showEdit()} bsSize="xsmall">
+                    <Button bsStyle="primary" onClick={() => measurement.showEdit()} bsSize="xsmall" disabled>
                         <FontAwesome name="pencil"/>
                     </Button>
                 );
