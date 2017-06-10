@@ -85,7 +85,7 @@ class CSVLogger(DataHandler):
             mode = 'w'
         else:
             mode = 'x'
-        self._csvfile = open(targetPath, mode=mode, newline='\n')
+        self._csvfile = open(targetPath, mode=mode, newline='')
         self._csv = csv.writer(self._csvfile)
         self.started = True
         self._first = True

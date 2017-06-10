@@ -79,7 +79,7 @@ class Measure extends Component {
         } else if (allFetches.rejected) {
             return (
                 <div>
-                    <Message title="Unable to fetch data" type="danger" message={measurements.reason.toString()}/>
+                    <Message title="Unable to fetch data" type="danger" message={measurements.reason}/>
                 </div>
             );
         } else if (allFetches.fulfilled) {

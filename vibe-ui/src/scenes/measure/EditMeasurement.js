@@ -134,18 +134,19 @@ class EditMeasurement extends PureComponent {
     }
 
     getSubmitButton() {
-        const response = this.props.selected && Object.keys(this.props).find(p => p === `submitEditResponse_${this.props.selected.id}`);
-        if (response) {
+        const responseKey = this.props.selected && Object.keys(this.props).find(p => p === `submitEditResponse_${this.props.selected.id}`);
+        if (responseKey) {
+            const response = this.props[responseKey];
             if (response.pending) {
                 return <Button bsStyle="warning"><FontAwesome name="spinner" spin/> Updating</Button>;
             } else if (response.rejected) {
                 return (
-                    <Button bsStyle="danger">Failed - {response.reason}
+                    <Button bsStyle="danger" disabled>Failed - {response.reason}
                         <FontAwesome name="exclamation-triangle"/>
                     </Button>
                 );
             } else if (response.fulfilled) {
-                return <Button bsStyle="success"><FontAwesome name="check"/>Updated</Button>;
+                return <Button bsStyle="success" disabled><FontAwesome name="check"/>Updated</Button>;
             }
         } else {
             return (

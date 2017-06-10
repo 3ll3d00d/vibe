@@ -151,16 +151,13 @@ class ActionCell extends Component {
         if (measurement.status === 'COMPLETE') {
             if (measurement.isSelectedEdit) {
                 return (
-                    <Button bsStyle="success"
-                            onClick={() => measurement.clearEdit()} bsSize="xsmall">
+                    <Button bsStyle="success" onClick={() => measurement.clearEdit()} bsSize="xsmall">
                         <FontAwesome name="eject"/>
                     </Button>
                 );
             } else {
-                // TODO enable this once we get this to work properly
-                // 
                 return (
-                    <Button bsStyle="primary" onClick={() => measurement.showEdit()} bsSize="xsmall" disabled>
+                    <Button bsStyle="primary" onClick={() => measurement.showEdit()} bsSize="xsmall">
                         <FontAwesome name="pencil"/>
                     </Button>
                 );
