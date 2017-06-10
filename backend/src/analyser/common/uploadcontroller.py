@@ -112,11 +112,11 @@ class UploadController(object):
         srcFs = signal.fs
         completeSamples = signal.samples
         outputFileName = os.path.join(self._uploadDir, tmpCacheEntry['name'])
-        tmpCacheEntry['status'] = 'loaded'
         if srcFs > 1024:
             self.writeOutput(outputFileName, completeSamples, srcFs, 1000)
         else:
             self.writeOutput(outputFileName, completeSamples, srcFs, srcFs)
+        tmpCacheEntry['status'] = 'loaded'
         self._conversionCache.remove(tmpCacheEntry)
         self._uploadCache.append(self._extractMeta(outputFileName, 'loaded'))
 
