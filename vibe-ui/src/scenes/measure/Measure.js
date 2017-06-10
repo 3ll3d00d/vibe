@@ -59,8 +59,23 @@ class Measure extends Component {
         if (dataPromise) {
             const selected = this.props.measurements.value.find(m => m.id === this.state.selectedChart);
             if (selected) {
-                return <TimeSeries fs={selected.measurementParameters.fs}
-                                   dataPromise={dataPromise}/>
+                if (dataPromise.fulfilled) {
+                    return <TimeSeries measurementId={selected.id}
+                                       fs={selected.measurementParameters.fs}
+                                       dataPromise={dataPromise}/>
+                } else if (dataPromise.pending) {
+                    return (
+                        <div>
+                            <Message type="info" message="Loading"/>
+                        </div>
+                    );
+                } else if (dataPromise.rejected) {
+                    return (
+                        <div>
+                            <Message title="Unable to fetch data" type="danger" message={dataPromise.reason}/>
+                        </div>
+                    );
+                }
             }
         }
         return <div/>;
@@ -79,7 +94,7 @@ class Measure extends Component {
         } else if (allFetches.rejected) {
             return (
                 <div>
-                    <Message title="Unable to fetch data" type="danger" message={measurements.reason.toString()}/>
+                    <Message title="Unable to fetch data" type="danger" message={measurements.reason}/>
                 </div>
             );
         } else if (allFetches.fulfilled) {

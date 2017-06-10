@@ -563,6 +563,7 @@ class MeasurementController(object):
             if newName:
                 logger.info('Updating name from ' + oldMeasurement.name + ' to ' + newName)
                 newMeasurement.updateName(newName)
+                createdFilteredCopy = True
                 deleteOld = True
             if newDesc:
                 logger.info('Updating description from ' + str(oldMeasurement.description) + ' to ' + str(newDesc))
@@ -574,6 +575,7 @@ class MeasurementController(object):
                 newMeasurement.duration = newDuration
                 createdFilteredCopy = True
             if createdFilteredCopy:
+                logger.info('Copying measurement data from ' + oldMeasurement.idAsPath + ' to ' + newMeasurement.idAsPath)
                 newMeasurementPath = self._getPathToMeasurementMetaDir(newMeasurement.idAsPath)
                 dataSearchPattern = self._getPathToMeasurementMetaDir(oldMeasurement.idAsPath) + '/**/data.out'
                 newDataCountsByDevice = [self._filterCopy(dataFile, newStart, newEnd, newMeasurementPath)
@@ -594,7 +596,6 @@ class MeasurementController(object):
                 self.completeMeasurements.append(newMeasurement)
             if deleteOld:
                 self.delete(oldMeasurement.id)
-                self.completeMeasurements.remove(oldMeasurement)
             return True
         else:
             return False
@@ -617,7 +618,7 @@ class MeasurementController(object):
         outputFile = os.path.join(newDataDir, dataDeviceName, dataFileName)
         dataCount = 0
         rowNum = 0
-        with open(dataFile, 'r') as dataIn, open(outputFile, 'w') as dataOut:
+        with open(dataFile, mode='rt', newline='') as dataIn, open(outputFile, mode='wt', newline='') as dataOut:
             writer = csv.writer(dataOut, delimiter=',')
             for row in csv.reader(dataIn, delimiter=','):
                 if len(row) > 0:

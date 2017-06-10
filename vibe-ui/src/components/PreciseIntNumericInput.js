@@ -11,7 +11,8 @@ export default class PreciseIntNumericInput extends Component {
         handler: PropTypes.func.isRequired,
         format: PropTypes.func,
         min: PropTypes.number,
-        max: PropTypes.number
+        max: PropTypes.number,
+        placeholder: PropTypes.string
     };
 
     defaultProps = {

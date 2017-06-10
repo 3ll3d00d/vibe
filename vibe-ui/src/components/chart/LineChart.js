@@ -25,6 +25,18 @@ export default class LineChart extends PureComponent {
         return `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})`;
     };
 
+    suppressNthLabel = (n, delegate) => (dataLabel, index, values) => {
+        if (index % n === 0) {
+            if (delegate) {
+                return delegate(dataLabel, index, values);
+            } else {
+                return dataLabel;
+            }
+        } else {
+            return '';
+        }
+    };
+
     componentWillMount = () => {
         // required for png export as per https://github.com/chartjs/Chart.js/issues/2830
         Chart.plugins.register({
@@ -56,6 +68,7 @@ export default class LineChart extends PureComponent {
     };
 
     render() {
+        const {customChartConfig} = this.props;
         const datasets = this.props.series.map((s) => {
             let colour;
             if (SERIES_COLOURS[s.series]) {
@@ -71,10 +84,12 @@ export default class LineChart extends PureComponent {
             const dataset = {
                 label: s.id + '/' + s.series,
                 data: s.xyz,
-                pointRadius: this.props.config.showDots ? 1 : 0,
+                pointRadius: this.props.config.showDots ? (customChartConfig ? customChartConfig.dotSize : 1) : 0,
                 borderColor: colour,
                 backgroundColor: hexToRGBA(colour, 2),
-                borderWidth: 1,
+                borderWidth: customChartConfig ? customChartConfig.lineWidth : 1,
+                lineTension: customChartConfig ? customChartConfig.lineTension : 0.4,
+                fill: customChartConfig ? (customChartConfig.lineFill ? 'bottom' : false) : false
             };
             if (s.renderMetaData) {
                 return Object.assign(dataset, s.renderMetaData);
@@ -83,22 +98,36 @@ export default class LineChart extends PureComponent {
             }
         });
         let textColour = '#666';
-        const {customChartConfig} = this.props;
         if (customChartConfig) {
             const fontColor = customChartConfig.colours.text;
             textColour = `rgba(${fontColor.r}, ${fontColor.g}, ${fontColor.b}, ${fontColor.a})`;
         }
         // x ticks
         const xLinLog = this.props.config.xLog ? "logarithmic" : "linear";
-        let xAxisTicks = {fontColor: textColour};
+        let xAxisTicks = {fontColor: textColour, beginAtZero: false};
         if (this.props.config.xOverrideRange) {
             xAxisTicks = Object.assign(xAxisTicks, {min: this.props.config.x[0], max: this.props.config.x[1]});
         }
+        // apply a default step size if we have a linear x axis
+        if (!this.props.config.xLog && !this.props.config.xStep) {
+            xAxisTicks = Object.assign(xAxisTicks, {stepSize: 5});
+            const steps = ((this.props.config.x[1] - this.props.config.x[0]) / 5);
+            if (steps > 30) {
+                xAxisTicks = Object.assign(xAxisTicks, {
+                    callback: this.suppressNthLabel(2, this.props.config.xFormatter)
+                });
+            } else {
+                if (this.props.config.xFormatter) {
+                    xAxisTicks = Object.assign(xAxisTicks, {callback: this.props.config.xFormatter});
+                } else {
+                    xAxisTicks = Object.assign(xAxisTicks, {callback: (a,b,c) => a});
+                }
+            }
+        } else if (this.props.config.xFormatter) {
+            xAxisTicks = Object.assign(xAxisTicks, {callback: this.props.config.xFormatter});
+        }
         if (this.props.config.xStep) {
             xAxisTicks = Object.assign(xAxisTicks, {stepSize: this.props.config.xStep});
-        }
-        if (this.props.config.xFormatter) {
-            xAxisTicks = Object.assign(xAxisTicks, {callback: this.props.config.xFormatter});
         }
         // y ticks
         const yLinLog = this.props.config.yLog ? "logarithmic" : "linear";
@@ -106,7 +135,9 @@ export default class LineChart extends PureComponent {
         if (this.props.config.yOverrideRange) {
             yAxisTicks = Object.assign(yAxisTicks, {min: this.props.config.y[0], max: this.props.config.y[1]});
         }
-        if (this.props.config.yStep) {
+        if (customChartConfig && customChartConfig.yStep > 0) {
+            yAxisTicks = Object.assign(yAxisTicks, {stepSize: customChartConfig.yStep});
+        } else if (this.props.config.yStep) {
             yAxisTicks = Object.assign(yAxisTicks, {stepSize: this.props.config.yStep});
         }
         if (this.props.config.yFormatter) {

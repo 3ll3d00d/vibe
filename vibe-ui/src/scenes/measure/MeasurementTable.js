@@ -151,8 +151,7 @@ class ActionCell extends Component {
         if (measurement.status === 'COMPLETE') {
             if (measurement.isSelectedEdit) {
                 return (
-                    <Button bsStyle="success"
-                            onClick={() => measurement.clearEdit()} bsSize="xsmall">
+                    <Button bsStyle="success" onClick={() => measurement.clearEdit()} bsSize="xsmall">
                         <FontAwesome name="eject"/>
                     </Button>
                 );
