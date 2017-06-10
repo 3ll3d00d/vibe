@@ -6,6 +6,7 @@ import Message from "../../components/Message";
 
 export default class TimeSeries extends Component {
     static propTypes = {
+        measurementId: PropTypes.string.isRequired,
         dataPromise: PropTypes.object.isRequired,
         fs: PropTypes.number.isRequired
     };
@@ -17,6 +18,16 @@ export default class TimeSeries extends Component {
     };
 
     state = {selected: "2"};
+
+    /**
+     * Only update if the view has changed or the measurement has changed.
+     * @param nextProps
+     * @param nextState
+     * @returns {boolean}
+     */
+    shouldComponentUpdate = (nextProps, nextState) => {
+        return nextState.selected !== this.state.selected ||  nextProps.measurementId !== this.props.measurementId;
+    };
 
     /**
      * Controls which graph to display.
