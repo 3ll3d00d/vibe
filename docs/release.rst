@@ -74,12 +74,12 @@ Prerequisites
 1) You must be on a windows box with anaconda installed and you must use python 3.5
 2) `Create a venv`_ in conda and activate it::
 
-    conda create --name pyinst35 python=3.5
-    activate pyinst35
+    conda create --name pyinst36 python=3.6
+    activate pyinst36
 
 3) Install dependencies that aren't in conda::
 
-    pip.exe install aniso8601 pefile flask-restful smbus2 versioneer unittest-data-provider sphinx-rtd-theme
+    pip.exe install aniso8601 pefile flask-restful smbus2 versioneer unittest-data-provider sphinx-rtd-theme pysoundfile
 
 4) Install dependencies that are in conda::
 
@@ -89,11 +89,10 @@ Prerequisites
 
 5) install pyinstaller::
 
-    conda install -c acellera pyinstaller=3.2.3
+    conda install -c conda-forge pyinstaller
 
 6) fix pyinstaller incompatibilities
 
-* remove the python 3.6 specific files from ``<CONDA-ENV-DIR>\Lib\site-packages\jinja2`` (as per https://github.com/pallets/jinja/issues/655)
 * move the ``import pkg_resources`` statement in ``<CONDA-ENV-DIR>\Lib\site-packages\librosa\util\files.py`` into the function that uses it
 * update ``release\resampy_pyinst`` from ``<CONDA-ENV-DIR>\Lib\site-packages\resampy\data`` if necessary
 * replace the implementation of ``load_filter`` in ``resampy\filters.py`` with the implementation below and remove the ``import pkg_resources``::
@@ -116,13 +115,13 @@ Build
 
 1) Generate a spec::
 
-    pyi-makespec -F -n vibe-analyser --exclude-module pkg_resources --hidden-import=cython --additional-hooks-dir=.\release\hooks backend\src\analyser\app.py
+    pyi-makespec -F -n vibe-analyser --exclude-module pkg_resources --exclude-module PyQt4 --hidden-import=cython --hidden-import=scipy._lib.messagestream --additional-hooks-dir=.\release\hooks backend\src\analyser\app.py
 
 2) manually add the following (though adjust the path for your env dir) after a.binaries in exe = EXE::
 
     Tree('vibe-ui\\build', prefix='ui'),
     Tree('release\\resampy_pyinst', prefix='resampy_filters'),
-    Tree('C:\\Users\\Matt\\Anaconda3\\envs\\vibe35\\Lib\\site-packages\\_soundfile_data', prefix='_soundfile_data'),
+    Tree('C:\\Users\\Matt\\Anaconda3\\envs\\pyinst36\\Lib\\site-packages\\_soundfile_data', prefix='_soundfile_data'),
 
 It should now look like this::
 
@@ -145,7 +144,7 @@ It should now look like this::
               a.binaries,
               Tree('vibe-ui\\build', prefix='ui'),
               Tree('release\\resampy_pyinst', prefix='resampy_filters'),
-              Tree('C:\\Users\\Matt\\Anaconda3\\envs\\vibe35\\Lib\\site-packages\\_soundfile_data', prefix='_soundfile_data'),
+              Tree('C:\\Users\\Matt\\Anaconda3\\envs\\pyinst36\\Lib\\site-packages\\_soundfile_data', prefix='_soundfile_data'),
               a.zipfiles,
               a.datas,
               name='vibe-analyser',
