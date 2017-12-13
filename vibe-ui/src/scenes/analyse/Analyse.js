@@ -15,8 +15,30 @@ class Analyse extends Component {
 
     constructor(props, context) {
         super(props, context);
-        this.state = {pathStore: pathStore.fromRouterPath(props.params)};
+        this.state = {pathStore: pathStore.fromRouterPath(this.adaptParams(props.match))};
     }
+
+    /** converts react router 4 style params into the react router 3 format (which supported a splat param). */
+    adaptParams = (match) => {
+        const idxToKey = ['type', 'measurementId', 'deviceId', 'analyserId', 'series'];
+        if (match && match.splat) {
+            const paramValues = match.splat.split('/');
+            if (paramValues.length > 0) {
+                let val = {};
+                for (let i = 0; i < paramValues.length; i++) {
+                    if (i < 5) {
+                        val = Object.assign(val, {[idxToKey[i]]: paramValues[i]});
+                    } else if (i === 5) {
+                        val = Object.assign(val, {splat: paramValues[i]});
+                    } else {
+                        val.splat = val.splat + '/' + paramValues[i];
+                    }
+                }
+                return val;
+            }
+        }
+        return {};
+    };
 
     /** append a new measurement path. */
     addPath = () => {
@@ -32,7 +54,7 @@ class Analyse extends Component {
     removePath = (id) => {
         this.setState((previousState, props) => {
             const pathStore = previousState.pathStore.removePath(id);
-            this.context.router.push(pathStore.toRouterPath());
+            this.context.router.history.push(pathStore.toRouterPath());
             if (pathStore)
             return {pathStore: pathStore};
         });
@@ -66,7 +88,7 @@ class Analyse extends Component {
     navigate = (id) => (params) => {
         this.setState((previousState, props) => {
             const pathStore = previousState.pathStore.navigate(id, params);
-            this.context.router.push(pathStore.toRouterPath());
+            this.context.router.history.push(pathStore.toRouterPath());
             return {pathStore: pathStore};
         });
     };
@@ -118,7 +140,7 @@ class Analyse extends Component {
                 const newStore = previousState.pathStore.storeMeta(nextProps.measurementMeta.value);
                 const newPath = pathStore.toRouterPath();
                 if (oldPath !== newPath) {
-                    this.context.router.push(newPath);
+                    this.context.router.history.push(newPath);
                 }
                 return {pathStore: newStore};
             });

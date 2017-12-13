@@ -1,8 +1,14 @@
 import React, {Component} from "react";
 import PropTypes from "prop-types";
 import {Grid, Navbar, Nav, NavItem, Image, Row, Col} from "react-bootstrap";
+import {Route, Switch} from "react-router";
 import {LinkContainer} from 'react-router-bootstrap';
 import logo from "./vibe-24x24.png";
+import Configure from "./scenes/configure/Configure";
+import Upload from "./scenes/upload/Upload";
+import Analyse from "./scenes/analyse/Analyse";
+import Measure from "./scenes/measure/Measure";
+import Target from "./scenes/target/Target";
 
 class App extends Component {
     static childContextTypes = {
@@ -12,7 +18,7 @@ class App extends Component {
     getChildContext() {
         return {
             apiPrefix: '/api/1'
-        }
+        };
     }
 
     render() {
@@ -51,7 +57,14 @@ class App extends Component {
                         </Col>
                     </Row>
                     <Row>
-                        {this.props.children}
+                        <Switch>
+                            <Route path="/configure" component={Configure}/>
+                            <Route path="/target" component={Target}/>
+                            <Route path="/measure" component={Measure}/>
+                            <Route path="/analyse/:splat*)" component={Analyse}/>
+                            <Route path="/analyse" component={Analyse}/>
+                            <Route path="/upload" component={Upload}/>
+                        </Switch>
                     </Row>
                 </Grid>
             </div>
