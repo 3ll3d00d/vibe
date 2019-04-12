@@ -79,12 +79,12 @@ Prerequisites
 
 3) Install dependencies that aren't in conda::
 
-    pip.exe install aniso8601 pefile flask-restful smbus2 versioneer unittest-data-provider sphinx-rtd-theme pysoundfile
+    pip.exe install aniso8601 pefile smbus2 versioneer unittest-data-provider sphinx-rtd-theme pysoundfile
 
 4) Install dependencies that are in conda::
 
     conda install flask numpy scipy python-dateutil requests Sphinx Twisted pyyaml
-    conda install -c conda-forge librosa
+    conda install -c conda-forge librosa flask-restful
     conda install pyqt=4.11.4
 
 5) install pyinstaller::
@@ -136,7 +136,7 @@ It should now look like this::
                  excludes=['pkg_resources', 'PyQt4'],
                  win_no_prefer_redirects=False,
                  win_private_assemblies=False,
-                 cipher=block_cipher)
+                 cipher=block_cipher)'
     pyz = PYZ(a.pure, a.zipped_data,
                  cipher=block_cipher)
     exe = EXE(pyz,
