@@ -1,18 +1,18 @@
-aniso8601~=1.2.0
-docutils~=0.13.1
-Flask~=0.12
-Flask-RESTful~=0.3.5
-numpy~=1.12.0
-python-dateutil~=2.6.0
-PyYAML~=3.12
-requests~=2.13.0
-scipy~=0.19.0
-smbus2~=0.1.4
-Sphinx~=1.5.5
-sphinx-rtd-theme~=0.2.4
-Twisted~=17.1.0
-librosa~=0.5.0
-typing~=3.6.1
+aniso8601~=6.0.0
+docutils~=0.14
+Flask~=1.0.2
+Flask-RESTful~=0.3.7
+librosa~=0.6.3
+numpy~=1.16.2
+python-dateutil~=2.8.0
+PyYAML~=5.1
+requests~=2.21.0
+scipy~=1.2.1
+smbus2~=0.2.3
+Sphinx~=2.0.1
+sphinx-rtd-theme~=0.4.3
+Twisted~=19.2.0
+typing~=3.6.6
 # to use librosa - http://stackoverflow.com/questions/39574639/importerror-cannot-import-name-qtcore
 # conda install -c conda-forge librosa (0.5)
 # conda install pyqt=4.11.4
