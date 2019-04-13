@@ -1,12 +1,9 @@
 import React, {Component} from "react";
-import PropTypes from "prop-types";
-import {Button, Col, ControlLabel, FormControl, FormGroup, Panel, Row} from "react-bootstrap";
+import {Button, Card, Col, Form, Row} from "react-bootstrap";
 import {connect} from "react-refetch";
+import {API_PREFIX} from "../../App";
 
 class TargetState extends Component {
-    static contextTypes = {
-        apiPrefix: PropTypes.string.isRequired
-    };
 
     state = {
         fs: null,
@@ -36,79 +33,72 @@ class TargetState extends Component {
 
     // accessor methods that return the value for the attribute from the component state if it exists otherwise yields
     // the value pushed down from the server
-    getFs() {
+    getFs = () => {
         return this.hasFs() ? this.state.fs : this.props.targetState.fs;
-    }
+    };
 
-    getSamplesPerBatch() {
+    getSamplesPerBatch = () => {
         return this.hasSamplesPerBatch() ? this.state.samplesPerBatch : this.props.targetState.samplesPerBatch;
-    }
+    };
 
-    getAccelerometerSens() {
+    getAccelerometerSens = () => {
         return this.hasAccelerometerSens() ? this.state.accelerometerSens : this.props.targetState.accelerometerSens;
-    }
+    };
 
-    getGyroSens() {
+    getGyroSens = () => {
         return this.hasGyroSens() ? this.state.gyroSens : this.props.targetState.gyroSens;
-    }
+    };
 
     // helper functions that return true if we have this value in component state
-    hasFs() {
+    hasFs = () => {
         return this.state && this.state.fs;
-    }
+    };
 
-    hasSamplesPerBatch() {
+    hasSamplesPerBatch = () => {
         return this.state && this.state.samplesPerBatch;
-    }
+    };
 
-    hasAccelerometerSens() {
+    hasAccelerometerSens = () => {
         return this.state && this.state.accelerometerSens;
-    }
+    };
 
-    hasGyroSens() {
+    hasGyroSens = () => {
         return this.state && this.state.gyroSens;
-    }
+    };
 
     // validation rule
-    isValidFs(fs) {
+    static isValidFs(fs) {
         return fs > 0 && fs <= 1000;
     }
 
     // validates the supplied value so we can see whether a value has been entered that differs from that on the server
     // and which has been validated
-    getFsValidationState() {
+    getFsValidationState = () => {
         if (this.hasFs()) {
             let fs = this.getFs();
             if (fs !== this.props.targetState.fs) {
-                return this.isValidFs(fs) ? "success" : "error";
+                return TargetState.isValidFs(fs);
             } else {
                 return null;
             }
         } else {
             return null;
         }
-    }
+    };
 
-    getBatchValidationState() {
+    getBatchValidationState = () => {
         if (this.hasSamplesPerBatch()) {
             let samplesPerBatch = this.getSamplesPerBatch();
             if (samplesPerBatch !== this.props.targetState.samplesPerBatch) {
                 if (samplesPerBatch > 0) {
-                    if (samplesPerBatch < this.getFs()) {
-                        return "success";
-                    } else {
-                        return "warning";
-                    }
+                    return samplesPerBatch < this.getFs();
                 } else {
-                    return "error";
+                    return false;
                 }
-            } else {
-                return null;
             }
-        } else {
-            return null;
         }
-    }
+        return null
+    };
 
     handleSubmit = (event) => {
         let targetState = {};
@@ -149,9 +139,10 @@ class TargetState extends Component {
             ? this.props.targetState.gyroSens
             : -1;
         return (
-            <Panel header="Target State" bsStyle="info">
-                <form onSubmit={this.handleSubmit}>
-                    <FormGroup controlId="foo">
+            <Card>
+                <Card.Header as={'h6'} className={'bg-info'}>Target State</Card.Header>
+                <form onSubmit={this.handleSubmit}  className={'p-2'}>
+                    <Form.Group controlId="foo">
                         <Row>
                             <Col md={6}>
                                 <SampleRate fs={this.getFs()}
@@ -178,12 +169,12 @@ class TargetState extends Component {
                                                unit="Degrees/s"/>
                             </Col>
                         </Row>
-                    </FormGroup>
-                    <Button type="submit">
+                    </Form.Group>
+                    <Button type="submit" className={'p-2'}>
                         Update Device
                     </Button>
                 </form>
-            </Panel>
+            </Card>
         );
     }
 }
@@ -192,26 +183,32 @@ class SampleRate extends Component {
 
     render() {
         let currentFs = "";
+        let fsValid = {};
         if (this.props.fsValidationState !== null) {
             currentFs = " - current: " + this.props.serverFs + "Hz";
+            fsValid = {isValid: this.props.fsValidationState};
         }
         let currentBatch = "";
+        let batchValid = {};
         if (this.props.batchValidationState !== null) {
             currentBatch = " - current: " + this.props.serverBatch;
+            batchValid = {isValid: this.props.batchValidationState};
         }
         return (
-            <FormGroup>
-                <FormGroup controlId="fs" validationState={this.props.fsValidationState}>
-                    <ControlLabel>Sample Rate (Hz) {currentFs}</ControlLabel>
-                    <FormControl type="number" min="1" max="1000" step="1" value={this.props.fs}
-                                 onChange={this.props.fsHandler}/>
-                </FormGroup>
-                <FormGroup controlId="batch" validationState={this.props.batchValidationState}>
-                    <ControlLabel>Samples per Batch {currentBatch}</ControlLabel>
-                    <FormControl type="number" min="1" step="1" value={this.props.batch}
-                                 onChange={this.props.batchHandler}/>
-                </FormGroup>
-            </FormGroup>
+            <Form.Group>
+                <Form.Group controlId="fs">
+                    <Form.Label>Sample Rate (Hz) {currentFs}</Form.Label>
+                    <Form.Control type="number" min="1" max="1000" step="1" value={this.props.fs}
+                                  onChange={this.props.fsHandler}
+                                  {...fsValid}/>
+                </Form.Group>
+                <Form.Group controlId="batch">
+                    <Form.Label>Samples per Batch {currentBatch}</Form.Label>
+                    <Form.Control type="number" min="1" step="1" value={this.props.batch}
+                                  onChange={this.props.batchHandler}
+                                  {...batchValid}/>
+                </Form.Group>
+            </Form.Group>
         );
     }
 }
@@ -222,31 +219,32 @@ class SensorControl extends Component {
             return <option key={option} value={option}>{option}</option>
         });
         let extraLabel = "";
-        let validationState = null;
+        let isValid = {};
         if (this.props.serverSens !== this.props.sens) {
             extraLabel = " - current: ";
             extraLabel += (this.props.serverSens === -1 ? " disabled" : " " + this.props.serverSens);
-            validationState = this.props.sens === -1 ? "warning" : "success";
+            isValid = {isValid: this.props.sens !== -1};
         }
         return (
-            <FormGroup controlId={this.props.name} validationState={validationState}>
-                <ControlLabel>{this.props.name} ({this.props.unit}){extraLabel}</ControlLabel>
-                <FormControl componentClass="select"
-                             placeholder="select"
-                             value={this.props.sens}
-                             onChange={this.props.sensHandler}>
+            <Form.Group controlId={this.props.name}>
+                <Form.Label>{this.props.name} ({this.props.unit}){extraLabel}</Form.Label>
+                <Form.Control as="select"
+                              placeholder="select"
+                              value={this.props.sens}
+                              onChange={this.props.sensHandler}
+                              {...isValid}>
                     <option value="-1">Disabled</option>
                     {options}
-                </FormControl>
-            </FormGroup>
+                </Form.Control>
+            </Form.Group>
         );
     }
 }
 
-export default connect((props, context) => ({
+export default connect((props) => ({
     postTargetState: targetState => ({
         postTargetStateResponse: {
-            url: `${context.apiPrefix}/state`,
+            url: `${API_PREFIX}/state`,
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'

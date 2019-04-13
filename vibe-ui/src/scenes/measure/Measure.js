@@ -1,18 +1,14 @@
 import React, {Component} from "react";
-import PropTypes from "prop-types";
 import Message from "../../components/Message";
-import {Col, Grid, Panel, Row} from "react-bootstrap";
+import {Card, Col, Container, Row} from "react-bootstrap";
 import {connect, PromiseState} from "react-refetch";
 import Measurements from "./Measurements";
 import ScheduleMeasurement from "./ScheduleMeasurement";
 import TimeSeries from "./TimeSeries";
 import EditMeasurement from "./EditMeasurement";
+import {API_PREFIX} from "../../App";
 
 class Measure extends Component {
-    static contextTypes = {
-        apiPrefix: PropTypes.string.isRequired
-    };
-
     state = {
         selectedChart: null,
         selectedEdit: null
@@ -101,10 +97,11 @@ class Measure extends Component {
             const timeSeries = this.renderTimeSeriesIfAny();
             return (
                 <div>
-                    <Grid>
+                    <Container>
                         <Row>
                             <Col>
-                                <Panel header="Measurements" bsStyle="info">
+                                <Card>
+                                    <Card.Header as={'h6'} className={'bg-info'}>Measurements</Card.Header>
                                     <Row>
                                         <Col>
                                             <Measurements measurements={this.props.measurements.value}
@@ -122,27 +119,27 @@ class Measure extends Component {
                                         <Col md={8}>
                                             {timeSeries}
                                         </Col>
-                                        <Col mdOffset={3} md={1}>
+                                        <Col md={{offset: 3, span: 1}}>
                                             <ScheduleMeasurement deviceStatuses={this.props.deviceStatuses.value}/>
                                         </Col>
                                     </Row>
-                                </Panel>
+                                </Card>
                             </Col>
                         </Row>
-                    </Grid>
+                    </Container>
                 </div>
             );
         }
     }
 }
-export default connect((props, context) => ( {
+export default connect((props) => ( {
     deviceStatuses: {
-        url: `${context.apiPrefix}/devices`,
+        url: `${API_PREFIX}/devices`,
         refreshInterval: 1000,
         then: (states) => ({value: states.map(ds => ds.state.status)})
     },
-    measurements: {url: `${context.apiPrefix}/measurements`, refreshInterval: 1000},
+    measurements: {url: `${API_PREFIX}/measurements`, refreshInterval: 1000},
     fetchMeasurementData: (measurementId) => ({
-        [`fetchedData_${measurementId}`]: `${context.apiPrefix}/measurements/${measurementId}/timeseries`
+        [`fetchedData_${measurementId}`]: `${API_PREFIX}/measurements/${measurementId}/timeseries`
     })
 } ))(Measure)

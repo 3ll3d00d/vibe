@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import PropTypes from "prop-types";
-import {Panel} from "react-bootstrap";
+import {Card} from "react-bootstrap";
 import LineChart from "../../components/chart/LineChart";
 
 export default class HingeTargetCurve extends Component {
@@ -46,9 +46,9 @@ export default class HingeTargetCurve extends Component {
         const series = this.asChartData();
         const config = this.getChartConfig(series);
         return (
-            <Panel>
+            <Card className={'p-2'}>
                 <LineChart series={[series]} config={config}/>
-            </Panel>
+            </Card>
         );
     }
 }

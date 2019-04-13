@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import PropTypes from "prop-types";
-import {Nav, NavItem, Panel} from "react-bootstrap";
+import {Card, Nav, NavItem} from "react-bootstrap";
 import LineChart from "../../components/chart/LineChart";
 import Message from "../../components/Message";
 
@@ -107,18 +107,18 @@ export default class TimeSeries extends Component {
                     const config = this.getChartConfig(series);
                     return (
                         <div>
-                            <Nav bsStyle="tabs" activeKey={this.state.selected} onSelect={this.selectChart}>
+                            <Nav variant="tabs" activeKey={this.state.selected} onSelect={this.selectChart}>
                                 {navs}
                             </Nav>
-                            <Panel>
+                            <Card className={'p-2'}>
                                 <LineChart series={series} config={config}/>
-                            </Panel>
+                            </Card>
                         </div>
                     );
                 } else {
                     return (
                         <div>
-                            <Nav bsStyle="tabs" activeKey={this.state.selected} onSelect={this.selectChart}>
+                            <Nav variant="tabs" activeKey={this.state.selected} onSelect={this.selectChart}>
                                 {navs}
                             </Nav>
                             <Message title="Failed to render data" type="danger"/>

@@ -2,15 +2,15 @@ import React, {Component} from "react";
 import PropTypes from "prop-types";
 import {
     Button,
+    Card,
     Col,
-    ControlLabel,
     FormControl,
     FormGroup,
+    FormLabel,
     InputGroup,
     OverlayTrigger,
     Row,
-    Tooltip,
-    Well
+    Tooltip
 } from "react-bootstrap";
 import ToggleButton from "react-toggle-button";
 import FontAwesome from "react-fontawesome";
@@ -127,7 +127,7 @@ export default class ChartController extends Component {
     makeYFields(range) {
         const yTip = <Tooltip id={"y"}>Y Axis Range</Tooltip>;
         return <OverlayTrigger placement="top" overlay={yTip} trigger="click" rootClose>
-            <InputGroup bsSize="small">
+            <InputGroup size="sm">
                 <InputGroup.Addon>
                     <FontAwesome name="arrows-v"/>
                 </InputGroup.Addon>
@@ -174,8 +174,8 @@ export default class ChartController extends Component {
             if (options && options.length > 1) {
                 return (
                     <FormGroup controlId="normalise">
-                        <ControlLabel>Reference Series:</ControlLabel>
-                        <FormControl componentClass="select"
+                        <FormLabel>Reference Series:</FormLabel>
+                        <FormControl as="select"
                                      value={this.props.referenceSeriesId}
                                      onChange={this.props.referenceSeriesHandler}
                                      placeholder="select">
@@ -198,14 +198,14 @@ export default class ChartController extends Component {
     }
 
     getDownloadButton = () => {
-        return <Button onClick={this.toggleExportModal} bsSize="small"><FontAwesome name="download"/></Button>;
+        return <Button onClick={this.toggleExportModal} size="sm"><FontAwesome name="download"/></Button>;
     };
 
     render() {
         const xRange = this.makeXFields(this.props.range);
         const yRange = this.makeYFields(this.props.range);
-        const updateButton = <Button onClick={this.renderChart} bsSize="small"><FontAwesome name="repeat"/></Button>;
-        const resetButton = <Button onClick={this.resetChart} bsSize="small"><FontAwesome name="undo"/></Button>;
+        const updateButton = <Button onClick={this.renderChart} size="sm"><FontAwesome name="repeat"/></Button>;
+        const resetButton = <Button onClick={this.resetChart} size="sm"><FontAwesome name="undo"/></Button>;
         return (
             <div>
                 <ChartCustomiser visible={this.state.exportModalState}
@@ -214,7 +214,7 @@ export default class ChartController extends Component {
                                  currentChartURL={this.state.chartDataUrl}
                                  resetCustomChartConfig={this.resetCustomChartConfig}
                                  updateChart={this.updateCustomChartConfig}/>
-                <Well bsSize="small">
+                <Card size="sm" bg="light">
                     <Row>
                         <Col lg={2} md={2} sm={4} xs={4}>{xRange}</Col>
                         <Col lg={1} md={1} sm={2} xs={2}>
@@ -240,7 +240,7 @@ export default class ChartController extends Component {
                             {updateButton}{resetButton}{this.getDownloadButton()}
                         </Col>
                     </Row>
-                </Well>
+                </Card>
                 <Row>
                     <Col>
                         <LineChart series={this.props.series}

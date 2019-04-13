@@ -92,7 +92,7 @@ export default class UploadRecord {
         let totalBytesUploaded = this.getTotalBytesUploaded();
         let percentComplete = (totalBytesUploaded / this.size) * 100;
         if (this.progress.size > 0) {
-            return <ProgressBar bsStyle="success" now={percentComplete} key={1}/>
+            return <ProgressBar variant="success" now={percentComplete} key={1}/>
         }
         return null;
     };

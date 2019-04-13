@@ -3,20 +3,19 @@ import PropTypes from "prop-types";
 import {Button, ButtonToolbar, OverlayTrigger, Tooltip} from "react-bootstrap";
 import FontAwesome from "react-fontawesome";
 import sematable, {Table} from "sematable";
-import "react-select/dist/react-select.css";
 
 class ActionCell extends Component {
     getAnalyseButton(target) {
         if (target.isSelected) {
             return (
-                <Button bsStyle="success"
-                        onClick={() => target.clearTimeSeries()} bsSize="xsmall">
+                <Button variant="success"
+                        onClick={() => target.clearTimeSeries()} size="sm">
                     <FontAwesome name="eject"/>
                 </Button>
             );
         } else {
             return (
-                <Button bsStyle="primary" onClick={() => target.fetchTimeSeries()} bsSize="xsmall">
+                <Button variant="primary" onClick={() => target.fetchTimeSeries()} size="sm">
                     <FontAwesome name="line-chart"/>
                 </Button>
             );
@@ -27,7 +26,7 @@ class ActionCell extends Component {
         let deletePromise = row.deleteResponse;
         if (deletePromise) {
             if (deletePromise.pending) {
-                return <Button bsStyle="danger" disabled bsSize="xsmall"><FontAwesome name="spinner" spin/></Button>;
+                return <Button variant="danger" disabled size="sm"><FontAwesome name="spinner" spin/></Button>;
             } else if (deletePromise.rejected) {
                 const code = deletePromise.meta.response.status;
                 const text = deletePromise.meta.response.statusText;
@@ -35,7 +34,7 @@ class ActionCell extends Component {
                 return (
                     <OverlayTrigger placement="top" overlay={tooltip}>
                         <div>
-                            <Button bsStyle="warning" bsSize="xsmall">
+                            <Button variant="warning" size="sm">
                                 <FontAwesome name="exclamation"/>&nbsp;FAILED
                             </Button>
                         </div>
@@ -43,16 +42,16 @@ class ActionCell extends Component {
                 );
             } else if (deletePromise.fulfilled) {
                 return (
-                    <Button bsStyle="success" disabled bsSize="xsmall">
+                    <Button variant="success" disabled size="sm">
                         <FontAwesome name="check"/>&nbsp;Deleted
                     </Button>
                 );
             }
         } else {
             return (
-                <Button bsStyle="danger"
+                <Button variant="danger"
                         onClick={() => { row.clearTimeSeries(); row.deleteTarget(); }}
-                        bsSize="xsmall">
+                        size="sm">
                     <FontAwesome name="trash"/>
                 </Button>
             );
@@ -93,7 +92,7 @@ class TargetTable extends Component {
         return (
             <Table {...this.props}
                    columns={columns}
-                   className="table-responsive table-condensed table-bordered table-hover table-striped"/>
+                   className="table-responsive table-sm table-bordered table-hover table-striped"/>
         );
     }
 }

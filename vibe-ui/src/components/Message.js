@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import PropTypes from "prop-types";
-import {Panel} from "react-bootstrap";
+import {Card} from "react-bootstrap";
 
 class Message extends Component {
     static propTypes = {
@@ -12,9 +12,10 @@ class Message extends Component {
     render() {
         let title = this.props.title ? this.props.title : "Info";
         return (
-            <Panel header={title} bsStyle={this.props.type}>
+            <Card>
+                <Card.Header as={'h6'} className={`bg-${this.props.type}`}>{title}</Card.Header>
                 {this.props.message}
-            </Panel>
+            </Card>
         );
     }
 }

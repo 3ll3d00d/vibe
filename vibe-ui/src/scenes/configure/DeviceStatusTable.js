@@ -1,6 +1,6 @@
 import React, {Component} from "react";
-import {Table, Panel} from "react-bootstrap";
-import {DeviceStatusRow, DeviceStatusHeader} from "./DeviceStatusRow";
+import {Card, Table} from "react-bootstrap";
+import {DeviceStatusHeader, DeviceStatusRow} from "./DeviceStatusRow";
 
 class DeviceStatusTable extends Component {
 
@@ -19,14 +19,15 @@ class DeviceStatusTable extends Component {
             );
         }
         return (
-            <Panel header="Measurement Devices" bsStyle="info">
-                <Table striped bordered condensed hover fill responsive>
+            <Card>
+                <Card.Header as={'h6'} className={"bg-info"}>Measurement Devices</Card.Header>
+                <Table striped bordered hover responsive size="sm">
                     <DeviceStatusHeader/>
                     <tbody>
                     {rows}
                     </tbody>
                 </Table>
-            </Panel>
+            </Card>
         );
     }
 }

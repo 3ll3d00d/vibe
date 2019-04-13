@@ -56,7 +56,7 @@ export default class NavigatorMultiSelect extends Component {
                 <MultiSelect key={this.props.analyserId + '-d'}
                              buttonClass={`btn`}
                              data={this.makeValues()}
-                             disabled="true"
+                             disabled={true}
                              multiple
                              onChange={this.handleChange}
                              nonSelectedText="Series... "
