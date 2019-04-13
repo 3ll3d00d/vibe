@@ -1,20 +1,17 @@
 import React, {Component} from "react";
-import PropTypes from "prop-types";
 import {connect, PromiseState} from "react-refetch";
-import {Panel} from "react-bootstrap";
+import {Card} from "react-bootstrap";
 import AnalysisNavigator from "./AnalysisNavigator";
 import Message from "../../components/Message";
 import ChartController from "../../components/chart/ChartController";
 import {pathStore} from "../../components/path/PathStore";
+import {API_PREFIX} from "../../App";
+import {withRouter} from "react-router";
 
 class Analyse extends Component {
-    static contextTypes = {
-        router: PropTypes.object.isRequired,
-        apiPrefix: PropTypes.string.isRequired
-    };
 
-    constructor(props, context) {
-        super(props, context);
+    constructor(props) {
+        super(props);
         this.state = {pathStore: pathStore.fromRouterPath(this.adaptParams(props.match))};
     }
 
@@ -54,7 +51,7 @@ class Analyse extends Component {
     removePath = (id) => {
         this.setState((previousState, props) => {
             const pathStore = previousState.pathStore.removePath(id);
-            this.context.router.history.push(pathStore.toRouterPath());
+            this.props.history.push(pathStore.toRouterPath());
             if (pathStore)
             return {pathStore: pathStore};
         });
@@ -88,7 +85,7 @@ class Analyse extends Component {
     navigate = (id) => (params) => {
         this.setState((previousState, props) => {
             const pathStore = previousState.pathStore.navigate(id, params);
-            this.context.router.history.push(pathStore.toRouterPath());
+            this.props.history.push(pathStore.toRouterPath());
             return {pathStore: pathStore};
         });
     };
@@ -140,7 +137,7 @@ class Analyse extends Component {
                 const newStore = previousState.pathStore.storeMeta(nextProps.measurementMeta.value);
                 const newPath = pathStore.toRouterPath();
                 if (oldPath !== newPath) {
-                    this.context.router.history.push(newPath);
+                    this.props.history.push(newPath);
                 }
                 return {pathStore: newStore};
             });
@@ -158,12 +155,12 @@ class Analyse extends Component {
         const {chartData, range} = this.state.pathStore.asChartData();
         if (chartData !== null && chartData.length > 0) {
             analysis = (
-                <Panel bsStyle="info">
+                <Card bg="light">
                     <ChartController range={range}
                                      series={chartData}
                                      referenceSeriesId={this.state.pathStore.getReferenceSeriesId()}
                                      referenceSeriesHandler={this.handleReferenceSeries}/>
-                </Panel>
+                </Card>
             );
         }
         return (
@@ -225,9 +222,9 @@ class Analyse extends Component {
     }
 }
 
-export default connect((props, context) => ({
+export default connect((props) => ({
     measurementMeta: {
-        url: `${context.apiPrefix}/measurements`,
+        url: `${API_PREFIX}/measurements`,
         then: (measurements) => ({
             value: measurements
                 .filter(m => m.status === 'COMPLETE')
@@ -241,15 +238,15 @@ export default connect((props, context) => ({
         })
     },
     targetMeta: {
-        url: `${context.apiPrefix}/targets`,
+        url: `${API_PREFIX}/targets`,
         then: (targets) => ({
             value: targets.map(t => t.name).sort()
         })
     },
     fetchMeasurementData: (measurementId) => ({
-        [`fetchedMeasurementData_${measurementId}`]: `${context.apiPrefix}/measurements/${measurementId}/analyse`
+        [`fetchedMeasurementData_${measurementId}`]: `${API_PREFIX}/measurements/${measurementId}/analyse`
     }),
     fetchTargetData: (targetName) => ({
-        [`fetchedTargetData_${targetName}`]: `${context.apiPrefix}/targets/${targetName}`
+        [`fetchedTargetData_${targetName}`]: `${API_PREFIX}/targets/${targetName}`
     })
-}))(Analyse)
+}))(withRouter(Analyse))

@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import PropTypes from "prop-types";
-import {Panel} from "react-bootstrap";
+import {Card} from "react-bootstrap";
 import LineChart from "../../components/chart/LineChart";
 import {getAnalysisChartConfig} from "../../components/chart/ConfigGenerator";
 
@@ -20,9 +20,9 @@ export default class WavTargetCurve extends Component {
             seriesIdx: 1,
         });
         return (
-            <Panel>
+            <Card className={'p-2'}>
                 <LineChart series={[series]} config={config}/>
-            </Panel>
+            </Card>
         );
     }
 }

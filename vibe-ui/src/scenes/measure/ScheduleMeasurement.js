@@ -1,14 +1,10 @@
 import React, {Component} from "react";
-import PropTypes from "prop-types";
-import {Button, Col, ControlLabel, Form, FormControl, FormGroup, Modal, Row, Well} from "react-bootstrap";
+import {Button, Card, Col, Form, FormControl, FormGroup, FormLabel, Modal, Row} from "react-bootstrap";
 import {connect} from "react-refetch";
 import FontAwesome from "react-fontawesome";
+import {API_PREFIX} from "../../App";
 
 class ScheduleMeasurement extends Component {
-    static contextTypes = {
-        apiPrefix: PropTypes.string.isRequired
-    };
-
     state = {
         name: null,
         description: null,
@@ -66,9 +62,9 @@ class ScheduleMeasurement extends Component {
     }
 
     render() {
-        let openButton = <Button className="pull-right" bsStyle="danger" disabled>No Devices<br/>Available&nbsp;<FontAwesome name="exclamation"/></Button>;
+        let openButton = <Button className="pull-right" variant="danger" disabled>No Devices<br/>Available&nbsp;<FontAwesome name="exclamation"/></Button>;
         if (this.props.deviceStatuses.some((status) => status === 'INITIALISED' || status === 'RECORDING')) {
-            openButton = <Button className="pull-right" bsStyle="success" onClick={this.openModal}>Schedule<br/>Measurement</Button>;
+            openButton = <Button className="pull-right" variant="success" onClick={this.openModal}>Schedule<br/>Measurement</Button>;
         }
         return (
             <div>
@@ -78,28 +74,28 @@ class ScheduleMeasurement extends Component {
                         <Modal.Title>Schedule Measurement</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <Well>
+                        <Card bg={'light'}>
                             <Form onSubmit={false}>
                                 <Row>
                                     <Col md={6}>
                                         <FormGroup controlId="name">
-                                            <ControlLabel>Name: </ControlLabel>
+                                            <FormLabel>Name: </FormLabel>
                                             {' '}
-                                            <FormControl componentClass="textarea" onChange={this.handleName}/>
+                                            <FormControl as="textarea" onChange={this.handleName}/>
                                         </FormGroup>
                                     </Col>
                                     <Col md={6}>
                                         <FormGroup controlId="desc">
-                                            <ControlLabel>Description: </ControlLabel>
+                                            <FormLabel>Description: </FormLabel>
                                             {' '}
-                                            <FormControl componentClass="textarea" onChange={this.handleDescription}/>
+                                            <FormControl as="textarea" onChange={this.handleDescription}/>
                                         </FormGroup>
                                     </Col>
                                 </Row>
                                 <Row>
                                     <Col md={6}>
                                         <FormGroup controlId="duration">
-                                            <ControlLabel>Duration: </ControlLabel>
+                                            <FormLabel>Duration: </FormLabel>
                                             {' '}
                                             <FormControl type="number" min="0.1" step="0.1" placeholder="in seconds"
                                                          onChange={this.handleDuration}/>
@@ -107,7 +103,7 @@ class ScheduleMeasurement extends Component {
                                     </Col>
                                     <Col md={6}>
                                         <FormGroup controlId="delay">
-                                            <ControlLabel>Delay: </ControlLabel>
+                                            <FormLabel>Delay: </FormLabel>
                                             {' '}
                                             <FormControl type="number" min="1" step="1" placeholder="in seconds"
                                                          onChange={this.handleDelay}/>
@@ -120,7 +116,7 @@ class ScheduleMeasurement extends Component {
                                     </Col>
                                 </Row>
                             </Form>
-                        </Well>
+                        </Card>
                     </Modal.Body>
                 </Modal>
             </div>
@@ -138,7 +134,7 @@ class ScheduleMeasurement extends Component {
                     );
                 } else if (this.props.createMeasurementResponse.rejected) {
                     return (
-                        <Button type="submit" bsStyle="danger" disabled>
+                        <Button type="submit" variant="danger" disabled>
                             <FontAwesome name="exclamation"/>&nbsp;Error!
                         </Button>
                     );
@@ -151,7 +147,7 @@ class ScheduleMeasurement extends Component {
             );
         } else {
             return (
-                <Button type="submit" bsStyle="danger" disabled>
+                <Button type="submit" variant="danger" disabled>
                     <FontAwesome name="exclamation"/>&nbsp;No Devices<br/>Available!
                 </Button>
             );
@@ -159,10 +155,10 @@ class ScheduleMeasurement extends Component {
     }
 }
 
-export default connect((props, context) => ({
+export default connect((props) => ({
     createMeasurement: measurement => ({
         createMeasurementResponse: {
-            url: `${context.apiPrefix}/measurements/${measurement.name}`,
+            url: `${API_PREFIX}/measurements/${measurement.name}`,
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'

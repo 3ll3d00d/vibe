@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import PropTypes from "prop-types";
 import {SketchPicker} from 'react-color';
-import {Tabs, Tab} from "react-bootstrap";
+import {Tab, Tabs} from "react-bootstrap";
 
 export default class StylePicker extends Component {
     static propTypes = {

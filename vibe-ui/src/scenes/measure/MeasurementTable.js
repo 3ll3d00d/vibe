@@ -1,29 +1,28 @@
 import React, {Component} from "react";
 import PropTypes from "prop-types";
-import {Button, ButtonToolbar, Label, OverlayTrigger, Table as RBTable, Tooltip} from "react-bootstrap";
+import {Badge, Button, ButtonToolbar, OverlayTrigger, Table as RBTable, Tooltip} from "react-bootstrap";
 import {Line} from "rc-progress";
 import FontAwesome from "react-fontawesome";
 import sematable, {Table} from "sematable";
 import "./MeasurementTable.css";
-import "react-select/dist/react-select.css";
 
 const statusCell = ({row}) => {
     let label = null;
     switch (row.status) {
         case "COMPLETE":
-            label = <Label bsStyle="success"><FontAwesome name="check"/></Label>;
+            label = <Badge variant="success"><FontAwesome name="check"/></Badge>;
             break;
         case "RECORDING":
-            label = <Label bsStyle="success"><FontAwesome name="spinner" spin/></Label>;
+            label = <Badge variant="success"><FontAwesome name="spinner" spin/></Badge>;
             break;
         case "FAILED":
-            label = <Label bsStyle="danger"><FontAwesome name="exclamation-triangle"/></Label>;
+            label = <Badge variant="danger"><FontAwesome name="exclamation-triangle"/></Badge>;
             break;
         case "SCHEDULED":
-            label = <Label bsStyle="success"><FontAwesome name="clock-o"/></Label>;
+            label = <Badge variant="success"><FontAwesome name="clock-o"/></Badge>;
             break;
         default:
-            label = <Label bsStyle="warning"><FontAwesome name="question"/></Label>;
+            label = <Badge variant="warning"><FontAwesome name="question"/></Badge>;
             break;
     }
     const tooltip = <Tooltip id={row.status}>{row.status}</Tooltip>;
@@ -85,9 +84,9 @@ const sensorCell = ({row}) => {
     const accelIcon = row.measurementParameters.accelerometerEnabled ? "check-square-o" : "minus-square-o";
     return (
         <span>
-            <Label bsStyle="primary">Accelerometer  <FontAwesome name={accelIcon}/></Label>
+            <Badge variant="primary">Accelerometer  <FontAwesome name={accelIcon}/></Badge>
              <br/>
-             <Label bsStyle="primary">Gyrometer  <FontAwesome name={gyroIcon}/></Label>
+             <Badge variant="primary">Gyrometer  <FontAwesome name={gyroIcon}/></Badge>
         </span>
     );
 };
@@ -106,7 +105,7 @@ class DeviceCell extends Component {
             rows.push(row);
         }
         return (
-            <RBTable responsive condensed>
+            <RBTable responsive size="sm">
                 <thead>
                 <tr>
                     <th>Device</th>
@@ -151,13 +150,13 @@ class ActionCell extends Component {
         if (measurement.status === 'COMPLETE') {
             if (measurement.isSelectedEdit) {
                 return (
-                    <Button bsStyle="success" onClick={() => measurement.clearEdit()} bsSize="xsmall">
+                    <Button variant="success" onClick={() => measurement.clearEdit()} size="xs">
                         <FontAwesome name="eject"/>
                     </Button>
                 );
             } else {
                 return (
-                    <Button bsStyle="primary" onClick={() => measurement.showEdit()} bsSize="xsmall">
+                    <Button variant="primary" onClick={() => measurement.showEdit()} size="xs">
                         <FontAwesome name="pencil"/>
                     </Button>
                 );
@@ -170,14 +169,14 @@ class ActionCell extends Component {
         if (measurement.status === 'COMPLETE') {
             if (measurement.isSelectedChart) {
                 return (
-                    <Button bsStyle="success"
-                            onClick={() => measurement.clearTimeSeries()} bsSize="xsmall">
+                    <Button variant="success"
+                            onClick={() => measurement.clearTimeSeries()} size="xs">
                         <FontAwesome name="eject"/>
                     </Button>
                 );
             } else {
                 return (
-                    <Button bsStyle="primary" onClick={() => measurement.fetchTimeSeries()} bsSize="xsmall">
+                    <Button variant="primary" onClick={() => measurement.fetchTimeSeries()} size="xs">
                         <FontAwesome name="line-chart"/>
                     </Button>
                 );
@@ -190,7 +189,7 @@ class ActionCell extends Component {
         let deletePromise = row.deleteResponse;
         if (deletePromise) {
             if (deletePromise.pending) {
-                return <Button bsStyle="danger" disabled bsSize="xsmall"><FontAwesome name="spinner" spin/></Button>;
+                return <Button variant="danger" disabled size="xs"><FontAwesome name="spinner" spin/></Button>;
             } else if (deletePromise.rejected) {
                 const code = deletePromise.meta.response.status;
                 const text = deletePromise.meta.response.statusText;
@@ -198,7 +197,7 @@ class ActionCell extends Component {
                 return (
                     <OverlayTrigger placement="top" overlay={tooltip}>
                         <div>
-                            <Button bsStyle="warning" bsSize="xsmall">
+                            <Button variant="warning" size="xs">
                                 <FontAwesome name="exclamation"/>&nbsp;FAILED
                             </Button>
                         </div>
@@ -206,7 +205,7 @@ class ActionCell extends Component {
                 );
             } else if (deletePromise.fulfilled) {
                 return (
-                    <Button bsStyle="success" disabled bsSize="xsmall">
+                    <Button variant="success" disabled size="xs">
                         <FontAwesome name="check"/>&nbsp;Deleted
                     </Button>
                 );
@@ -214,8 +213,8 @@ class ActionCell extends Component {
         } else {
             if (row.status === 'COMPLETE' || row.status === 'FAILED') {
                 return (
-                    <Button bsStyle="danger" onClick={() => row.deleteMeasurement()}
-                            bsSize="xsmall">
+                    <Button variant="danger" onClick={() => row.deleteMeasurement()}
+                            size="xs">
                         <FontAwesome name="trash"/>
                     </Button>
                 );
@@ -257,7 +256,7 @@ class MeasurementTable extends Component {
         return (
             <Table {...this.props}
                    columns={columns}
-                   className="table-responsive table-condensed table-bordered table-hover table-striped"/>
+                   className="table-sm table-bordered table-hover table-striped"/>
         );
     }
 }

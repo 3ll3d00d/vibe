@@ -1,19 +1,15 @@
 import React, {Component} from "react";
-import PropTypes from "prop-types";
 import Message from "../../components/Message";
-import {Col, Grid, Panel, Row} from "react-bootstrap";
+import {Card, Col, Container, Row} from "react-bootstrap";
 import {connect} from "react-refetch";
 import Targets from "./Targets";
 import CreateTarget from "./CreateTarget";
 import HingeTargetCurve from "./HingeTargetCurve";
 import WavTargetCurve from "./WavTargetCurve";
 import PathSeries from "../../components/path/PathSeries";
+import {API_PREFIX} from "../../App";
 
 class Target extends Component {
-    static contextTypes = {
-        apiPrefix: PropTypes.string.isRequired
-    };
-
     state = {selected: null, preview: null};
 
     handlePreview = (hingePoints) => {
@@ -80,44 +76,40 @@ class Target extends Component {
         } else if (targets.fulfilled) {
             const timeSeries = this.renderTimeSeriesIfAny();
             return (
-                <div>
-                    <Grid>
+                <Card>
+                    <Card.Header as={'h6'} className={'bg-info'}>Targets</Card.Header>
+                    <Container>
                         <Row>
-                            <Col>
-                                <Panel header="Targets" bsStyle="info">
-                                    <Row>
-                                        <Col md={7}>
-                                            <Targets targets={this.props.targets.value}
-                                                     showFunc={this.showTimeSeries}
-                                                     clearFunc={this.clearTimeSeries}
-                                                     selected={this.state.selected}/>
-                                        </Col>
-                                        <Col md={5}>
-                                            <CreateTarget previewFunc={this.handlePreview}/>
-                                        </Col>
-                                    </Row>
-                                    <Row>
-                                        <Col>
-                                            {timeSeries}
-                                        </Col>
-                                    </Row>
-                                </Panel>
+                            <Col md={7}>
+                                <Targets targets={this.props.targets.value}
+                                         showFunc={this.showTimeSeries}
+                                         clearFunc={this.clearTimeSeries}
+                                         selected={this.state.selected}/>
+                            </Col>
+                            <Col md={5}>
+                                <CreateTarget previewFunc={this.handlePreview}/>
                             </Col>
                         </Row>
-                    </Grid>
-                </div>
+                        <Row>
+                            <Col>
+                                {timeSeries}
+                            </Col>
+                        </Row>
+                    </Container>
+                </Card>
             );
         }
     }
 }
-export default connect((props, context) => ( {
-    targets: {url: `${context.apiPrefix}/targets`, refreshInterval: 1000},
+
+export default connect((props) => ({
+    targets: {url: `${API_PREFIX}/targets`, refreshInterval: 1000},
     loadAnalysis: target => ({
         analysis: {
-            url: `${context.apiPrefix}/targets/${target}`,
+            url: `${API_PREFIX}/targets/${target}`,
             then: analysis => ({
                 value: new PathSeries(analysis.name).acceptData(analysis.data).rendered.toJS()
             })
         }
     })
-} ))(Target)
+}))(Target)

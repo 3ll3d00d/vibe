@@ -2,6 +2,7 @@ import React, {Component} from "react";
 import PropTypes from "prop-types";
 import {connect} from "react-refetch";
 import TargetTable from "./TargetTable";
+import {API_PREFIX} from "../../App";
 
 class Targets extends Component {
     static propTypes = {
@@ -11,19 +12,15 @@ class Targets extends Component {
         selected: PropTypes.string
     };
 
-    static contextTypes = {
-        apiPrefix: PropTypes.string.isRequired
-    };
-
-    findResponse(id, responses) {
+    findResponse = (id, responses) => {
         const responseKey = `deleteTargetResponse_${id}`;
         if (responses && responses.hasOwnProperty(responseKey)) {
             return responses[responseKey];
         }
         return null;
-    }
+    };
 
-    convert(row, showFunc, clearFunc, selectedTarget, responses) {
+    convert = (row, showFunc, clearFunc, selectedTarget, responses) => {
         const deleteTarget = () => this.props.deleteFunc(row.name);
         const fetchTimeSeries = () => showFunc(row.name, row.type);
         return Object.assign(row, {
@@ -33,7 +30,7 @@ class Targets extends Component {
             clearTimeSeries: clearFunc,
             isSelected: row.name === selectedTarget
         });
-    }
+    };
 
     render() {
         const {targets, showFunc, clearFunc, selected, ...responses} = this.props;
@@ -42,10 +39,10 @@ class Targets extends Component {
     }
 }
 
-export default connect((props, context) => ({
+export default connect((props) => ({
     deleteFunc: targetId => ({
         [`deleteTargetResponse_${targetId}`]: {
-            url: `${context.apiPrefix}/targets/${targetId}`,
+            url: `${API_PREFIX}/targets/${targetId}`,
             method: 'DELETE'
         }
     })

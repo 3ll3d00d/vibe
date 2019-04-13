@@ -1,20 +1,16 @@
 import React, {Component} from "react";
-import PropTypes from "prop-types";
 import {connect} from "react-refetch";
 import MeasurementTable from "./MeasurementTable";
+import {API_PREFIX} from "../../App";
 
 class Measurements extends Component {
-    static contextTypes = {
-        apiPrefix: PropTypes.string.isRequired
-    };
-
-    findResponse(id, responses) {
+    findResponse = (id, responses) => {
         const responseKey = `deleteMeasurementResponse_${id}`;
         if (responses.hasOwnProperty(responseKey)) {
             return responses[responseKey];
         }
         return null;
-    }
+    };
 
     /**
      * Maps the delete function and any responses into the data row for rendering.
@@ -55,10 +51,10 @@ class Measurements extends Component {
     }
 }
 
-export default connect((props, context) => ({
+export default connect((props) => ({
     deleteFunc: measurementId => ({
         [`deleteMeasurementResponse_${measurementId}`]: {
-            url: `${context.apiPrefix}/measurements/${measurementId}`,
+            url: `${API_PREFIX}/measurements/${measurementId}`,
             method: 'DELETE'
         }
     })

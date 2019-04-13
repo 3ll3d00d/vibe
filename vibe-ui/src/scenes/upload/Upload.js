@@ -1,7 +1,6 @@
 import React, {Component} from "react";
-import PropTypes from "prop-types";
 import Dropzone from "react-dropzone";
-import {ListGroup, ListGroupItem, Panel, Table} from "react-bootstrap";
+import {Card, ListGroup, ListGroupItem, Table} from "react-bootstrap";
 import {List, Map} from "immutable";
 import FontAwesome from "react-fontawesome";
 import {UPLOAD_CHUNK_SIZE} from "../../constants";
@@ -11,12 +10,9 @@ import UploadTable from "./UploadTable";
 import Preview from "./Preview";
 import PathSeries from "../../components/path/PathSeries";
 import {DateTimeFormatter, LocalTime} from "js-joda";
+import {API_PREFIX} from "../../App";
 
 class Upload extends Component {
-
-    static contextTypes = {
-        apiPrefix: PropTypes.string.isRequired
-    };
 
     state = {
         uploaded: new List(),
@@ -126,7 +122,7 @@ class Upload extends Component {
 
     finaliseUpload = (metadata, chunkCount, success) => {
         const finaliser = new XMLHttpRequest();
-        finaliser.open("PUT", `${this.context.apiPrefix}/completeupload/${metadata.name}/${chunkCount}/${success}`, true);
+        finaliser.open("PUT", `${this.API_PREFIX}/completeupload/${metadata.name}/${chunkCount}/${success}`, true);
         finaliser.onload = this.onFinaliseLoadEvent(finaliser);
         finaliser.onerror = this.onFinaliseErrorEvent(finaliser);
         finaliser.send();
@@ -154,7 +150,7 @@ class Upload extends Component {
 
     postChunk = (chunk, metadata, chunkCount) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("PUT", `${this.context.apiPrefix}/upload/${metadata.name}/${metadata.idx}/${chunkCount}`, true);
+        xhr.open("PUT", `${this.API_PREFIX}/upload/${metadata.name}/${metadata.idx}/${chunkCount}`, true);
         xhr.overrideMimeType('binary/octet-stream');
         xhr.onload = this.onChunkLoadEvent(xhr, metadata, chunkCount);
         xhr.upload.addEventListener("progress", this.onChunkProgressEvent(xhr, metadata), false);
@@ -246,7 +242,7 @@ class Upload extends Component {
         const {uploads} = this.props;
         if (uploads.pending) {
             return (
-                <ListGroup fill>
+                <ListGroup>
                     <ListGroupItem>
                         Loading uploaded files
                     </ListGroupItem>
@@ -319,7 +315,7 @@ class Upload extends Component {
     };
 
     render() {
-        const uploading = <Table fill striped bordered condensed hover>
+        const uploading = <Table striped bordered hover size="sm">
             <thead>
             <tr>
                 <th>Status</th>
@@ -338,13 +334,13 @@ class Upload extends Component {
         const uploaded = this.renderUploaded();
         const preview = this.renderPreview();
         return (
-            <Panel header="Upload" bsStyle="info">
-                <ListGroup fill>
+            <Card>
+                <Card.Header as={'h6'} className={'bg-info'}>Upload</Card.Header>
+                <ListGroup>
                     <ListGroupItem>
                         <Dropzone accept="audio/wav"
                                   onDrop={this.postFile}
                                   multiple={false}
-                                  disablePreview={true}
                                   className="list-group-item"
                                   style={{
                                       borderWidth: 2,
@@ -352,34 +348,39 @@ class Upload extends Component {
                                       borderStyle: 'dashed',
                                       borderRadius: 5
                                   }}>
-                            <FontAwesome name="upload" size="lg"/>
-                            &nbsp;&nbsp;
-                            Drag and drop a file here or click to choose a file
+                            {({getRootProps, getInputProps}) => (
+                                <div {...getRootProps()}>
+                                    <input {...getInputProps()} />
+                                    <FontAwesome name="upload" size="lg"/>
+                                    &nbsp;&nbsp;
+                                    Drag and drop a file here or click to choose a file
+                                </div>
+                            )}
                         </Dropzone>
                     </ListGroupItem>
                 </ListGroup>
                 {this.state.uploaded.size > 0 ? uploading : null}
                 {uploaded}
                 {preview}
-            </Panel>
+            </Card>
         );
     }
 }
 
-export default connect((props, context) => ( {
-    uploads: {url: `${context.apiPrefix}/uploads`, refreshInterval: 1000},
+export default connect((props) => ( {
+    uploads: {url: `${API_PREFIX}/uploads`, refreshInterval: 1000},
     fetchAnalysis: (name, start, end, resolution, window) => ({
-        fetchedAnalysis: `${context.apiPrefix}/uploads/${name}/${start}/${end}/${resolution}/${window}`
+        fetchedAnalysis: `${API_PREFIX}/uploads/${name}/${start}/${end}/${resolution}/${window}`
     }),
     deleteData: name => ({
         [`deleteUpload_${name}`]: {
-            url: `${context.apiPrefix}/uploads/${name}`,
+            url: `${API_PREFIX}/uploads/${name}`,
             method: 'DELETE'
         }
     }),
     createTarget: (name, start, end) => ({
         [`createTarget_${name}_${start}_${end}`]: {
-            url: `${context.apiPrefix}/uploadtarget/${name}/${start}/${end}`,
+            url: `${API_PREFIX}/uploadtarget/${name}/${start}/${end}`,
             method: 'PUT'
         }
     })

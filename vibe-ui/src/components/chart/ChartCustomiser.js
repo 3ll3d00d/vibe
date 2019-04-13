@@ -3,19 +3,17 @@ import PropTypes from "prop-types";
 import {
     Button,
     ButtonGroup,
-    Checkbox,
+    Card,
     Col,
-    ControlLabel,
     DropdownButton,
+    DropdownItem,
     Form,
     FormControl,
     FormGroup,
     InputGroup,
-    MenuItem,
     Modal,
     OverlayTrigger,
-    Tooltip,
-    Well
+    Tooltip
 } from "react-bootstrap";
 import FontAwesome from "react-fontawesome";
 import StylePicker from "./StylePicker";
@@ -251,8 +249,8 @@ export default class ChartCustomiser extends Component {
     };
 
     render() {
-        const presetMenuItems = this.state.presets.toJS().map(p => <MenuItem key={p.name}
-                                                                             eventKey={p.name}>{p.name}</MenuItem>);
+        const presetMenuItems = this.state.presets.toJS().map(p => <DropdownItem key={p.name}
+                                                                             eventKey={p.name}>{p.name}</DropdownItem>);
         return (
             <Modal show={this.props.visible} onHide={this.props.toggleVisibility}>
                 <Modal.Header>
@@ -274,9 +272,9 @@ export default class ChartCustomiser extends Component {
                 </Modal.Header>
                 <Modal.Body>
                     <Form horizontal>
-                        <Well bsSize="small">
+                        <Card size="sm" bg="light">
                             <FormGroup controlId="title">
-                                <Col componentClass={ControlLabel} md={2}>Title</Col>
+                                <Col as={Form.Label} md={2}>Title</Col>
                                 <Col md={6}>
                                     <FormControl type="text" value={this.state.title} onChange={this.handleTitle}/>
                                 </Col>
@@ -292,9 +290,9 @@ export default class ChartCustomiser extends Component {
                                 </Col>
                             </FormGroup>
                             <FormGroup controlId="size">
-                                <Col componentClass={ControlLabel} md={2}>Dimensions</Col>
+                                <Col as={Form.Label} md={2}>Dimensions</Col>
                                 <Col md={3}>
-                                    <InputGroup bsSize="small">
+                                    <InputGroup size="sm">
                                         <InputGroup.Addon>
                                             <FontAwesome name="arrows-h"/>
                                         </InputGroup.Addon>
@@ -307,7 +305,7 @@ export default class ChartCustomiser extends Component {
                                     </InputGroup>
                                 </Col>
                                 <Col md={3}>
-                                    <InputGroup bsSize="small">
+                                    <InputGroup size="sm">
                                         <InputGroup.Addon>
                                             <FontAwesome name="arrows-v"/>
                                         </InputGroup.Addon>
@@ -322,7 +320,7 @@ export default class ChartCustomiser extends Component {
                                 <Col md={3}>
                                     <OverlayTrigger placement="bottom"
                                                     overlay={<Tooltip id="ok">Y Axis Step Size</Tooltip>}>
-                                        <InputGroup bsSize="small">
+                                        <InputGroup size="sm">
                                             <InputGroup.Addon>y</InputGroup.Addon>
                                             <PreciseIntNumericInput precision={0}
                                                                     step={1}
@@ -335,7 +333,7 @@ export default class ChartCustomiser extends Component {
                                 </Col>
                             </FormGroup>
                             <FormGroup controlId="line">
-                                <Col componentClass={ControlLabel} md={2}>Line Style</Col>
+                                <Col as={Form.Label} md={2}>Line Style</Col>
                                 <Col md={3}>
                                     <OverlayTrigger placement="bottom"
                                                     overlay={<Tooltip id="ok">Line width (in pixels)</Tooltip>}>
@@ -374,20 +372,20 @@ export default class ChartCustomiser extends Component {
                                 </Col>
                             </FormGroup>
                             <FormGroup controlId="legend">
-                                <Col md={3} mdOffset={2}>
-                                    <Checkbox onChange={this.handleShowLegend} checked={this.state.showLegend}>
+                                <Col md={{span:3, offset:2}}>
+                                    <Form.Check onChange={this.handleShowLegend} checked={this.state.showLegend}>
                                         Show Legend?
-                                    </Checkbox>
+                                    </Form.Check>
                                 </Col>
                                 <Col md={3}>
-                                    <Checkbox onChange={this.handleLineFill} checked={this.state.lineFill}>
+                                    <Form.Check onChange={this.handleLineFill} checked={this.state.lineFill}>
                                         Fill Lines?
-                                    </Checkbox>
+                                    </Form.Check>
                                 </Col>
                             </FormGroup>
-                        </Well>
+                        </Card>
                         <FormGroup controlId="style">
-                            <Col componentClass={ControlLabel} md={2}>Colours</Col>
+                            <Col as={Form.Label} md={2}>Colours</Col>
                             <Col md={9}>
                                 <StylePicker namedColours={this.state.namedColours}
                                              selectColour={this.handleColourChange}/>

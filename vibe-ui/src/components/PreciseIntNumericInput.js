@@ -15,14 +15,14 @@ export default class PreciseIntNumericInput extends Component {
         placeholder: PropTypes.string
     };
 
-    defaultProps = {
-        step: 1,
-        precision: 12,
-        format: this.round
+    static round = (number) => {
+        return Math.round(number);
     };
 
-    round = (number) => {
-        return Math.round(number);
+    static defaultProps = {
+        step: 1,
+        precision: 12,
+        format: PreciseIntNumericInput.round
     };
 
     render() {

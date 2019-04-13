@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import {Button, ButtonToolbar, FormControl, OverlayTrigger, Tooltip} from "react-bootstrap";
 import FontAwesome from "react-fontawesome";
 import sematable, {Table} from "sematable";
-import "react-select/dist/react-select.css";
 import {SCIPY_WINDOWS} from "../../constants";
 
 const sizeCell = ({row}) => {
@@ -31,14 +30,14 @@ class ActionCell extends Component {
         if (upload.status === 'loaded') {
             if (upload.isSelectedChart) {
                 return (
-                    <Button bsStyle="success"
-                            onClick={upload.clearData} bsSize="xsmall">
+                    <Button variant="success"
+                            onClick={upload.clearData} size="xs">
                         <FontAwesome name="eject"/>
                     </Button>
                 );
             } else {
                 return (
-                    <Button bsStyle="primary" onClick={upload.fetchData} bsSize="xsmall">
+                    <Button variant="primary" onClick={upload.fetchData} size="xs">
                         <FontAwesome name="line-chart"/>
                     </Button>
                 );
@@ -51,7 +50,7 @@ class ActionCell extends Component {
         let deletePromise = upload.deleteResponse;
         if (deletePromise) {
             if (deletePromise.pending) {
-                return <Button bsStyle="danger" disabled bsSize="xsmall"><FontAwesome name="spinner" spin/></Button>;
+                return <Button variant="danger" disabled size="xs"><FontAwesome name="spinner" spin/></Button>;
             } else if (deletePromise.rejected) {
                 const code = deletePromise.meta.response.status;
                 const text = deletePromise.meta.response.statusText;
@@ -59,7 +58,7 @@ class ActionCell extends Component {
                 return (
                     <OverlayTrigger placement="top" overlay={tooltip}>
                         <div>
-                            <Button bsStyle="warning" bsSize="xsmall">
+                            <Button variant="warning" size="xs">
                                 <FontAwesome name="exclamation"/>&nbsp;FAILED
                             </Button>
                         </div>
@@ -67,14 +66,14 @@ class ActionCell extends Component {
                 );
             } else if (deletePromise.fulfilled) {
                 return (
-                    <Button bsStyle="success" disabled bsSize="xsmall">
+                    <Button variant="success" disabled size="xs">
                         <FontAwesome name="check"/>&nbsp;Deleted
                     </Button>
                 );
             }
         } else if (upload.status === 'loaded') {
             return (
-                <Button bsStyle="danger" onClick={() => upload.deleteData()} bsSize="xsmall">
+                <Button variant="danger" onClick={() => upload.deleteData()} size="xs">
                     <FontAwesome name="trash"/>
                 </Button>
             );
@@ -100,7 +99,7 @@ const previewEndCell = ({row}) => {
 };
 
 const previewResolutionCell = ({row}) => {
-    return <FormControl componentClass="select"
+    return <FormControl as="select"
                         placeholder="select"
                         value={row.previewResolution}
                         onChange={row.handlePreviewResolution}>
@@ -115,7 +114,7 @@ const previewWindowCell = ({row}) => {
     const options = SCIPY_WINDOWS.map(w => {
         return <option key={w} value={w}>{w}</option>;
     });
-    return <FormControl componentClass="select"
+    return <FormControl as="select"
                         placeholder="select"
                         value={row.previewWindow}
                         onChange={row.handlePreviewWindow}>
@@ -127,7 +126,7 @@ const targetCell = ({row}) => {
     let targetPromise = row.createResponse;
     if (targetPromise) {
         if (targetPromise.pending) {
-            return <Button bsStyle="danger" disabled bsSize="xsmall"><FontAwesome name="spinner" spin/>&nbsp;Saving</Button>;
+            return <Button variant="danger" disabled size="xs"><FontAwesome name="spinner" spin/>&nbsp;Saving</Button>;
         } else if (targetPromise.rejected) {
             const code = targetPromise.meta.response.status;
             const text = targetPromise.meta.response.statusText;
@@ -135,7 +134,7 @@ const targetCell = ({row}) => {
             return (
                 <OverlayTrigger placement="top" overlay={tooltip}>
                     <div>
-                        <Button bsStyle="warning" bsSize="xsmall">
+                        <Button variant="warning" size="xs">
                             <FontAwesome name="exclamation"/>&nbsp;FAILED
                         </Button>
                     </div>
@@ -143,14 +142,14 @@ const targetCell = ({row}) => {
             );
         } else if (targetPromise.fulfilled) {
             return (
-                <Button bsStyle="success" disabled bsSize="xsmall">
+                <Button variant="success" disabled size="xs">
                     <FontAwesome name="check"/>&nbsp;Saved
                 </Button>
             );
         }
     } else if (row.status === 'loaded') {
         return (
-            <Button bsStyle="primary" onClick={() => row.createTarget(row.name, row.start, row.end)} bsSize="xsmall">
+            <Button variant="primary" onClick={() => row.createTarget(row.name, row.start, row.end)} size="xs">
                 <FontAwesome name="bullseye"/>
             </Button>
         );
@@ -183,7 +182,7 @@ class UploadTable extends Component {
         return (
             <Table {...this.props}
                    columns={columns}
-                   className="table-responsive table-condensed table-bordered table-hover table-striped"/>
+                   className="table-responsive table-sm table-bordered table-hover table-striped"/>
         );
     }
 }

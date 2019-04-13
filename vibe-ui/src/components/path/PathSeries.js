@@ -1,5 +1,5 @@
 import {Map, Record} from "immutable";
-import {renderData, normaliseData} from "./RenderedData";
+import {normaliseData, renderData} from "./RenderedData";
 
 /**
  * An individual series that has a dataset which can be displayed on a chart.

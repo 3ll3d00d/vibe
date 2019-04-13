@@ -1,14 +1,11 @@
 import React, {PureComponent} from "react";
-import {Button, ControlLabel, Form, FormControl, FormGroup, Modal, Well} from "react-bootstrap";
+import {Button, Card, Form, FormControl, FormGroup, FormLabel, Modal} from "react-bootstrap";
 import PropTypes from "prop-types";
 import FontAwesome from "react-fontawesome";
 import {connect} from "react-refetch";
+import {API_PREFIX} from "../../App";
 
 class EditMeasurement extends PureComponent {
-    static contextTypes = {
-        apiPrefix: PropTypes.string.isRequired
-    };
-
     static propTypes = {
         selected: PropTypes.object,
         clearEditFunc: PropTypes.func.isRequired
@@ -138,15 +135,15 @@ class EditMeasurement extends PureComponent {
         if (responseKey) {
             const response = this.props[responseKey];
             if (response.pending) {
-                return <Button bsStyle="warning"><FontAwesome name="spinner" spin/> Updating</Button>;
+                return <Button variant="warning"><FontAwesome name="spinner" spin/> Updating</Button>;
             } else if (response.rejected) {
                 return (
-                    <Button bsStyle="danger" disabled>Failed - {response.reason}
+                    <Button variant="danger" disabled>Failed - {response.reason}
                         <FontAwesome name="exclamation-triangle"/>
                     </Button>
                 );
             } else if (response.fulfilled) {
-                return <Button bsStyle="success" disabled><FontAwesome name="check"/>Updated</Button>;
+                return <Button variant="success" disabled><FontAwesome name="check"/>Updated</Button>;
             }
         } else {
             return (
@@ -161,7 +158,7 @@ class EditMeasurement extends PureComponent {
         const deviceRenames = !this.props.selected ? null : Object.keys(this.props.selected.recordingDevices).map(d => {
             return (
                 <FormGroup key={d} controlId={d}>
-                    <ControlLabel>Rename {d} to: </ControlLabel>
+                    <FormLabel>Rename {d} to: </FormLabel>
                     {' '}
                     <FormControl type="text" value={this.state[d]} onChange={this.handleDevice(d)}/>
                 </FormGroup>
@@ -173,28 +170,28 @@ class EditMeasurement extends PureComponent {
                     <Modal.Title>Edit Measurement</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <Well>
+                    <Card bg="light">
                         <Form onSubmit={false}>
                             <FormGroup controlId="name">
-                                <ControlLabel>Name: </ControlLabel>
+                                <FormLabel>Name: </FormLabel>
                                 {' '}
                                 <FormControl type="text" value={this.state.name} onChange={this.handleName}/>
                             </FormGroup>
                             <FormGroup controlId="desc">
-                                <ControlLabel>Description: </ControlLabel>
+                                <FormLabel>Description: </FormLabel>
                                 {' '}
-                                <FormControl componentClass="textarea" value={this.state.description}
+                                <FormControl as="textarea" value={this.state.description}
                                              onChange={this.handleDescription}/>
                             </FormGroup>
                             <FormGroup controlId="start">
-                                <ControlLabel>Start: </ControlLabel>
+                                <FormLabel>Start: </FormLabel>
                                 {' '}
                                 <FormControl type="number" min="0" max={this.state.end - (1 / this.getFs())}
                                              step={1 / this.getFs()}
                                              value={this.state.start} onChange={this.handleStart}/>
                             </FormGroup>
                             <FormGroup controlId="end">
-                                <ControlLabel>End: </ControlLabel>
+                                <FormLabel>End: </FormLabel>
                                 {' '}
                                 <FormControl type="number" min={1 / this.getFs()} max={this.state.maxEnd}
                                              step={1 / this.getFs()}
@@ -203,17 +200,17 @@ class EditMeasurement extends PureComponent {
                             {deviceRenames}
                             {this.getSubmitButton()}
                         </Form>
-                    </Well>
+                    </Card>
                 </Modal.Body>
             </Modal>
         );
     }
 }
 
-export default connect((props, context) => ( {
+export default connect((props) => ( {
     submitEdit: (edit) => ({
         [`submitEditResponse_${edit.id}`]: {
-            url: `${context.apiPrefix}/measurements/${edit.id}`,
+            url: `${API_PREFIX}/measurements/${edit.id}`,
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'

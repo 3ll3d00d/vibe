@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {Label, OverlayTrigger, Tooltip} from "react-bootstrap";
+import {Badge, OverlayTrigger, Tooltip} from "react-bootstrap";
 import FontAwesome from "react-fontawesome";
 
 class DeviceStatusCell extends Component {
@@ -18,7 +18,7 @@ class DeviceStatusCell extends Component {
 
 class InitialisedCell extends Component {
     render() {
-        const label = <Label bsStyle="success"><FontAwesome name="check"/></Label>;
+        const label = <Badge variant="success"><FontAwesome name="check"/></Badge>;
         const tooltip = <Tooltip id="ok">OK</Tooltip>;
         const body = <div>{label}&nbsp;{this.props.deviceState.lastUpdateTime.toString()}</div>;
         return (
@@ -31,7 +31,7 @@ class InitialisedCell extends Component {
 
 class RecordingCell extends Component {
     render() {
-        const label = <Label bsStyle="warning"><FontAwesome name="spinner" spin/></Label>;
+        const label = <Badge variant="warning"><FontAwesome name="spinner" spin/></Badge>;
         const tooltip = <Tooltip id="recording">RECORDING</Tooltip>;
         return (
             <td colSpan="2">
@@ -46,7 +46,7 @@ class RecordingCell extends Component {
 
 class FailedCell extends Component {
     render() {
-        const label = <Label bsStyle="danger"><FontAwesome name="exclamation"/></Label>;
+        const label = <Badge variant="danger"><FontAwesome name="exclamation"/></Badge>;
         const tooltip = <Tooltip id="failed">FAILED</Tooltip>;
         return (
             <td colSpan="2">

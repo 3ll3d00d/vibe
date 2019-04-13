@@ -1,5 +1,5 @@
-import { combineReducers } from 'redux'
-import { reducer as sematable } from "sematable";
+import {combineReducers} from 'redux'
+import {reducer as sematable} from "sematable";
 
 const vibeApp = combineReducers({
     sematable

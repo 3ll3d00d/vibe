@@ -1,5 +1,13 @@
 import React, {Component} from "react";
-import {Button, ButtonGroup, ButtonToolbar, DropdownButton, MenuItem, OverlayTrigger, Tooltip} from "react-bootstrap";
+import {
+    Button,
+    ButtonGroup,
+    ButtonToolbar,
+    DropdownButton,
+    DropdownItem,
+    OverlayTrigger,
+    Tooltip
+} from "react-bootstrap";
 import NavigatorMultiSelect from "./NavigatorMultiSelect";
 import FontAwesome from "react-fontawesome";
 import "react-bootstrap-multiselect/css/bootstrap-multiselect.css";
@@ -27,9 +35,9 @@ export default class AnalysisNavigator extends Component {
             style = 'warning';
         }
         return (
-            <DropdownButton key="typeSelector" bsStyle={style} title={namedType} id="typeSelector">
-                <MenuItem eventKey={1} onClick={() => this.navigate({type: 'measure'})}>Measurement</MenuItem>
-                <MenuItem eventKey={2} onClick={() => this.navigate({type: 'target'})}>Target</MenuItem>
+            <DropdownButton key="typeSelector" variant={style} title={namedType} id="typeSelector">
+                <DropdownItem eventKey={1} onClick={() => this.navigate({type: 'measure'})}>Measurement</DropdownItem>
+                <DropdownItem eventKey={2} onClick={() => this.navigate({type: 'target'})}>Target</DropdownItem>
             </DropdownButton>
         );
     }
@@ -37,7 +45,7 @@ export default class AnalysisNavigator extends Component {
     createTargetLinks() {
         const targetOptions = this.props.targetMeta.map((t) => {
             let navFunc = () => this.navigate({type: this.props.type, measurementId: t});
-            return <MenuItem key={t} eventKey={t} onClick={navFunc}>{t}</MenuItem>;
+            return <DropdownItem key={t} eventKey={t} onClick={navFunc}>{t}</DropdownItem>;
         });
         let title = null;
         let style = null;
@@ -49,7 +57,7 @@ export default class AnalysisNavigator extends Component {
             title = "Select a target";
         }
         return (
-            <DropdownButton key="targetSelector" bsStyle={style} title={title} id="targetSelector">
+            <DropdownButton key="targetSelector" variant={style} title={title} id="targetSelector">
                 {targetOptions}
             </DropdownButton>
         );
@@ -68,7 +76,7 @@ export default class AnalysisNavigator extends Component {
             if (m.devices && m.devices.length === 1) {
                 navFunc = () => this.navigate({type: this.props.type, measurementId: m.id, deviceId: m.devices[0]});
             }
-            return <MenuItem key={m.id} eventKey={m.id} onClick={navFunc}>{m.id}</MenuItem>;
+            return <DropdownItem key={m.id} eventKey={m.id} onClick={navFunc}>{m.id}</DropdownItem>;
         });
         let title = null;
         let style = null;
@@ -80,7 +88,7 @@ export default class AnalysisNavigator extends Component {
             title = "Select a measurement";
         }
         return (
-            <DropdownButton key="measurementSelector" bsStyle={style} title={title} id="measurementSelector">
+            <DropdownButton key="measurementSelector" variant={style} title={title} id="measurementSelector">
                 {measurementOptions}
             </DropdownButton>
         );
@@ -98,7 +106,7 @@ export default class AnalysisNavigator extends Component {
                 if (measurement) {
                     deviceOptions = measurement.devices.map((d) => {
                         const navigateFunc = () => this.navigate({type: this.props.type, measurementId: measurementId, deviceId: d});
-                        return <MenuItem key={d} eventKey={d} onClick={navigateFunc}>{d}</MenuItem>;
+                        return <DropdownItem key={d} eventKey={d} onClick={navigateFunc}>{d}</DropdownItem>;
                     });
                     if (deviceId) {
                         title = `Device: ${deviceId}`;
@@ -113,13 +121,13 @@ export default class AnalysisNavigator extends Component {
         }
         if (disabled) {
             return (
-                <DropdownButton disabled bsStyle={style} title={title} id="deviceSelector">
+                <DropdownButton disabled variant={style} title={title} id="deviceSelector">
                     {deviceOptions}
                 </DropdownButton>
             );
         } else {
             return (
-                <DropdownButton bsStyle={style} title={title} id="deviceSelector">
+                <DropdownButton variant={style} title={title} id="deviceSelector">
                     {deviceOptions}
                 </DropdownButton>
             );
@@ -149,7 +157,7 @@ export default class AnalysisNavigator extends Component {
                             analyserId: a,
                             series: seriesLink
                         });
-                        return <MenuItem key={a} eventKey={a} onClick={navigateFunc}>{a}</MenuItem>;
+                        return <DropdownItem key={a} eventKey={a} onClick={navigateFunc}>{a}</DropdownItem>;
                     });
                     if (analyserId) {
                         title = `Analysis: ${analyserId}`;
@@ -164,13 +172,13 @@ export default class AnalysisNavigator extends Component {
         }
         if (disabled) {
             return (
-                <DropdownButton disabled bsStyle={style} title={title} id="analysisSelector">
+                <DropdownButton disabled variant={style} title={title} id="analysisSelector">
                     {analyserOptions}
                 </DropdownButton>
             );
         } else {
             return (
-                <DropdownButton bsStyle={style} title={title} id="analysisSelector">
+                <DropdownButton variant={style} title={title} id="analysisSelector">
                     {analyserOptions}
                 </DropdownButton>
             );
@@ -228,19 +236,19 @@ export default class AnalysisNavigator extends Component {
         if (path && path.data) {
             if (path.data.pending) {
                 actionButtons.push(
-                    <Button key="loading" bsStyle="success">Loading... <FontAwesome name="spinner" spin/></Button>
+                    <Button key="loading" variant="success">Loading... <FontAwesome name="spinner" spin/></Button>
                 );
             } else if (path.data.rejected) {
                 const tooltip = <Tooltip id={path.getExternalId()}>{path.data.reason.toString()}</Tooltip>;
                 actionButtons.push(
-                    <OverlayTrigger placement="top" overlay={tooltip}>
-                        <Button bsStyle="danger">Failed<FontAwesome name="exclamation-triangle"/></Button>
+                    <OverlayTrigger key="failed" placement="top" overlay={tooltip}>
+                        <Button variant="danger">Failed<FontAwesome name="exclamation-triangle"/></Button>
                     </OverlayTrigger>
                 );
             } else if (path.data.fulfilled) {
                 loadedOK = true;
                 actionButtons.push(
-                    <Button key="loaded" bsStyle="success">Loaded <FontAwesome name="check"/></Button>
+                    <Button key="loaded" variant="success">Loaded <FontAwesome name="check"/></Button>
                 );
             }
         }
