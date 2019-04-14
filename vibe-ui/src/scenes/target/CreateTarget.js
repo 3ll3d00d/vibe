@@ -114,7 +114,7 @@ class HingeSelector extends Component {
                         <FormControl as="textarea"
                                      value={this.state.hinge}
                                      onChange={this.handleHinge}
-                                     style={{ height: 130 }}
+                                     rows={ 8 }
                                      placeholder="Enter a set of hinge points in dB<space>frequency format &#10;where 0 &lt; freq &lt; 500 e.g.&#10;4 1&#10;1 4&#10;1 8&#10;6 80"
                                      {...isValid}/>
                     </FormGroup>

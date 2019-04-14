@@ -2,7 +2,7 @@ import React, {Component} from "react";
 import PropTypes from "prop-types";
 import {Button, ButtonToolbar, OverlayTrigger, Tooltip} from "react-bootstrap";
 import FontAwesome from "react-fontawesome";
-import sematable, {Table} from "sematable";
+import ReactTable from 'react-table';
 
 class ActionCell extends Component {
     getAnalyseButton(target) {
@@ -81,24 +81,26 @@ const typeCell = ({row}) => {
 
 
 const columns = [
-    {key: 'type', header: 'Type', Component: typeCell},
-    {key: 'name', header: 'Name', primaryKey: true, filterable: true},
-    {key: 'actions', header: 'Actions', Component: ActionCell},
+    {accessor: 'type', Header: 'Type', Cell: typeCell},
+    {accessor: 'name', Header: 'Name', filterable: true},
+    {accessor: 'actions', Header: 'Actions', Cell: ActionCell},
 ];
 
-
-class TargetTable extends Component {
+export default class TargetTable extends Component {
     render() {
         return (
-            <Table {...this.props}
-                   columns={columns}
-                   className="table-responsive table-sm table-bordered table-hover table-striped"/>
+            <ReactTable data={this.props.data}
+                        columns={columns}
+                        sortable={false}
+                        defaultPageSize={5}
+                        defaultSorted={[
+                            {
+                                id: "name",
+                                desc: false
+                            }
+                        ]}
+                        className={'-striped -highlight'}/>
+
         );
     }
 }
-
-export default sematable('targets', TargetTable, columns, {
-    defaultPageSize: 6,
-    sortKey: 'name',
-    sortDirection: 'asc'
-});

@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import Message from "../../components/Message";
-import {Card, Col, Container, Row} from "react-bootstrap";
+import {Card, Col, Row} from "react-bootstrap";
 import {connect, PromiseState} from "react-refetch";
 import Measurements from "./Measurements";
 import ScheduleMeasurement from "./ScheduleMeasurement";
@@ -27,7 +27,7 @@ class Measure extends Component {
         });
     };
 
-    clearEdit  = () => {
+    clearEdit = () => {
         this.setState((previousState, props) => {
             return {selectedEdit: null};
         });
@@ -96,43 +96,37 @@ class Measure extends Component {
         } else if (allFetches.fulfilled) {
             const timeSeries = this.renderTimeSeriesIfAny();
             return (
-                <div>
-                    <Container>
-                        <Row>
-                            <Col>
-                                <Card>
-                                    <Card.Header as={'h6'} className={'bg-info'}>Measurements</Card.Header>
-                                    <Row>
-                                        <Col>
-                                            <Measurements measurements={this.props.measurements.value}
-                                                          fetcher={this.showTimeSeries}
-                                                          clearFunc={this.clearTimeSeries}
-                                                          showEditFunc={this.showEdit}
-                                                          clearEditFunc={this.clearEdit}
-                                                          selectedChart={this.state.selectedChart}
-                                                          selectedEdit={this.state.selectedEdit}/>
-                                            <EditMeasurement selected={this.props.measurements.value.find(m => m.id === this.state.selectedEdit)}
-                                                             clearEditFunc={this.clearEdit}/>
-                                        </Col>
-                                    </Row>
-                                    <Row>
-                                        <Col md={8}>
-                                            {timeSeries}
-                                        </Col>
-                                        <Col md={{offset: 3, span: 1}}>
-                                            <ScheduleMeasurement deviceStatuses={this.props.deviceStatuses.value}/>
-                                        </Col>
-                                    </Row>
-                                </Card>
-                            </Col>
-                        </Row>
-                    </Container>
-                </div>
+                <Card>
+                    <Card.Header as={'h6'} className={'bg-info'}>Measurements</Card.Header>
+                    <Row>
+                        <Col>
+                            <Measurements measurements={this.props.measurements.value}
+                                          fetcher={this.showTimeSeries}
+                                          clearFunc={this.clearTimeSeries}
+                                          showEditFunc={this.showEdit}
+                                          clearEditFunc={this.clearEdit}
+                                          selectedChart={this.state.selectedChart}
+                                          selectedEdit={this.state.selectedEdit}/>
+                            <EditMeasurement
+                                selected={this.props.measurements.value.find(m => m.id === this.state.selectedEdit)}
+                                clearEditFunc={this.clearEdit}/>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col md={8}>
+                            {timeSeries}
+                        </Col>
+                        <Col md={{offset: 3, span: 1}}>
+                            <ScheduleMeasurement deviceStatuses={this.props.deviceStatuses.value}/>
+                        </Col>
+                    </Row>
+                </Card>
             );
         }
     }
 }
-export default connect((props) => ( {
+
+export default connect((props) => ({
     deviceStatuses: {
         url: `${API_PREFIX}/devices`,
         refreshInterval: 1000,
@@ -142,4 +136,4 @@ export default connect((props) => ( {
     fetchMeasurementData: (measurementId) => ({
         [`fetchedData_${measurementId}`]: `${API_PREFIX}/measurements/${measurementId}/timeseries`
     })
-} ))(Measure)
+}))(Measure)

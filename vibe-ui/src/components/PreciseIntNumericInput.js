@@ -30,8 +30,7 @@ export default class PreciseIntNumericInput extends Component {
         return (
             <NumericInput {...rest}
                           onChange={handler}
-                          className="form-control"
-                          style={false}/> // eslint-disable-line react/style-prop-object
+                          className="form-control"/>
         );
     }
 }

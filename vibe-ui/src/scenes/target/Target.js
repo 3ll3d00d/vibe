@@ -78,15 +78,15 @@ class Target extends Component {
             return (
                 <Card>
                     <Card.Header as={'h6'} className={'bg-info'}>Targets</Card.Header>
-                    <Container>
+                    <Container fluid>
                         <Row>
-                            <Col md={7}>
+                            <Col md={7} className={'pl-0'}>
                                 <Targets targets={this.props.targets.value}
                                          showFunc={this.showTimeSeries}
                                          clearFunc={this.clearTimeSeries}
                                          selected={this.state.selected}/>
                             </Col>
-                            <Col md={5}>
+                            <Col md={5} className={'pr-0'}>
                                 <CreateTarget previewFunc={this.handlePreview}/>
                             </Col>
                         </Row>

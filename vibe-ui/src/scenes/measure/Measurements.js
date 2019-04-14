@@ -29,7 +29,7 @@ class Measurements extends Component {
         const deleteMeasurement = () => deleteFunc(row.id);
         const fetchTimeSeries = () => fetchFunc(row.id);
         const showEdit = () => showEditFunc(row.id);
-        return Object.assign(row, {
+        let result = Object.assign({}, row, {
             date: row.startTime.split('_')[0],
             time: row.startTime.split('_')[1],
             fs: row.measurementParameters.fs,
@@ -42,6 +42,7 @@ class Measurements extends Component {
             isSelectedChart: row.id === selectedChart,
             isSelectedEdit: row.id === selectedEdit
         });
+        return result;
     }
 
     render() {

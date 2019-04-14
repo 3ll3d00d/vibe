@@ -26,7 +26,7 @@ class Configure extends Component {
             );
         } else if (allFetches.fulfilled) {
             return (
-                <Container>
+                <Container fluid>
                     <Row>
                         <Col>
                             <DeviceStatusTable deviceState={this.props.deviceState.value}

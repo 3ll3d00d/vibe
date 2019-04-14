@@ -11,6 +11,8 @@ export default class LineChart extends PureComponent {
         customChartConfig: PropTypes.object
     };
 
+    chartRef = {};
+
     state = {
         redraw: false
     };
@@ -55,13 +57,13 @@ export default class LineChart extends PureComponent {
     };
 
     // credit to https://www.paulirish.com/2009/random-hex-color-code-snippets/
-    generateRandomColour() {
+    static generateRandomColour() {
         return '#' + ~~(Math.random() * (1 << 24)).toString(16);
     }
 
     propagateExportableChart = (anim) => {
-        const {height, width} = this.refs.chart.chart_instance.chart;
-        const url = this.refs.chart.chart_instance.toBase64Image();
+        const {height, width} = this.chartRef.chartInstance;
+        const url = this.chartRef.chartInstance.toBase64Image();
         if (this.props.chartExportHandler) {
             this.props.chartExportHandler({height, width, url});
         }
@@ -80,7 +82,7 @@ export default class LineChart extends PureComponent {
                     colour = SERIES_COLOURS.unknown[s.seriesIdx];
                 }
             }
-            if (!colour) colour = this.generateRandomColour();
+            if (!colour) colour = LineChart.generateRandomColour();
             const dataset = {
                 label: s.id + '/' + s.series,
                 data: s.xyz,
@@ -228,8 +230,8 @@ export default class LineChart extends PureComponent {
             title: title
         };
         return (
-            <div style={Object.assign({position: "relative"}, divSize)}>
-                <Line ref='chart'
+            <div style={Object.assign({position: "relative"}, divSize)} className='mt-3 mr-4'>
+                <Line ref={(reference) => this.chartRef = reference }
                       type={'line'}
                       data={{datasets: datasets}}
                       options={options}
