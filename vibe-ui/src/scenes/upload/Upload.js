@@ -101,7 +101,7 @@ class Upload extends Component {
             this.setState((previousState, props) => {
                 const {uploaded} = previousState;
                 const upload = uploaded.get(0);
-                if (finaliser.status === 200) {
+                if (finaliser.status === 200 && upload) {
                     upload.completeMerge();
                 } else {
                     upload.failMerge(finaliser.statusText);
@@ -122,7 +122,7 @@ class Upload extends Component {
 
     finaliseUpload = (metadata, chunkCount, success) => {
         const finaliser = new XMLHttpRequest();
-        finaliser.open("PUT", `${this.API_PREFIX}/completeupload/${metadata.name}/${chunkCount}/${success}`, true);
+        finaliser.open("PUT", `${API_PREFIX}/completeupload/${metadata.name}/${chunkCount}/${success}`, true);
         finaliser.onload = this.onFinaliseLoadEvent(finaliser);
         finaliser.onerror = this.onFinaliseErrorEvent(finaliser);
         finaliser.send();
@@ -150,7 +150,7 @@ class Upload extends Component {
 
     postChunk = (chunk, metadata, chunkCount) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("PUT", `${this.API_PREFIX}/upload/${metadata.name}/${metadata.idx}/${chunkCount}`, true);
+        xhr.open("PUT", `${API_PREFIX}/upload/${metadata.name}/${metadata.idx}/${chunkCount}`, true);
         xhr.overrideMimeType('binary/octet-stream');
         xhr.onload = this.onChunkLoadEvent(xhr, metadata, chunkCount);
         xhr.upload.addEventListener("progress", this.onChunkProgressEvent(xhr, metadata), false);

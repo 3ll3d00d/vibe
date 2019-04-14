@@ -61,6 +61,11 @@ class ScheduleMeasurement extends Component {
         return this.state && this.state.delay;
     }
 
+    ignoreSubmit = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
     render() {
         let openButton = <Button className="pull-right" variant="danger" disabled>No Devices<br/>Available&nbsp;<FontAwesome name="exclamation"/></Button>;
         if (this.props.deviceStatuses.some((status) => status === 'INITIALISED' || status === 'RECORDING')) {
@@ -75,7 +80,7 @@ class ScheduleMeasurement extends Component {
                     </Modal.Header>
                     <Modal.Body>
                         <Card bg={'light'}>
-                            <Form onSubmit={false}>
+                            <Form onSubmit={this.ignoreSubmit}>
                                 <Row>
                                     <Col md={6}>
                                         <FormGroup controlId="name">

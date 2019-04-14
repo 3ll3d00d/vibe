@@ -1,5 +1,4 @@
 import React, {Component} from "react";
-import PropTypes from "prop-types";
 import {Button, ButtonToolbar, FormControl, OverlayTrigger, Tooltip} from "react-bootstrap";
 import FontAwesome from "react-fontawesome";
 import ReactTable from 'react-table';
@@ -7,10 +6,6 @@ import {SCIPY_WINDOWS} from "../../constants";
 
 const sizeCell = ({row}) => {
     return <div>{Math.round(row.size / 1000) / 1000}</div>;
-};
-
-const durationCell = ({row}) => {
-    return <div>{row.durationStr}</div>;
 };
 
 const statusCell = ({row}) => {
@@ -66,14 +61,14 @@ class ActionCell extends Component {
                 );
             } else if (deletePromise.fulfilled) {
                 return (
-                    <Button variant="success" disabled size="xm">
+                    <Button variant="success" disabled size="sm">
                         <FontAwesome name="check"/>&nbsp;Deleted
                     </Button>
                 );
             }
         } else if (upload.status === 'loaded') {
             return (
-                <Button variant="danger" onClick={() => upload.deleteData()} size="xm">
+                <Button variant="danger" onClick={() => upload.deleteData()} size="sm">
                     <FontAwesome name="trash"/>
                 </Button>
             );
@@ -82,27 +77,27 @@ class ActionCell extends Component {
     };
 
     render() {
-        const analyseButton = this.getAnalyseButton(this.props.row);
-        const deleteButton = this.getDeleteButton(this.props.row);
+        const analyseButton = this.getAnalyseButton(this.props.original);
+        const deleteButton = this.getDeleteButton(this.props.original);
         return <ButtonToolbar>{analyseButton}{deleteButton}</ButtonToolbar>;
     }
 }
 
-const previewStartCell = ({row}) => {
-    return <FormControl type="time" step="0.001" min="0" max={row.durationStr} value={row.previewStart}
-                        onChange={row.handlePreviewStart}/>;
+const previewStartCell = ({original}) => {
+    return <FormControl type="time" step="0.001" min="0" max={original.durationStr} value={original.previewStart}
+                        onChange={original.handlePreviewStart}/>;
 };
 
-const previewEndCell = ({row}) => {
-    return <FormControl type="time" step="0.001" min="0" max={row.durationStr} value={row.previewEnd}
-                        onChange={row.handlePreviewEnd}/>;
+const previewEndCell = ({original}) => {
+    return <FormControl type="time" step="0.001" min="0" max={original.durationStr} value={original.previewEnd}
+                        onChange={original.handlePreviewEnd}/>;
 };
 
-const previewResolutionCell = ({row}) => {
+const previewResolutionCell = ({original}) => {
     return <FormControl as="select"
                         placeholder="select"
-                        value={row.previewResolution}
-                        onChange={row.handlePreviewResolution}>
+                        value={original.previewResolution}
+                        onChange={original.handlePreviewResolution}>
         <option value="1">1 Hz</option>
         <option value="2">0.5 Hz</option>
         <option value="4">0.25 Hz</option>
@@ -110,31 +105,31 @@ const previewResolutionCell = ({row}) => {
     </FormControl>;
 };
 
-const previewWindowCell = ({row}) => {
+const previewWindowCell = ({original}) => {
     const options = SCIPY_WINDOWS.map(w => {
         return <option key={w} value={w}>{w}</option>;
     });
     return <FormControl as="select"
                         placeholder="select"
-                        value={row.previewWindow}
-                        onChange={row.handlePreviewWindow}>
+                        value={original.previewWindow}
+                        onChange={original.handlePreviewWindow}>
         {options}
     </FormControl>;
 };
 
-const targetCell = ({row}) => {
-    let targetPromise = row.createResponse;
+const targetCell = ({original}) => {
+    let targetPromise = original.createResponse;
     if (targetPromise) {
         if (targetPromise.pending) {
-            return <Button variant="danger" disabled size="xm"><FontAwesome name="spinner" spin/>&nbsp;Saving</Button>;
+            return <Button variant="danger" disabled size="sm"><FontAwesome name="spinner" spin/>&nbsp;Saving</Button>;
         } else if (targetPromise.rejected) {
             const code = targetPromise.meta.response.status;
             const text = targetPromise.meta.response.statusText;
-            const tooltip = <Tooltip id={row.name}>{code} - {text}</Tooltip>;
+            const tooltip = <Tooltip id={original.name}>{code} - {text}</Tooltip>;
             return (
                 <OverlayTrigger placement="top" overlay={tooltip}>
                     <div>
-                        <Button variant="warning" size="xm">
+                        <Button variant="warning" size="sm">
                             <FontAwesome name="exclamation"/>&nbsp;FAILED
                         </Button>
                     </div>
@@ -142,26 +137,22 @@ const targetCell = ({row}) => {
             );
         } else if (targetPromise.fulfilled) {
             return (
-                <Button variant="success" disabled size="xm">
+                <Button variant="success" disabled size="sm">
                     <FontAwesome name="check"/>&nbsp;Saved
                 </Button>
             );
         }
-    } else if (row.status === 'loaded') {
+    } else if (original.status === 'loaded') {
         return (
-            <Button variant="primary" onClick={() => row.createTarget(row.name, row.start, row.end)} size="xm">
+            <Button variant="primary"
+                    onClick={() => original.createTarget(original.name, original.start, original.end)}
+                    size="sm">
                 <FontAwesome name="bullseye"/>
             </Button>
         );
     }
     return null;
 };
-
-[sizeCell, durationCell, statusCell, targetCell, ActionCell, previewStartCell, previewEndCell, previewResolutionCell].forEach(m => {
-    m.propTypes = {
-        row: PropTypes.object.isRequired,
-    }
-});
 
 const columns = [
     {accessor: 'status', Header: 'Status', Cell: statusCell},

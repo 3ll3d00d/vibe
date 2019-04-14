@@ -154,6 +154,11 @@ class EditMeasurement extends PureComponent {
         }
     }
 
+    ignoreSubmit = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
     render() {
         const deviceRenames = !this.props.selected ? null : Object.keys(this.props.selected.recordingDevices).map(d => {
             return (
@@ -171,7 +176,7 @@ class EditMeasurement extends PureComponent {
                 </Modal.Header>
                 <Modal.Body>
                     <Card bg="light">
-                        <Form onSubmit={false}>
+                        <Form onSubmit={this.ignoreSubmit}>
                             <FormGroup controlId="name">
                                 <FormLabel>Name: </FormLabel>
                                 {' '}
