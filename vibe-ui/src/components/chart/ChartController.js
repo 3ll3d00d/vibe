@@ -45,9 +45,9 @@ export default class ChartController extends Component {
     };
 
     createChartConfig(state, range) {
-        const yRange = [this.chooseValue('minY', state, range), this.chooseValue('maxY', state, range)];
-        const minX = Math.round(this.chooseValue('minX', state, range) * 10) / 10;
-        const xRange = [minX === 0 ? 0.1 : minX, this.chooseValue('maxX', state, range)];
+        const yRange = [ChartController.chooseValue('minY', state, range), ChartController.chooseValue('maxY', state, range)];
+        const minX = Math.round(ChartController.chooseValue('minX', state, range) * 10) / 10;
+        const xRange = [minX === 0 ? 0.1 : minX, ChartController.chooseValue('maxX', state, range)];
         return {config: getAnalysisChartConfig(xRange, yRange, state.xLog, state.dots)};
     }
 
@@ -113,7 +113,7 @@ export default class ChartController extends Component {
         this.setState({customChartConfig: null});
     };
 
-    chooseValue(name, state, range) {
+    static chooseValue(name, state, range) {
         return state[name] !== -100 ? state[name] : range[name];
     }
 
@@ -172,49 +172,51 @@ export default class ChartController extends Component {
                                  resetCustomChartConfig={this.resetCustomChartConfig}
                                  updateChart={this.updateCustomChartConfig}/>
                 <Card size="sm" bg="light">
-                    <Row className={'align-items-center'}>
-                        <Col md={6}>
+                    <Row className={'align-items-center p-2'}>
+                        <Col lg={4} md={5} sm={8}>
                             <Row>
                                 <Col md={{span: 4, offset: 4}}>
                                     <PreciseIntNumericInput
-                                        value={this.chooseValue('maxY', this.state, this.props.range)}
+                                        value={ChartController.chooseValue('maxY', this.state, this.props.range)}
                                         handler={this.handleMaxY}/>
                                 </Col>
                             </Row>
-                            <Row className={'justify-content-md-center'}>
-                                <Col md={4}>
+                            <Row className={'justify-content-center'}>
+                                <Col md={4} className={'align-self-center'}>
                                     <PreciseIntNumericInput
-                                        value={this.chooseValue('minX', this.state, this.props.range)}
+                                        value={ChartController.chooseValue('minX', this.state, this.props.range)}
                                         handler={this.handleMinX}/>
                                 </Col>
-                                <Col md={4}>
-                                    <ToggleButton activeLabel="x log"
-                                                  inactiveLabel="x lin"
-                                                  value={this.state.xLog}
-                                                  onToggle={this.handleLinLogChange}/>
-                                    <ToggleButton activeLabel="dots"
-                                                  inactiveLabel="dots"
-                                                  value={this.state.dots}
-                                                  onToggle={this.handleDotsChange}/>
+                                <Col md={4} className={'p-2'}>
+                                    <Row className={'justify-content-center pb-2'}>
+                                        <ToggleButton activeLabel="x log"
+                                                      inactiveLabel="x lin"
+                                                      value={this.state.xLog}
+                                                      onToggle={this.handleLinLogChange}/>
+                                        <ToggleButton activeLabel="dots"
+                                                      inactiveLabel="dots"
+                                                      value={this.state.dots}
+                                                      onToggle={this.handleDotsChange}/>
+                                    </Row>
+                                    <Row className={'justify-content-center'}>
+                                        {updateButton}{resetButton}{this.getDownloadButton()}
+                                    </Row>
                                 </Col>
-                                <Col md={4}>
+                                <Col md={4} className={'align-self-center'}>
                                     <PreciseIntNumericInput
-                                        value={this.chooseValue('maxX', this.state, this.props.range)}
+                                        value={ChartController.chooseValue('maxX', this.state, this.props.range)}
                                         handler={this.handleMaxX}/>
                                 </Col>
                             </Row>
                             <Row>
                                 <Col md={{span: 4, offset: 4}}>
                                     <PreciseIntNumericInput
-                                        value={this.chooseValue('minY', this.state, this.props.range)}
+                                        value={ChartController.chooseValue('minY', this.state, this.props.range)}
                                         handler={this.handleMinY}/>
                                 </Col>
                             </Row>
                         </Col>
-                        <Col md={2}>
-                            {updateButton}{resetButton}{this.getDownloadButton()}
-                        </Col>
-                        <Col md={4}>
+                        <Col lg={4} md={6} sm={4}>
                             {this.makeReferenceSeriesSelector()}
                         </Col>
                     </Row>
