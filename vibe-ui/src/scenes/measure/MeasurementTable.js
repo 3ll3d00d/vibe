@@ -1,14 +1,13 @@
 import React, {Component} from "react";
-import PropTypes from "prop-types";
 import {Badge, Button, ButtonToolbar, OverlayTrigger, Table as RBTable, Tooltip} from "react-bootstrap";
 import {Line} from "rc-progress";
 import FontAwesome from "react-fontawesome";
-import sematable, {Table} from "sematable";
 import "./MeasurementTable.css";
+import ReactTable from 'react-table'
 
-const statusCell = ({row}) => {
+const statusCell = ({original}) => {
     let label = null;
-    switch (row.status) {
+    switch (original.status) {
         case "COMPLETE":
             label = <Badge variant="success"><FontAwesome name="check"/></Badge>;
             break;
@@ -25,28 +24,28 @@ const statusCell = ({row}) => {
             label = <Badge variant="warning"><FontAwesome name="question"/></Badge>;
             break;
     }
-    const tooltip = <Tooltip id={row.status}>{row.status}</Tooltip>;
+    const tooltip = <Tooltip id={original.status}>{original.status}</Tooltip>;
     return <OverlayTrigger placement="top" overlay={tooltip} trigger="click" rootClose>{label}</OverlayTrigger>;
 };
 
-const nameCell = ({row}) => {
-    if (row.description && row.description.length > 0) {
-        const tooltip = <Tooltip id={row.name}>{row.description}</Tooltip>;
+const nameCell = ({original}) => {
+    if (original.description && original.description.length > 0) {
+        const tooltip = <Tooltip id={original.name}>{original.description}</Tooltip>;
         return (
             <OverlayTrigger placement="top" overlay={tooltip} trigger="click" rootClose>
-                <div>{row.name}</div>
+                <div>{original.name}</div>
             </OverlayTrigger>
         );
     } else {
-        return <div>{row.name}</div>;
+        return <div>{original.name}</div>;
     }
 };
 
 class ProgressCell extends Component {
     calculateProgress() {
-        const samplesExpected = this.props.row.measurementParameters.fs * this.props.row.duration;
-        const progressValues = Object.keys(this.props.row.recordingDevices)
-                                     .map(key => this.props.row.recordingDevices[key].count);
+        const samplesExpected = this.props.original.measurementParameters.fs * this.props.original.duration;
+        const progressValues = Object.keys(this.props.original.recordingDevices)
+            .map(key => this.props.original.recordingDevices[key].count);
         const samplesSoFar = Math.max(...progressValues);
         return Math.ceil(samplesSoFar / samplesExpected * 100);
     }
@@ -54,7 +53,7 @@ class ProgressCell extends Component {
     render() {
         let progress = null;
         let percentage = 0;
-        switch (this.props.row.status) {
+        switch (this.props.original.status) {
             case "COMPLETE":
                 percentage = 100;
                 progress = <Line percent={percentage} strokeWidth="5" strokeColor="green"/>;
@@ -74,14 +73,14 @@ class ProgressCell extends Component {
                 progress = <Line percent={percentage} strokeWidth="5" strokeColor="yellow"/>;
                 break;
         }
-        const tooltip = <Tooltip id={this.props.row.status}>{percentage}%</Tooltip>;
+        const tooltip = <Tooltip id={this.props.original.status}>{percentage}%</Tooltip>;
         return <OverlayTrigger placement="top" overlay={tooltip} trigger="click" rootClose>{progress}</OverlayTrigger>;
     }
 }
 
-const sensorCell = ({row}) => {
-    const gyroIcon = row.measurementParameters.gyroEnabled ? "check-square-o" : "minus-square-o";
-    const accelIcon = row.measurementParameters.accelerometerEnabled ? "check-square-o" : "minus-square-o";
+const sensorCell = ({original}) => {
+    const gyroIcon = original.measurementParameters.gyroEnabled ? "check-square-o" : "minus-square-o";
+    const accelIcon = original.measurementParameters.accelerometerEnabled ? "check-square-o" : "minus-square-o";
     return (
         <span>
             <Badge variant="primary">Accelerometer  <FontAwesome name={accelIcon}/></Badge>
@@ -92,7 +91,7 @@ const sensorCell = ({row}) => {
 };
 
 class DeviceCell extends Component {
-    createDetailTable(devices) {
+    createDetailTable = devices => {
         const rows = [];
         for (let kv of devices) {
             const row = <tr key={kv[0]}>
@@ -120,23 +119,23 @@ class DeviceCell extends Component {
                 </tbody>
             </RBTable>
         );
-    }
+    };
 
-    mapDevices() {
+    mapDevices = () => {
         const devices = new Map();
-        Object.keys(this.props.row.recordingDevices).forEach(key => {
-            devices.set(key, this.props.row.recordingDevices[key]);
+        Object.keys(this.props.original.recordingDevices).forEach(key => {
+            devices.set(key, this.props.original.recordingDevices[key]);
         });
         return devices;
-    }
+    };
 
-    extractDeviceNames(devices) {
+    extractDeviceNames = (devices) => {
         return [...devices.keys()].join(',');
-    }
+    };
 
     render() {
         const devices = this.mapDevices();
-        const tooltip = <Tooltip id={this.props.row.name}>{this.createDetailTable(devices)}</Tooltip>;
+        const tooltip = <Tooltip id={this.props.original.name}>{this.createDetailTable(devices)}</Tooltip>;
         return (
             <OverlayTrigger placement="top" overlay={tooltip} trigger="click" rootClose>
                 <div>{this.extractDeviceNames(devices)}</div>
@@ -146,58 +145,58 @@ class DeviceCell extends Component {
 }
 
 class ActionCell extends Component {
-    getEditButton(measurement) {
+    getEditButton = measurement => {
         if (measurement.status === 'COMPLETE') {
             if (measurement.isSelectedEdit) {
                 return (
-                    <Button variant="success" onClick={() => measurement.clearEdit()} size="xs">
+                    <Button variant="success" onClick={() => measurement.clearEdit()} size="sm">
                         <FontAwesome name="eject"/>
                     </Button>
                 );
             } else {
                 return (
-                    <Button variant="primary" onClick={() => measurement.showEdit()} size="xs">
+                    <Button variant="primary" onClick={() => measurement.showEdit()} size="sm">
                         <FontAwesome name="pencil"/>
                     </Button>
                 );
             }
         }
         return null;
-    }
+    };
 
-    getAnalyseButton(measurement) {
+    getAnalyseButton = measurement => {
         if (measurement.status === 'COMPLETE') {
             if (measurement.isSelectedChart) {
                 return (
                     <Button variant="success"
-                            onClick={() => measurement.clearTimeSeries()} size="xs">
+                            onClick={() => measurement.clearTimeSeries()} size="sm">
                         <FontAwesome name="eject"/>
                     </Button>
                 );
             } else {
                 return (
-                    <Button variant="primary" onClick={() => measurement.fetchTimeSeries()} size="xs">
+                    <Button variant="primary" onClick={() => measurement.fetchTimeSeries()} size="sm">
                         <FontAwesome name="line-chart"/>
                     </Button>
                 );
             }
         }
         return null;
-    }
+    };
 
-    getDeleteButton(row) {
-        let deletePromise = row.deleteResponse;
+    getDeleteButton = measurement => {
+        let deletePromise = measurement.deleteResponse;
         if (deletePromise) {
             if (deletePromise.pending) {
-                return <Button variant="danger" disabled size="xs"><FontAwesome name="spinner" spin/></Button>;
+                return <Button variant="danger" disabled size="sm"><FontAwesome name="spinner" spin/></Button>;
             } else if (deletePromise.rejected) {
                 const code = deletePromise.meta.response.status;
                 const text = deletePromise.meta.response.statusText;
-                const tooltip = <Tooltip id={row.name}>{code} - {text}</Tooltip>;
+                const tooltip = <Tooltip id={measurement.name}>{code} - {text}</Tooltip>;
                 return (
                     <OverlayTrigger placement="top" overlay={tooltip}>
                         <div>
-                            <Button variant="warning" size="xs">
+                            <Button variant="warning" size="sm">
                                 <FontAwesome name="exclamation"/>&nbsp;FAILED
                             </Button>
                         </div>
@@ -205,64 +204,60 @@ class ActionCell extends Component {
                 );
             } else if (deletePromise.fulfilled) {
                 return (
-                    <Button variant="success" disabled size="xs">
+                    <Button variant="success" disabled size="sm">
                         <FontAwesome name="check"/>&nbsp;Deleted
                     </Button>
                 );
             }
         } else {
-            if (row.status === 'COMPLETE' || row.status === 'FAILED') {
+            if (measurement.status === 'COMPLETE' || measurement.status === 'FAILED') {
                 return (
-                    <Button variant="danger" onClick={() => row.deleteMeasurement()}
-                            size="xs">
+                    <Button variant="danger" onClick={() => measurement.deleteMeasurement()}
+                            size="sm">
                         <FontAwesome name="trash"/>
                     </Button>
                 );
             }
         }
         return null;
-    }
+    };
 
     render() {
-        const editButton = this.getEditButton(this.props.row);
-        const analyseButton = this.getAnalyseButton(this.props.row);
-        const deleteButton = this.getDeleteButton(this.props.row);
+        const editButton = this.getEditButton(this.props.original);
+        const analyseButton = this.getAnalyseButton(this.props.original);
+        const deleteButton = this.getDeleteButton(this.props.original);
         return <ButtonToolbar>{editButton}{analyseButton}{deleteButton}</ButtonToolbar>;
     }
 }
 
-[ProgressCell, nameCell, statusCell, sensorCell, DeviceCell, ActionCell].forEach(m => {
-    m.propTypes = {
-        row: PropTypes.object.isRequired,
-    }
-});
-
 const columns = [
-    {key: 'id', header: 'ID', hidden: true, primaryKey: true},
-    {key: 'status', header: 'Status', filterable: true, Component: statusCell},
-    {key: 'progress', header: 'Progress', Component: ProgressCell},
-    {key: 'startTime', hidden: true},
-    {key: 'name', header: 'Name', sortable: true, filterable: true, Component: nameCell},
-    {key: 'date', header: 'Date', sortable: true, filterable: true},
-    {key: 'time', header: 'Time', sortable: true},
-    {key: 'fs', header: 'Fs', sortable: true, searchable: true},
-    {key: 'sensors', header: 'Sensors', Component: sensorCell},
-    {key: 'devices', header: 'Devices', searchable: true, Component: DeviceCell},
-    {key: 'actions', header: 'Actions', Component: ActionCell},
+    {accessor: 'id', Header: 'ID', show: false},
+    {id: 'status', Header: 'Status', Cell: statusCell},
+    {id: 'progress', Header: 'Progress', Cell: ProgressCell},
+    {accessor: 'startTime', show: false},
+    {accessor: 'name', Header: 'Name', sortable: true, filterable: true, Cell: nameCell},
+    {accessor: 'date', Header: 'Date', sortable: true, filterable: true},
+    {accessor: 'time', Header: 'Time', sortable: true},
+    {accessor: 'fs', Header: 'Fs', sortable: true, filterable: true},
+    {id: 'sensors', Header: 'Sensors', Cell: sensorCell},
+    {id: 'devices', Header: 'Devices', filterable: true, Cell: DeviceCell},
+    {id: 'actions', Header: 'Actions', Cell: ActionCell},
 ];
 
-class MeasurementTable extends Component {
+export default class MeasurementTable extends Component {
     render() {
         return (
-            <Table {...this.props}
-                   columns={columns}
-                   className="table-sm table-bordered table-hover table-striped"/>
+            <ReactTable data={this.props.data}
+                        columns={columns}
+                        sortable={false}
+                        defaultPageSize={5}
+                        defaultSorted={[
+                            {
+                                id: "startTime",
+                                desc: true
+                            }
+                        ]}
+                        className={'-striped -highlight'}/>
         );
     }
 }
-
-export default sematable('measurements', MeasurementTable, columns, {
-    defaultPageSize: 6,
-    sortKey: 'startTime',
-    sortDirection: 'desc'
-});

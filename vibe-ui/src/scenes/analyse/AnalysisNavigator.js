@@ -10,7 +10,6 @@ import {
 } from "react-bootstrap";
 import NavigatorMultiSelect from "./NavigatorMultiSelect";
 import FontAwesome from "react-fontawesome";
-import "react-bootstrap-multiselect/css/bootstrap-multiselect.css";
 import PreciseIntNumericInput from "../../components/PreciseIntNumericInput";
 
 export default class AnalysisNavigator extends Component {

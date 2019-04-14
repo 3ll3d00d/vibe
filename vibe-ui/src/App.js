@@ -15,7 +15,7 @@ class App extends Component {
 
     render() {
         return (
-            <Container>
+            <Container fluid>
                 <Navbar>
                     <Navbar.Brand>
                         <a href="http://vibe.readthedocs.io/en/latest/" target="docs">
@@ -46,8 +46,7 @@ class App extends Component {
                 <Route path="/configure" component={Configure}/>
                 <Route path="/target" component={Target}/>
                 <Route path="/measure" component={Measure}/>
-                <Route path="/analyse/:splat*)" component={Analyse}/>
-                <Route path="/analyse" component={Analyse}/>
+                <Route path="/analyse/:splat*" component={Analyse}/>
                 <Route path="/upload" component={Upload}/>
             </Container>
         );

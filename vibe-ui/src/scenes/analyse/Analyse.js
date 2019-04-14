@@ -18,8 +18,8 @@ class Analyse extends Component {
     /** converts react router 4 style params into the react router 3 format (which supported a splat param). */
     adaptParams = (match) => {
         const idxToKey = ['type', 'measurementId', 'deviceId', 'analyserId', 'series'];
-        if (match && match.splat) {
-            const paramValues = match.splat.split('/');
+        if (match.params && match.params.splat) {
+            const paramValues = match.params.splat.split('/');
             if (paramValues.length > 0) {
                 let val = {};
                 for (let i = 0; i < paramValues.length; i++) {

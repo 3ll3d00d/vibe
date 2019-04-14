@@ -2,7 +2,7 @@ import React, {Component} from "react";
 import PropTypes from "prop-types";
 import {Button, ButtonToolbar, FormControl, OverlayTrigger, Tooltip} from "react-bootstrap";
 import FontAwesome from "react-fontawesome";
-import sematable, {Table} from "sematable";
+import ReactTable from 'react-table';
 import {SCIPY_WINDOWS} from "../../constants";
 
 const sizeCell = ({row}) => {
@@ -31,13 +31,13 @@ class ActionCell extends Component {
             if (upload.isSelectedChart) {
                 return (
                     <Button variant="success"
-                            onClick={upload.clearData} size="xs">
+                            onClick={upload.clearData} size="sm">
                         <FontAwesome name="eject"/>
                     </Button>
                 );
             } else {
                 return (
-                    <Button variant="primary" onClick={upload.fetchData} size="xs">
+                    <Button variant="primary" onClick={upload.fetchData} size="sm">
                         <FontAwesome name="line-chart"/>
                     </Button>
                 );
@@ -50,7 +50,7 @@ class ActionCell extends Component {
         let deletePromise = upload.deleteResponse;
         if (deletePromise) {
             if (deletePromise.pending) {
-                return <Button variant="danger" disabled size="xs"><FontAwesome name="spinner" spin/></Button>;
+                return <Button variant="danger" disabled size="sm"><FontAwesome name="spinner" spin/></Button>;
             } else if (deletePromise.rejected) {
                 const code = deletePromise.meta.response.status;
                 const text = deletePromise.meta.response.statusText;
@@ -58,7 +58,7 @@ class ActionCell extends Component {
                 return (
                     <OverlayTrigger placement="top" overlay={tooltip}>
                         <div>
-                            <Button variant="warning" size="xs">
+                            <Button variant="warning" size="sm">
                                 <FontAwesome name="exclamation"/>&nbsp;FAILED
                             </Button>
                         </div>
@@ -66,14 +66,14 @@ class ActionCell extends Component {
                 );
             } else if (deletePromise.fulfilled) {
                 return (
-                    <Button variant="success" disabled size="xs">
+                    <Button variant="success" disabled size="xm">
                         <FontAwesome name="check"/>&nbsp;Deleted
                     </Button>
                 );
             }
         } else if (upload.status === 'loaded') {
             return (
-                <Button variant="danger" onClick={() => upload.deleteData()} size="xs">
+                <Button variant="danger" onClick={() => upload.deleteData()} size="xm">
                     <FontAwesome name="trash"/>
                 </Button>
             );
@@ -126,7 +126,7 @@ const targetCell = ({row}) => {
     let targetPromise = row.createResponse;
     if (targetPromise) {
         if (targetPromise.pending) {
-            return <Button variant="danger" disabled size="xs"><FontAwesome name="spinner" spin/>&nbsp;Saving</Button>;
+            return <Button variant="danger" disabled size="xm"><FontAwesome name="spinner" spin/>&nbsp;Saving</Button>;
         } else if (targetPromise.rejected) {
             const code = targetPromise.meta.response.status;
             const text = targetPromise.meta.response.statusText;
@@ -134,7 +134,7 @@ const targetCell = ({row}) => {
             return (
                 <OverlayTrigger placement="top" overlay={tooltip}>
                     <div>
-                        <Button variant="warning" size="xs">
+                        <Button variant="warning" size="xm">
                             <FontAwesome name="exclamation"/>&nbsp;FAILED
                         </Button>
                     </div>
@@ -142,14 +142,14 @@ const targetCell = ({row}) => {
             );
         } else if (targetPromise.fulfilled) {
             return (
-                <Button variant="success" disabled size="xs">
+                <Button variant="success" disabled size="xm">
                     <FontAwesome name="check"/>&nbsp;Saved
                 </Button>
             );
         }
     } else if (row.status === 'loaded') {
         return (
-            <Button variant="primary" onClick={() => row.createTarget(row.name, row.start, row.end)} size="xs">
+            <Button variant="primary" onClick={() => row.createTarget(row.name, row.start, row.end)} size="xm">
                 <FontAwesome name="bullseye"/>
             </Button>
         );
@@ -164,31 +164,33 @@ const targetCell = ({row}) => {
 });
 
 const columns = [
-    {key: 'status', header: 'Status', Component: statusCell},
-    {key: 'name', header: 'Name', sortable: true, filterable: true, primaryKey: true},
-    {key: 'size', header: 'Size (MB)', Component: sizeCell},
-    {key: 'duration', header: 'Duration (s)', Component: durationCell},
-    {key: 'fs', header: 'Fs (Hz)'},
-    {key: 'start', header: 'Preview Start', Component: previewStartCell},
-    {key: 'end', header: 'End', Component: previewEndCell},
-    {key: 'resolution', header: 'Resolution (Hz)', Component: previewResolutionCell},
-    {key: 'window', header: 'FFT Window', Component: previewWindowCell},
-    {key: 'target', header: 'Create Target', Component: targetCell},
-    {key: 'actions', header: 'Preview/Delete', Component: ActionCell},
+    {accessor: 'status', Header: 'Status', Cell: statusCell},
+    {accessor: 'name', Header: 'Name', sortable: true, filterable: true},
+    {accessor: 'size', Header: 'Size (MB)', Cell: sizeCell},
+    {accessor: 'durationStr', Header: 'Duration (s)'},
+    {accessor: 'fs', Header: 'Fs (Hz)'},
+    {Header: 'Preview Start', Cell: previewStartCell},
+    {Header: 'End', Cell: previewEndCell},
+    {accessor: 'resolution', Header: 'Resolution (Hz)', Cell: previewResolutionCell},
+    {accessor: 'window', Header: 'FFT Window', Cell: previewWindowCell},
+    {accessor: 'target', Header: 'Create Target', Cell: targetCell},
+    {accessor: 'actions', Header: 'Preview/Delete', Cell: ActionCell},
 ];
 
-class UploadTable extends Component {
+export default class UploadTable extends Component {
     render() {
         return (
-            <Table {...this.props}
-                   columns={columns}
-                   className="table-responsive table-sm table-bordered table-hover table-striped"/>
+            <ReactTable data={this.props.data}
+                        columns={columns}
+                        sortable={false}
+                        defaultPageSize={5}
+                        defaultSorted={[
+                            {
+                                id: "startTime",
+                                desc: true
+                            }
+                        ]}
+                        className={'-striped -highlight'}/>
         );
     }
 }
-
-export default sematable('uploads', UploadTable, columns, {
-    defaultPageSize: 3,
-    sortKey: 'startTime',
-    sortDirection: 'desc'
-});

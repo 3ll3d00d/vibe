@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import PropTypes from "prop-types";
-import {Card, Nav, NavItem} from "react-bootstrap";
+import {Card, Nav} from "react-bootstrap";
 import LineChart from "../../components/chart/LineChart";
 import Message from "../../components/Message";
 
@@ -101,16 +101,20 @@ export default class TimeSeries extends Component {
             if (this.props.dataPromise.fulfilled) {
                 const series = this.renderSelectedMeasurementAsChartData();
                 const navs = Object.keys(TimeSeries.idxToSeriesName).map(k =>
-                    <NavItem key={k} eventKey={k}>{TimeSeries.idxToSeriesName[k]}</NavItem>
+                    <Nav.Item key={k}>
+                        <Nav.Link eventKey={k}>{TimeSeries.idxToSeriesName[k]}</Nav.Link>
+                    </Nav.Item>
                 );
                 if (series.length > 0) {
                     const config = this.getChartConfig(series);
                     return (
                         <div>
-                            <Nav variant="tabs" activeKey={this.state.selected} onSelect={this.selectChart}>
-                                {navs}
-                            </Nav>
-                            <Card className={'p-2'}>
+                            <Card>
+                                <Card.Header>
+                                    <Nav variant="tabs" activeKey={this.state.selected} onSelect={this.selectChart}>
+                                        {navs}
+                                    </Nav>
+                                </Card.Header>
                                 <LineChart series={series} config={config}/>
                             </Card>
                         </div>

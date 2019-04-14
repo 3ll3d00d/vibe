@@ -8,11 +8,10 @@ import {
     DropdownButton,
     DropdownItem,
     Form,
-    FormControl,
-    FormGroup,
     InputGroup,
     Modal,
     OverlayTrigger,
+    Row,
     Tooltip
 } from "react-bootstrap";
 import FontAwesome from "react-fontawesome";
@@ -250,9 +249,9 @@ export default class ChartCustomiser extends Component {
 
     render() {
         const presetMenuItems = this.state.presets.toJS().map(p => <DropdownItem key={p.name}
-                                                                             eventKey={p.name}>{p.name}</DropdownItem>);
+                                                                                 eventKey={p.name}>{p.name}</DropdownItem>);
         return (
-            <Modal show={this.props.visible} onHide={this.props.toggleVisibility}>
+            <Modal show={this.props.visible} onHide={this.props.toggleVisibility} size={'lg'}>
                 <Modal.Header>
                     <Modal.Title>Customise Chart</Modal.Title>
                     <Form inline>
@@ -260,7 +259,7 @@ export default class ChartCustomiser extends Component {
                             <DropdownButton title="Presets" id="preset" onSelect={this.loadPreset}>
                                 {presetMenuItems}
                             </DropdownButton>
-                            <FormControl type="text" value={this.state.presetName} onChange={this.handlePresetName}/>
+                            <Form.Control type="text" value={this.state.presetName} onChange={this.handlePresetName}/>
                             <Button disabled={this.cannotSavePreset()} onClick={this.savePreset}>
                                 <FontAwesome name="floppy-o"/>
                             </Button>
@@ -271,12 +270,12 @@ export default class ChartCustomiser extends Component {
                     </Form>
                 </Modal.Header>
                 <Modal.Body>
-                    <Form horizontal>
+                    <Form>
                         <Card size="sm" bg="light">
-                            <FormGroup controlId="title">
-                                <Col as={Form.Label} md={2}>Title</Col>
+                            <Form.Group controlId="title" as={Row}>
+                                <Form.Label column md={2}>Title</Form.Label>
                                 <Col md={6}>
-                                    <FormControl type="text" value={this.state.title} onChange={this.handleTitle}/>
+                                    <Form.Control type="text" value={this.state.title} onChange={this.handleTitle}/>
                                 </Col>
                                 <Col md={3}>
                                     <OverlayTrigger placement="bottom" overlay={<Tooltip id="ok">Font Size</Tooltip>}>
@@ -288,14 +287,16 @@ export default class ChartCustomiser extends Component {
                                                                 placeholder="font size"/>
                                     </OverlayTrigger>
                                 </Col>
-                            </FormGroup>
-                            <FormGroup controlId="size">
-                                <Col as={Form.Label} md={2}>Dimensions</Col>
+                            </Form.Group>
+                            <Form.Group controlId="size" as={Row}>
+                                <Form.Label column md={2}>Dimensions</Form.Label>
                                 <Col md={3}>
                                     <InputGroup size="sm">
-                                        <InputGroup.Addon>
-                                            <FontAwesome name="arrows-h"/>
-                                        </InputGroup.Addon>
+                                        <InputGroup.Prepend>
+                                            <InputGroup.Text>
+                                                <FontAwesome name="arrows-h"/>
+                                            </InputGroup.Text>
+                                        </InputGroup.Prepend>
                                         <PreciseIntNumericInput precision={0}
                                                                 step={10}
                                                                 min={10}
@@ -306,9 +307,11 @@ export default class ChartCustomiser extends Component {
                                 </Col>
                                 <Col md={3}>
                                     <InputGroup size="sm">
-                                        <InputGroup.Addon>
-                                            <FontAwesome name="arrows-v"/>
-                                        </InputGroup.Addon>
+                                        <InputGroup.Prepend>
+                                            <InputGroup.Text>
+                                                <FontAwesome name="arrows-v"/>
+                                            </InputGroup.Text>
+                                        </InputGroup.Prepend>
                                         <PreciseIntNumericInput precision={0}
                                                                 step={10}
                                                                 min={10}
@@ -321,7 +324,9 @@ export default class ChartCustomiser extends Component {
                                     <OverlayTrigger placement="bottom"
                                                     overlay={<Tooltip id="ok">Y Axis Step Size</Tooltip>}>
                                         <InputGroup size="sm">
-                                            <InputGroup.Addon>y</InputGroup.Addon>
+                                            <InputGroup.Prepend>
+                                                <InputGroup.Text>y</InputGroup.Text>
+                                            </InputGroup.Prepend>
                                             <PreciseIntNumericInput precision={0}
                                                                     step={1}
                                                                     min={0}
@@ -331,9 +336,9 @@ export default class ChartCustomiser extends Component {
                                         </InputGroup>
                                     </OverlayTrigger>
                                 </Col>
-                            </FormGroup>
-                            <FormGroup controlId="line">
-                                <Col as={Form.Label} md={2}>Line Style</Col>
+                            </Form.Group>
+                            <Form.Group controlId="line" as={Row}>
+                                <Form.Label column md={2}>Line Style</Form.Label>
                                 <Col md={3}>
                                     <OverlayTrigger placement="bottom"
                                                     overlay={<Tooltip id="ok">Line width (in pixels)</Tooltip>}>
@@ -370,27 +375,25 @@ export default class ChartCustomiser extends Component {
                                                                 handler={this.handleDotSize}/>
                                     </OverlayTrigger>
                                 </Col>
-                            </FormGroup>
-                            <FormGroup controlId="legend">
-                                <Col md={{span:3, offset:2}}>
-                                    <Form.Check onChange={this.handleShowLegend} checked={this.state.showLegend}>
-                                        Show Legend?
-                                    </Form.Check>
+                            </Form.Group>
+                            <Form.Group controlId="legend" as={Row}>
+                                <Col md={{span: 3, offset: 2}}>
+                                    <Form.Check onChange={this.handleShowLegend} checked={this.state.showLegend}
+                                                label={'Show Legend?'}/>
                                 </Col>
                                 <Col md={3}>
-                                    <Form.Check onChange={this.handleLineFill} checked={this.state.lineFill}>
-                                        Fill Lines?
-                                    </Form.Check>
+                                    <Form.Check onChange={this.handleLineFill} checked={this.state.lineFill}
+                                                label={'Fill Lines?'}/>
                                 </Col>
-                            </FormGroup>
+                            </Form.Group>
                         </Card>
-                        <FormGroup controlId="style">
-                            <Col as={Form.Label} md={2}>Colours</Col>
+                        <Form.Group controlId="style" as={Row}>
+                            <Form.Label column md={2}>Colours</Form.Label>
                             <Col md={9}>
                                 <StylePicker namedColours={this.state.namedColours}
                                              selectColour={this.handleColourChange}/>
                             </Col>
-                        </FormGroup>
+                        </Form.Group>
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>

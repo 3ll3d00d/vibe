@@ -250,7 +250,7 @@ class Upload extends Component {
             );
         } else if (uploads.rejected) {
             return (
-                <ListGroup fill>
+                <ListGroup>
                     <ListGroupItem>
                         Unable to fetch uploaded files - {uploads.reason.toString()}
                     </ListGroupItem>

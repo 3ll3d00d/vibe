@@ -19,9 +19,14 @@ export default class StylePicker extends Component {
 
     render() {
         return (
-            <Tabs activeKey={this.state.active} animation={false} onSelect={this.activate} id="colour-picker">
+            <Tabs activeKey={this.state.active}
+                  transition={false}
+                  onSelect={this.activate}
+                  id="colour-picker"
+                  className={'p-3'}
+                  variant={'pills'}>
                 {
-                    this.props.namedColours.map((v,k) => {
+                    this.props.namedColours.map((v, k) => {
                         return (
                             <Tab eventKey={k} title={k} key={k}>
                                 <SketchPicker color={v}
